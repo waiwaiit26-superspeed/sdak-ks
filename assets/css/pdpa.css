@@ -1,0 +1,320 @@
+/* ============================================
+   PDPA Components CSS
+   Cookie Banner, Consent Modal, Privacy Policy
+   ============================================ */
+
+/* ── Cookie Banner ── */
+.pdpa-cookie-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1e1044 0%, #2d1b69 100%);
+    color: #fff;
+    z-index: 10000;
+    padding: 1rem 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    animation: pdpa-slide-up 0.4s ease-out;
+}
+
+@keyframes pdpa-slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.pdpa-cookie-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.pdpa-cookie-text {
+    flex: 1;
+    min-width: 280px;
+}
+
+.pdpa-cookie-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.pdpa-cookie-actions .btn {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+}
+
+.pdpa-link {
+    color: #fbbf24 !important;
+    text-decoration: underline;
+    font-weight: 600;
+}
+.pdpa-link:hover {
+    color: #f59e0b !important;
+}
+
+/* ── Cookie Settings Panel ── */
+.pdpa-cookie-settings {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    color: #333;
+    z-index: 10001;
+    padding: 1rem 0;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
+    animation: pdpa-slide-up 0.3s ease-out;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.pdpa-settings-inner {
+    max-width: 600px;
+}
+
+.pdpa-cookie-option {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: #f9fafb;
+}
+
+.pdpa-cookie-option .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    cursor: pointer;
+}
+.pdpa-cookie-option .form-check-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* ── Consent Overlay & Modal ── */
+.pdpa-consent-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: pdpa-fade-in 0.4s ease-out;
+}
+
+@keyframes pdpa-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.pdpa-consent-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: pdpa-modal-pop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pdpa-modal-pop {
+    from { transform: scale(0.9) translateY(20px); opacity: 0; }
+    to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.pdpa-consent-header {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+    color: #fff;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.pdpa-consent-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.8rem;
+}
+
+.pdpa-consent-body {
+    flex: 1;
+    overflow: hidden;
+}
+
+.pdpa-consent-scroll {
+    padding: 1.5rem;
+    max-height: 40vh;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.pdpa-consent-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.pdpa-consent-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+.pdpa-consent-scroll::-webkit-scrollbar-thumb {
+    background: #a78bfa;
+    border-radius: 3px;
+}
+
+.pdpa-consent-scroll h6 {
+    color: #4c1d95;
+    margin-top: 1rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid #ede9fe;
+}
+.pdpa-consent-scroll h6:first-child {
+    margin-top: 0;
+}
+
+.pdpa-consent-scroll ul {
+    padding-left: 1.2rem;
+    margin-bottom: 0.75rem;
+}
+.pdpa-consent-scroll li {
+    margin-bottom: 0.25rem;
+}
+
+.pdpa-consent-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: #faf5ff;
+}
+
+.pdpa-consent-footer .form-check-input {
+    margin-top: 0.15rem;
+}
+.pdpa-consent-footer .form-check-input:checked {
+    background-color: #6d28d9;
+    border-color: #6d28d9;
+}
+
+.pdpa-consent-footer .btn-primary {
+    background: #6d28d9;
+    border-color: #6d28d9;
+    padding: 0.6rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+.pdpa-consent-footer .btn-primary:hover:not(:disabled) {
+    background: #5b21b6;
+    box-shadow: 0 4px 15px rgba(109,40,217,0.3);
+}
+.pdpa-consent-footer .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Privacy Policy Page ── */
+.privacy-content h4.privacy-heading {
+    color: #4c1d95;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #ede9fe;
+    font-size: 1.2rem;
+}
+.privacy-content h4.privacy-heading:first-child {
+    margin-top: 0;
+}
+
+.privacy-info-box {
+    background: #faf5ff;
+    padding: 1rem;
+    border-radius: 10px;
+    height: 100%;
+    border: 1px solid #ede9fe;
+}
+.privacy-info-box h6 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+.privacy-info-box ul {
+    padding-left: 1.2rem;
+    font-size: 0.9rem;
+}
+.privacy-info-box ul li {
+    margin-bottom: 0.2rem;
+}
+
+.privacy-right-card {
+    text-align: center;
+    padding: 1.25rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    height: 100%;
+    transition: all 0.3s;
+    background: #fff;
+}
+.privacy-right-card:hover {
+    border-color: #a78bfa;
+    box-shadow: 0 4px 15px rgba(109,40,217,0.1);
+    transform: translateY(-2px);
+}
+.privacy-right-card h6 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.95rem;
+}
+
+.privacy-table thead {
+    background: #4c1d95;
+    color: #fff;
+}
+.privacy-table thead th {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.privacy-table td {
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .pdpa-cookie-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+    .pdpa-cookie-actions {
+        justify-content: center;
+        width: 100%;
+    }
+    .pdpa-consent-modal {
+        max-height: 95vh;
+    }
+    .pdpa-consent-scroll {
+        max-height: 35vh;
+    }
+    .pdpa-consent-header {
+        padding: 1rem;
+    }
+    .pdpa-consent-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+}

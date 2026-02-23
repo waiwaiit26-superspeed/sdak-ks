@@ -1,0 +1,1105 @@
+<?php $pageTitle = 'สมัครสมาชิก'; $authBodyClass = 'register-page'; ?>
+<?php
+$extraCss = '
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<link rel="stylesheet" href="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.css">
+<style>
+    .modal-overlay {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+        z-index: 1050; align-items: center; justify-content: center; animation: fadeInSetup .3s;
+    }
+    .modal-overlay.show { display: flex; }
+    @keyframes fadeInSetup { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUpSetup { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .setup-modal {
+        background: #fff; border-radius: 20px; width: 480px; max-width: 94vw;
+        max-height: 90vh; overflow-y: auto; padding: 0;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: slideUpSetup .4s cubic-bezier(.16,1,.3,1);
+    }
+    .setup-modal-header {
+        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        color: #fff; padding: 24px 28px 20px; border-radius: 20px 20px 0 0;
+    }
+    .setup-modal-header h3 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 700; }
+    .setup-modal-header p { margin: 0; font-size: .88rem; opacity: .85; }
+    .setup-modal-body { padding: 24px 28px 28px; }
+    .setup-modal-body .step { display: none; }
+    .setup-modal-body .step.active { display: block; }
+    .step-indicators { display: flex; gap: 8px; margin-bottom: 24px; }
+    .step-dot { flex: 1; height: 4px; border-radius: 4px; background: #e5e7eb; transition: background .3s; }
+    .step-dot.active { background: #7c3aed; }
+    .step-dot.done { background: #10b981; }
+    .member-type-options { display: flex; flex-direction: column; gap: 12px; }
+    .member-type-card {
+        border: 2px solid #e5e7eb; border-radius: 14px; padding: 16px 18px;
+        cursor: pointer; transition: all .25s; display: flex; align-items: center;
+        gap: 14px; position: relative;
+    }
+    .member-type-card:hover { border-color: #a78bfa; background: #faf5ff; }
+    .member-type-card.selected { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
+    .member-type-card .type-icon {
+        width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center;
+        justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+    }
+    .member-type-card .type-info h4 { margin: 0 0 2px; font-size: 1rem; font-weight: 600; color: #1e1b4b; }
+    .member-type-card .type-info p { margin: 0; font-size: .82rem; color: #6b7280; }
+    .member-type-card .type-fee { margin-left: auto; font-weight: 700; font-size: .95rem; color: #7c3aed; white-space: nowrap; }
+    .member-type-card .check-mark { display: none; position: absolute; top: 10px; right: 12px; color: #7c3aed; font-size: 1.1rem; }
+    .member-type-card.selected .check-mark { display: block; }
+    .slip-upload-area {
+        border: 2px dashed #d1d5db; border-radius: 14px; padding: 32px 20px;
+        text-align: center; cursor: pointer; transition: all .25s; background: #fafafa; position: relative;
+    }
+    .slip-upload-area:hover { border-color: #7c3aed; background: #faf5ff; }
+    .slip-upload-area.has-file { border-color: #10b981; background: #f0fdf4; }
+    .slip-upload-area .upload-icon { font-size: 2.5rem; color: #9ca3af; margin-bottom: 8px; }
+    .slip-upload-area.has-file .upload-icon { color: #10b981; }
+    .slip-upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .slip-preview-img { max-height: 200px; border-radius: 8px; margin-top: 12px; }
+    .btn-step {
+        padding: 12px 24px; border: none; border-radius: 12px; font-size: 1rem;
+        font-weight: 600; font-family: inherit; cursor: pointer; transition: all .2s;
+    }
+    .btn-step-primary {
+        color: #fff; background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        box-shadow: 0 4px 12px rgba(109,40,217,.3);
+    }
+    .btn-step-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(109,40,217,.4); }
+    .btn-step-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .btn-step-outline { color: #6b7280; background: transparent; border: 2px solid #e5e7eb; }
+    .btn-step-outline:hover { border-color: #9ca3af; color: #374151; }
+    .bank-info-box {
+        background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    }
+    .bank-info-box .bi { color: #0284c7; margin-right: 6px; }
+    .bank-info-box strong { color: #0c4a6e; }
+    .bank-info-box .bank-row { margin-bottom: 4px; font-size: .92rem; }
+
+    /* ─── Setup Modal Form Styles (AdminLTE-like) ─── */
+    .setup-modal .setup-form-group {
+        margin-bottom: 16px;
+    }
+    .setup-modal .setup-form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: .88rem;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .setup-modal .setup-form-group label .text-danger { color: #dc3545; }
+    .setup-modal .setup-input-group {
+        display: flex;
+        align-items: stretch;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: border-color .2s, box-shadow .2s;
+        background: #fff;
+    }
+    .setup-modal .setup-input-group:focus-within {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+    }
+    .setup-modal .setup-input-group .input-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        background: #f8f5ff;
+        color: #7c3aed;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        border-right: 1px solid #e5e7eb;
+    }
+    .setup-modal .setup-input-group input,
+    .setup-modal .setup-input-group select {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 10px 14px;
+        font-size: .95rem;
+        font-family: inherit;
+        background: transparent;
+        color: #1e1b4b;
+        min-width: 0;
+    }
+    .setup-modal .setup-input-group input::placeholder { color: #9ca3af; }
+    .setup-modal .setup-input-group select { -webkit-appearance: auto; appearance: auto; cursor: pointer; }
+    .setup-modal .setup-name-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    @media (max-width: 480px) {
+        .setup-modal .setup-name-row { grid-template-columns: 1fr; }
+    }
+</style>
+';
+?>
+<?php include ROOT_PATH . 'templates/auth/header.php'; ?>
+
+<div class="register-box" style="width:800px; max-width:95vw; margin-top:30px;">
+    <div class="card card-outline card-primary">
+        <div class="card-header text-center">
+            <div class="register-logo mb-2" id="registerLogo">
+                <a href="<?php echo $basePath; ?>">
+                    <img id="regLogoImg" src="" alt="Logo" style="display:none;max-height:70px;">
+                    <span class="reg-logo-text"><i class="bi bi-mortarboard-fill"></i> <b>ส.ร.ม.ก.</b></span>
+                </a>
+            </div>
+            <h4>สมัครสมาชิก</h4>
+            <p class="text-muted mb-0" id="regSubtitle"></p>
+        </div>
+        <div class="card-body register-card-body">
+            <form id="registerForm" novalidate>
+                <!-- ข้อมูลทั่วไป -->
+                <fieldset class="border rounded p-3 mb-3">
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">ข้อมูลทั่วไป</legend>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="member_type">ประเภทสมาชิก <span class="text-danger">*</span></label>
+                                <select class="form-control" id="member_type" name="member_type" required>
+                                    <option value="">-- เลือก --</option>
+                                    <option value="ordinary">สมาชิกสามัญ</option>
+                                    <option value="associate">สมาชิกวิสามัญ</option>
+                                    <option value="affiliate">สมาชิกสมทบ</option>
+                                </select>
+                                <small class="text-muted">วิสามัญ = เกษียณ/เปลี่ยนตำแหน่ง</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="national_id">เลขบัตรประชาชน <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="national_id" name="national_id" maxlength="13" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="phone">มือถือ <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="0812345678" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="prefix">คำนำหน้า <span class="text-danger">*</span></label>
+                                <select class="form-control" id="prefix" name="prefix" required>
+                                    <option value="">-- เลือก --</option>
+                                    <option value="นาย">นาย</option>
+                                    <option value="นาง">นาง</option>
+                                    <option value="นางสาว">นางสาว</option>
+                                    <option value="ดร.">ดร.</option>
+                                    <option value="ผศ.">ผศ.</option>
+                                    <option value="รศ.">รศ.</option>
+                                    <option value="ศ.">ศ.</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="first_name">ชื่อ <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="กรุณากรอกคำนำหน้า" required>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label for="last_name">นามสกุล <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="birth_date">วันเกิด <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="birth_date" name="birth_date" placeholder="เลือกวันเกิด" readonly required>
+                                    <div class="input-group-append"><div class="input-group-text"><i class="fas fa-calendar-alt"></i></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="position">ตำแหน่ง <span class="text-danger">*</span></label>
+                                <select class="form-control" id="position" name="position" required>
+                                    <option value="">-- เลือก --</option>
+                                    <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
+                                    <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                                    <option value="other">อื่นๆ (กรอกเอง)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="positionOtherWrap" style="display:none">
+                            <div class="form-group">
+                                <label for="position_other">ระบุตำแหน่ง <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="position_other" name="position_other" placeholder="กรอกตำแหน่งของท่าน">
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- ที่อยู่ปัจจุบัน -->
+                <fieldset class="border rounded p-3 mb-3">
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">ที่อยู่ปัจจุบัน <span class="text-danger">*</span></legend>
+                    <div class="row">
+                        <div class="col-md-2"><div class="form-group"><label>เลขที่</label><input type="text" class="form-control" id="h_no"></div></div>
+                        <div class="col-md-2"><div class="form-group"><label>ซอย</label><input type="text" class="form-control" id="h_soi" placeholder="ไม่มีให้กรอก -"></div></div>
+                        <div class="col-md-2"><div class="form-group"><label>หมู่ที่</label><input type="text" class="form-control" id="h_moo"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>ถนน</label><input type="text" class="form-control" id="h_road"></div></div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>ค้นหาที่อยู่</label>
+                                <input type="text" class="form-control" id="h_search" placeholder="พิมพ์ ตำบล/อำเภอ/จังหวัด">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_subdistrict" name="h_subdistrict" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_district" name="h_district" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>จังหวัด <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_province" name="h_province" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์ <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_postal" name="h_postal" maxlength="5" required></div></div>
+                    </div>
+                </fieldset>
+
+                <!-- สถานที่ทำงาน -->
+                <fieldset class="border rounded p-3 mb-3">
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">สถานที่ทำงาน <span class="text-danger">*</span></legend>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="school_organization">โรงเรียน/หน่วยงาน <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <select class="form-control" id="school_prefix" style="max-width:160px">
+                                        <option value="โรงเรียน">โรงเรียน</option>
+                                        <option value="สพม.">สพม.</option>
+                                        <option value="สพป.">สพป.</option>
+                                        <option value="สำนักงาน">สำนักงาน</option>
+                                        <option value="">อื่นๆ (ไม่มีคำนำหน้า)</option>
+                                    </select>
+                                    <input type="text" class="form-control" id="school_organization" name="school_organization" placeholder="ชื่อโรงเรียน/หน่วยงาน" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="work_phone">โทรศัพท์ (โรงเรียน)</label>
+                                <input type="tel" class="form-control" id="work_phone">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>สังกัดเขตพื้นที่</label>
+                                <select class="form-control" id="education_area">
+                                    <option value="">-- เลือก --</option>
+                                    <option>สพป.</option><option>สพม.</option><option>สพอ.</option>
+                                    <option>สช.</option><option>อื่นๆ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-2"><div class="form-group"><label>เลขที่</label><input type="text" class="form-control" id="w_no"></div></div>
+                        <div class="col-md-2"><div class="form-group"><label>ซอย</label><input type="text" class="form-control" id="w_soi" placeholder="ไม่มีให้กรอก -"></div></div>
+                        <div class="col-md-2"><div class="form-group"><label>หมู่</label><input type="text" class="form-control" id="w_moo"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>ถนน</label><input type="text" class="form-control" id="w_road" placeholder="ไม่มีให้กรอก -"></div></div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>ค้นหาที่อยู่</label>
+                                <input type="text" class="form-control" id="w_search" placeholder="พิมพ์ ตำบล/อำเภอ/จังหวัด">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_subdistrict" name="w_subdistrict" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_district" name="w_district" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>จังหวัด <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_province" name="w_province" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์ <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_postal" name="w_postal" maxlength="5" required></div></div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>ภาค</label>
+                                <select class="form-control" id="region">
+                                    <option value="">-- เลือก --</option>
+                                    <option>ภาคเหนือ</option><option>ภาคกลาง</option>
+                                    <option>ภาคตะวันออกเฉียงเหนือ</option><option>ภาคใต้</option>
+                                    <option>ภาคตะวันออก</option><option>ภาคตะวันตก</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- บัญชีผู้ใช้ -->
+                <fieldset class="border rounded p-3 mb-3">
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">บัญชีผู้ใช้</legend>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="username">ชื่อผู้ใช้ <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                    <div class="input-group-append"><div class="input-group-text"><span class="fas fa-user"></span></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="email">อีเมล <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <div class="input-group-append"><div class="input-group-text"><span class="fas fa-envelope"></span></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="reg_password">รหัสผ่าน <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="reg_password" name="password" required>
+                                    <div class="input-group-append"><div class="input-group-text"><span class="fas fa-lock"></span></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="password_confirm">ยืนยันรหัสผ่าน <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password_confirm" name="password_confirm" required>
+                                    <div class="input-group-append"><div class="input-group-text"><span class="fas fa-lock"></span></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="callout callout-info">
+                    <p class="mb-0"><i class="fas fa-info-circle mr-1"></i>
+                    หลังจากสมัครสมาชิก ระบบจะนำท่านไปชำระค่าธรรมเนียมสมาชิกทันที</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-block" id="btnRegister">
+                            <i class="fas fa-user-plus mr-1"></i> สมัครสมาชิก
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="googleRegBtnWrap" style="display:none;">
+                <div class="text-center my-2"><small class="text-muted">หรือ</small></div>
+                <button type="button" class="btn btn-outline-secondary btn-block" id="btnGoogleReg" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    สมัครด้วย Google
+                </button>
+            </div>
+
+            <p class="mt-3 mb-0 text-center">
+                <a href="<?php echo $basePath; ?>"><i class="bi bi-house-door"></i> หน้าหลัก</a>
+                <span class="mx-2">|</span>
+                มีบัญชีอยู่แล้ว? <a href="./?page=login">เข้าสู่ระบบ</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Google Registration Setup Modal -->
+<div class="modal-overlay" id="setupModal">
+    <div class="setup-modal">
+        <div class="setup-modal-header">
+            <h3><i class="bi bi-person-plus me-1"></i> ตั้งค่าบัญชีสมาชิก</h3>
+            <p>กรุณากรอกข้อมูล เลือกประเภทสมาชิก และชำระค่าธรรมเนียม</p>
+        </div>
+        <div class="setup-modal-body">
+            <div class="step-indicators">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+            </div>
+
+            <!-- Step 1: กรอกชื่อ -->
+            <div class="step active" id="setupStep1">
+                <h4 style="margin-bottom:4px;font-weight:700;color:#1e1b4b;"><i class="bi bi-person-vcard me-1" style="color:#7c3aed"></i> กรอกข้อมูลชื่อ</h4>
+                <p style="color:#6b7280;font-size:.88rem;margin-bottom:20px;">กรุณากรอกคำนำหน้า ชื่อ และนามสกุล เพื่อใช้งานในระบบ</p>
+
+                <div class="setup-form-group">
+                    <label><i class="bi bi-tag me-1"></i> คำนำหน้า <span class="text-danger">*</span></label>
+                    <div class="setup-input-group">
+                        <span class="input-icon"><i class="bi bi-chevron-down"></i></span>
+                        <select id="setupPrefix" required>
+                            <option value="">-- เลือกคำนำหน้า --</option>
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                            <option value="ดร.">ดร.</option>
+                            <option value="ผศ.">ผศ.</option>
+                            <option value="รศ.">รศ.</option>
+                            <option value="พันตำรวจเอก">พันตำรวจเอก</option>
+                            <option value="พันตำรวจโท">พันตำรวจโท</option>
+                            <option value="พันตำรวจตรี">พันตำรวจตรี</option>
+                            <option value="ว่าที่ร้อยตรี">ว่าที่ร้อยตรี</option>
+                            <option value="other">อื่นๆ (กรอกเอง)</option>
+                        </select>
+                    </div>
+                    <div class="setup-input-group" id="setupPrefixOtherWrap" style="display:none;margin-top:8px;">
+                        <span class="input-icon"><i class="bi bi-pencil"></i></span>
+                        <input type="text" id="setupPrefixOther" placeholder="กรอกคำนำหน้า เช่น พ.ต.อ.">
+                    </div>
+                </div>
+
+                <div class="setup-name-row">
+                    <div class="setup-form-group">
+                        <label><i class="bi bi-person me-1"></i> ชื่อ <span class="text-danger">*</span></label>
+                        <div class="setup-input-group">
+                            <span class="input-icon"><i class="bi bi-person"></i></span>
+                            <input type="text" id="setupFirstName" placeholder="กรอกชื่อ" required>
+                        </div>
+                    </div>
+                    <div class="setup-form-group">
+                        <label><i class="bi bi-person me-1"></i> นามสกุล <span class="text-danger">*</span></label>
+                        <div class="setup-input-group">
+                            <span class="input-icon"><i class="bi bi-person"></i></span>
+                            <input type="text" id="setupLastName" placeholder="กรอกนามสกุล" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;">
+                    <button type="button" class="btn-step btn-step-primary" id="btnSetupNameNext" disabled>ถัดไป <i class="bi bi-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 2: เลือกประเภทสมาชิก -->
+            <div class="step" id="setupStep2">
+                <h4 style="margin-bottom:4px;font-weight:700;color:#1e1b4b;">เลือกประเภทสมาชิก</h4>
+                <p style="color:#6b7280;font-size:.88rem;margin-bottom:18px;">ค่าธรรมเนียมจะแตกต่างกันตามประเภทสมาชิก</p>
+                <div class="member-type-options" id="memberTypeOptions">
+                    <!-- Generated by JS -->
+                </div>
+                <div style="display:flex;justify-content:space-between;gap:10px;margin-top:24px;">
+                    <button type="button" class="btn-step btn-step-outline" id="btnSetupNameBack"><i class="bi bi-arrow-left"></i> ย้อนกลับ</button>
+                    <button type="button" class="btn-step btn-step-primary" id="btnSetupNext" disabled>ถัดไป <i class="bi bi-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Step 3: อัปโหลดสลิป -->
+            <div class="step" id="setupStep3">
+                <h4 style="margin-bottom:4px;font-weight:700;color:#1e1b4b;">อัปโหลดหลักฐานการชำระ</h4>
+                <p style="color:#6b7280;font-size:.88rem;margin-bottom:14px;">
+                    ค่าธรรมเนียม: <strong id="setupFeeAmount" class="text-primary">-</strong> บาท
+                    <span id="setupFeeType" style="font-size:.8rem;color:#9ca3af;"></span>
+                </p>
+
+                <div class="bank-info-box" id="setupBankInfo" style="display:none;">
+                    <div class="bank-row"><i class="bi bi-bank"></i> ธนาคาร: <strong id="setupBankName">-</strong></div>
+                    <div class="bank-row"><i class="bi bi-person"></i> ชื่อบัญชี: <strong id="setupBankAccName">-</strong></div>
+                    <div class="bank-row"><i class="bi bi-credit-card"></i> เลขที่บัญชี: <strong id="setupBankAccNo" style="font-size:1.05rem;">-</strong></div>
+                </div>
+
+                <div class="slip-upload-area" id="setupSlipArea">
+                    <div class="upload-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                    <div class="upload-text">คลิกหรือลากไฟล์สลิปมาวางที่นี่</div>
+                    <div style="font-size:.8rem;color:#9ca3af;margin-top:4px;">รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5 MB</div>
+                    <input type="file" id="setupSlipFile" accept="image/jpeg,image/png,image/webp">
+                    <img id="setupSlipPreview" class="slip-preview-img" src="" style="display:none;" alt="preview">
+                </div>
+
+                <div style="display:flex;justify-content:space-between;gap:10px;margin-top:24px;">
+                    <button type="button" class="btn-step btn-step-outline" id="btnSetupBack"><i class="bi bi-arrow-left"></i> ย้อนกลับ</button>
+                    <div style="display:flex;gap:10px;">
+                        <button type="button" class="btn-step btn-step-outline" id="btnSetupSkipSlip">ข้ามอัปโหลด</button>
+                        <button type="button" class="btn-step btn-step-primary" id="btnSetupComplete">
+                            <i class="bi bi-check-lg"></i> เสร็จสิ้น
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include ROOT_PATH . 'templates/auth/scripts.php'; ?>
+
+<!-- Flatpickr -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
+
+<!-- jquery.Thailand.js -->
+<script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/JQL.min.js"></script>
+<script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/typeahead.bundle.js"></script>
+<script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+$(function () {
+    if (API.isLoggedIn()) { window.location.href = '../'; return; }
+
+    // Load dynamic logo & favicon
+    (async function () {
+        try {
+            const result = await API.getSettings();
+            if (result.success && result.data) {
+                const s = result.data;
+                const logo = s.logo_login || s.logo_web || '';
+                if (logo) {
+                    const src = logo.startsWith('http') ? logo : (BASE_PATH + logo);
+                    $('#regLogoImg').attr('src', src).show();
+                    $('.reg-logo-text').hide();
+                }
+                const fav = s.logo_favicon || s.logo_web || '';
+                if (fav) {
+                    const favSrc = fav.startsWith('http') ? fav : (BASE_PATH + fav);
+                    $('#dynamic-favicon').attr('href', favSrc);
+                }
+
+                // Dynamic subtitle
+                const subtitle = s.login_subtitle || s.site_name || '';
+                if (subtitle) {
+                    $('#regSubtitle').text(subtitle);
+                }
+                // Page title
+                const shortName = s.site_name_short || 'ส.ร.ม.ก.';
+                document.title = 'สมัครสมาชิก | ' + shortName;
+
+                // Google Sign-In
+                const gClientId = s.google_client_id || '';
+                if (gClientId) {
+                    $('#googleRegBtnWrap').show();
+                    window._gClientId = gClientId;
+                    function initGSI() {
+                        if (typeof google === 'undefined' || !google.accounts) {
+                            setTimeout(initGSI, 200);
+                            return;
+                        }
+                        google.accounts.id.initialize({
+                            client_id: gClientId,
+                            callback: handleGoogleRegCredential,
+                            auto_select: false,
+                        });
+                    }
+                    initGSI();
+                }
+            }
+        } catch (e) { /* ignore */ }
+    })();
+
+    // ─── Google Sign-In handler ───
+    let _setupData = null;
+    let _selectedMemberType = null;
+    let _uploadedSlipUrl = null;
+    let _googleToken = null;
+
+    function googleRegBtnHTML() {
+        return '<svg viewBox="0 0 24 24" style="width:18px;height:18px"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> สมัครด้วย Google';
+    }
+
+    window.handleGoogleRegCredential = function(response) {
+        const btn = $('#btnGoogleReg');
+        _googleToken = response.credential;
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังดำเนินการ...');
+        API.googleLogin(response.credential)
+            .then(function(result) {
+                if (result.success) {
+                    // ─── ผู้ใช้ใหม่: ยังไม่มี record → ต้องเลือกประเภทสมาชิกก่อน ───
+                    if (result.data.needs_setup) {
+                        _setupData = result.data;
+                        openSetupModal(result.data);
+                        btn.prop('disabled', false).html(googleRegBtnHTML());
+                        return;
+                    }
+
+                    // ─── ผู้ใช้เดิม: มี record แล้ว → saveAuth & login ───
+                    API.saveAuth(result.data);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'เข้าสู่ระบบสำเร็จ',
+                        text: 'กำลังนำท่านเข้าสู่ระบบ...',
+                        timer: 1200,
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+                    setTimeout(function() {
+                        if (result.data.user.role === 'admin') { window.location.href = '../admin/'; }
+                        else { window.location.href = '../member/'; }
+                    }, 1000);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ไม่สำเร็จ', text: result.message });
+                }
+                btn.prop('disabled', false).html(googleRegBtnHTML());
+            })
+            .catch(function(err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message });
+                btn.prop('disabled', false).html(googleRegBtnHTML());
+            });
+    };
+
+    // ─── Setup Modal Logic ───
+    function openSetupModal(data) {
+        _selectedMemberType = null;
+        _uploadedSlipUrl = null;
+        const feeInfo = data.fee_info || {};
+        const gUser = data.google_user || {};
+
+        // Pre-fill name from Google
+        const gName = gUser.name || '';
+        const gParts = gName.trim().split(/\s+/);
+        $('#setupFirstName').val(gParts[0] || '');
+        $('#setupLastName').val(gParts.slice(1).join(' ') || '');
+        $('#setupPrefix').val('');
+        validateNameStep();
+
+        const types = [
+            { key: 'ordinary',  label: 'สมาชิกสามัญ',    desc: 'รองผู้อำนวยการ/อดีตรองผู้อำนวยการ', icon: 'bi-star-fill',    iconBg: '#fbbf24', iconColor: '#92400e' },
+            { key: 'associate', label: 'สมาชิกวิสามัญ',  desc: 'ผู้สนับสนุนสมาคม',                    icon: 'bi-people-fill',  iconBg: '#60a5fa', iconColor: '#1e3a5f' },
+            { key: 'affiliate', label: 'สมาชิกสมทบ',     desc: 'สมาชิกทั่วไป',                        icon: 'bi-person-fill',  iconBg: '#a78bfa', iconColor: '#3b0764' },
+        ];
+
+        let html = '';
+        types.forEach(function(t) {
+            const fi = feeInfo[t.key] || { amount: 0, mode: 'none' };
+            let feeText = 'ไม่มีค่าธรรมเนียม';
+            if (fi.mode !== 'none' && fi.amount > 0) {
+                feeText = new Intl.NumberFormat('th-TH').format(fi.amount) + ' ฿';
+                if (fi.mode === 'onetime') feeText += ' <small style="color:#9ca3af">(ครั้งเดียว)</small>';
+                else if (fi.mode === 'annual') feeText += ' <small style="color:#9ca3af">(/ปี)</small>';
+            }
+            html += `
+                <div class="member-type-card" data-type="${t.key}" data-amount="${fi.amount}" data-mode="${fi.mode}">
+                    <div class="type-icon" style="background:${t.iconBg}30;color:${t.iconColor}"><i class="bi ${t.icon}"></i></div>
+                    <div class="type-info"><h4>${t.label}</h4><p>${t.desc}</p></div>
+                    <div class="type-fee">${feeText}</div>
+                    <i class="bi bi-check-circle-fill check-mark"></i>
+                </div>`;
+        });
+        $('#memberTypeOptions').html(html);
+
+        // Show bank info
+        const bi = feeInfo.bank_info || {};
+        if (bi.bank_name || bi.account_number) {
+            $('#setupBankName').text(bi.bank_name || '-');
+            $('#setupBankAccName').text(bi.account_name || '-');
+            $('#setupBankAccNo').text(bi.account_number || '-');
+        }
+
+        // Reset to step 1
+        goToSetupStep(1);
+        $('#setupModal').addClass('show');
+    }
+
+    function goToSetupStep(n) {
+        $('.setup-modal-body .step').removeClass('active');
+        $('#setupStep' + n).addClass('active');
+        $('.step-dot').removeClass('active done');
+        for (let i = 1; i <= 3; i++) {
+            if (i < n) $(`.step-dot[data-step="${i}"]`).addClass('done');
+            else if (i === n) $(`.step-dot[data-step="${i}"]`).addClass('active');
+        }
+    }
+
+    // Toggle "other" prefix input
+    $(document).on('change', '#setupPrefix', function() {
+        if ($(this).val() === 'other') {
+            $('#setupPrefixOtherWrap').slideDown(200);
+            $('#setupPrefixOther').focus();
+        } else {
+            $('#setupPrefixOtherWrap').slideUp(200);
+            $('#setupPrefixOther').val('');
+        }
+    });
+
+    // Helper: get resolved prefix value
+    function getResolvedPrefix() {
+        const sel = $('#setupPrefix').val();
+        if (sel === 'other') return $('#setupPrefixOther').val().trim();
+        return sel || '';
+    }
+
+    // Validate name step fields
+    function validateNameStep() {
+        const prefix = getResolvedPrefix();
+        const firstName = $('#setupFirstName').val().trim();
+        const lastName = $('#setupLastName').val().trim();
+        const valid = prefix && firstName && lastName;
+        $('#btnSetupNameNext').prop('disabled', !valid);
+    }
+    $(document).on('input change', '#setupPrefix, #setupPrefixOther, #setupFirstName, #setupLastName', validateNameStep);
+
+    // Name step → next to member type
+    $('#btnSetupNameNext').on('click', function() {
+        if (!getResolvedPrefix() || !$('#setupFirstName').val().trim() || !$('#setupLastName').val().trim()) return;
+        goToSetupStep(2);
+    });
+
+    // Back from member type → name step
+    $('#btnSetupNameBack').on('click', function() { goToSetupStep(1); });
+
+    // Select member type
+    $(document).on('click', '.member-type-card', function() {
+        $('.member-type-card').removeClass('selected');
+        $(this).addClass('selected');
+        _selectedMemberType = $(this).data('type');
+        $('#btnSetupNext').prop('disabled', false);
+    });
+
+    // Next → Step 3
+    $('#btnSetupNext').on('click', function() {
+        if (!_selectedMemberType) return;
+        const card = $(`.member-type-card[data-type="${_selectedMemberType}"]`);
+        const amount = parseFloat(card.data('amount')) || 0;
+        const mode = card.data('mode');
+
+        if (mode === 'none' || amount <= 0) {
+            // ไม่มีค่าธรรมเนียม → ดำเนินการเลย
+            submitSetup(null);
+            return;
+        }
+
+        // แสดงข้อมูลค่าธรรมเนียมใน step 3
+        $('#setupFeeAmount').text(new Intl.NumberFormat('th-TH').format(amount));
+        $('#setupFeeType').text(mode === 'onetime' ? '(ชำระครั้งเดียว)' : '(ชำระรายปี)');
+
+        const bi = (_setupData && _setupData.fee_info) ? _setupData.fee_info.bank_info : {};
+        if (bi && (bi.bank_name || bi.account_number)) {
+            $('#setupBankInfo').show();
+        }
+
+        // Reset upload
+        _uploadedSlipUrl = null;
+        $('#setupSlipFile').val('');
+        $('#setupSlipPreview').hide();
+        $('#setupSlipArea').removeClass('has-file');
+        $('.upload-text').text('คลิกหรือลากไฟล์สลิปมาวางที่นี่');
+
+        goToSetupStep(3);
+    });
+
+    // Back → Step 2
+    $('#btnSetupBack').on('click', function() { goToSetupStep(2); });
+
+    // Slip file change
+    $('#setupSlipFile').on('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({ icon: 'warning', title: 'ไฟล์ใหญ่เกินไป', text: 'ขนาดไม่เกิน 5 MB' });
+            $(this).val('');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#setupSlipPreview').attr('src', e.target.result).show();
+            $('#setupSlipArea').addClass('has-file');
+            $('.upload-text').text(file.name);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Skip slip only
+    $('#btnSetupSkipSlip').on('click', function() {
+        submitSetup(null);
+    });
+
+    // Complete with slip
+    $('#btnSetupComplete').on('click', function() {
+        const fileInput = document.getElementById('setupSlipFile');
+        if (!fileInput.files.length) {
+            submitSetup(null);
+            return;
+        }
+
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังดำเนินการ...');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            submitSetup(e.target.result); // ส่ง base64 data URL
+        };
+        reader.onerror = function() {
+            Swal.fire({ icon: 'error', title: 'อ่านไฟล์ไม่ได้', text: 'กรุณาลองใหม่' });
+            btn.prop('disabled', false).html('<i class="bi bi-check-lg"></i> เสร็จสิ้น');
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    });
+
+    function submitSetup(slipUrl) {
+        const btn = $('#btnSetupComplete, #btnSetupSkipSlip, #btnSetupNext');
+        btn.prop('disabled', true);
+
+        if (!_googleToken) {
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่พบ Google Token กรุณาลองใหม่' });
+            btn.prop('disabled', false);
+            return;
+        }
+
+        API.completeGoogleRegister(_googleToken, _selectedMemberType || 'associate', slipUrl, {
+            prefix: getResolvedPrefix(),
+            first_name: $('#setupFirstName').val().trim(),
+            last_name: $('#setupLastName').val().trim()
+        })
+            .then(function(result) {
+                if (result.success) {
+                    API.saveAuth(result.data);
+                    $('#setupModal').removeClass('show');
+                    const hasSlip = !!slipUrl;
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'สมัครสมาชิกสำเร็จ!',
+                        html: hasSlip
+                            ? 'บัญชีของท่านอยู่ระหว่างรอการตรวจสอบหลักฐาน<br>และอนุมัติจากผู้ดูแลระบบ'
+                            : 'บัญชีของท่านอยู่ระหว่างรอการอนุมัติ<br>คุณสามารถอัปโหลดสลิปได้ภายหลังที่หน้าค่าธรรมเนียม',
+                        confirmButtonText: 'เข้าสู่ระบบ',
+                        confirmButtonColor: '#7c3aed',
+                        allowOutsideClick: false
+                    }).then(function() {
+                        redirectAfterSetup();
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.message });
+                    btn.prop('disabled', false);
+                }
+            })
+            .catch(function(err) {
+                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: err.message });
+                btn.prop('disabled', false);
+            });
+    }
+
+    function redirectAfterSetup() {
+        $('#setupModal').removeClass('show');
+        const user = API.getUser();
+        if (user && user.role === 'admin') { window.location.href = '../admin/'; }
+        else { window.location.href = '../member/'; }
+    }
+
+    $('#btnGoogleReg').on('click', function() {
+        if (typeof google === 'undefined' || !google.accounts) {
+            Swal.fire({ icon: 'warning', title: 'Google SDK', text: 'กำลังโหลด กรุณาลองใหม่อีกครั้ง' });
+            return;
+        }
+        google.accounts.id.prompt(function(notification) {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                // One Tap not available, fallback info
+                Swal.fire({ icon: 'info', title: 'Google Login', text: 'กรุณาอนุญาต popup หรือลองเข้าจากหน้า Login', timer: 3000 });
+            }
+        });
+    });
+
+    // ─── Flatpickr วันเกิด (Buddhist Era) ───
+    const fp = flatpickr('#birth_date', {
+        locale: 'th',
+        dateFormat: 'd/m/Y',
+        maxDate: 'today',
+        allowInput: false,
+        disableMobile: true,
+        formatDate: function(date, format) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear() + 543;
+            return d + '/' + m + '/' + y;
+        },
+        parseDate: function(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            return new Date(parseInt(parts[2]) - 543, parseInt(parts[1]) - 1, parseInt(parts[0]));
+        }
+    });
+
+    // ─── Position toggle ───
+    $('#position').on('change', function () {
+        if ($(this).val() === 'other') {
+            $('#positionOtherWrap').slideDown(200);
+            $('#position_other').prop('required', true).focus();
+        } else {
+            $('#positionOtherWrap').slideUp(200);
+            $('#position_other').val('').prop('required', false).removeClass('is-invalid');
+        }
+    });
+
+    // ─── jquery.Thailand.js — Home Address ───
+    $.Thailand({
+        $search: $('#h_search'),
+        $district: $('#h_subdistrict'),
+        $amphoe: $('#h_district'),
+        $province: $('#h_province'),
+        $zipcode: $('#h_postal'),
+        onDataFill: function(data) {
+            $('#h_subdistrict').val(data.district);
+            $('#h_district').val(data.amphoe);
+            $('#h_province').val(data.province);
+            $('#h_postal').val(data.zipcode);
+        }
+    });
+
+    // ─── jquery.Thailand.js — Work Address ───
+    $.Thailand({
+        $search: $('#w_search'),
+        $district: $('#w_subdistrict'),
+        $amphoe: $('#w_district'),
+        $province: $('#w_province'),
+        $zipcode: $('#w_postal'),
+        onDataFill: function(data) {
+            $('#w_subdistrict').val(data.district);
+            $('#w_district').val(data.amphoe);
+            $('#w_province').val(data.province);
+            $('#w_postal').val(data.zipcode);
+        }
+    });
+
+    $('#registerForm').validate({
+        rules: {
+            first_name:       { required: true, minlength: 2 },
+            last_name:        { required: true, minlength: 2 },
+            username:         { required: true, minlength: 4 },
+            email:            { required: true, email: true },
+            password:         { required: true, minlength: 6 },
+            password_confirm: { required: true, equalTo: '#reg_password' },
+            member_type:      { required: true },
+            phone:            { required: true },
+            prefix:           { required: true },
+            national_id:      { required: true, minlength: 13, maxlength: 13, digits: true },
+            birth_date:       { required: true },
+            position:         { required: true },
+            position_other:   { required: { depends: function() { return $('#position').val() === 'other'; } }, minlength: 2 },
+            school_organization: { required: true },
+            h_subdistrict:    { required: true },
+            h_district:       { required: true },
+            h_province:       { required: true },
+            h_postal:         { required: true, minlength: 5, maxlength: 5, digits: true },
+            w_subdistrict:    { required: true },
+            w_district:       { required: true },
+            w_province:       { required: true },
+            w_postal:         { required: true, minlength: 5, maxlength: 5, digits: true }
+        },
+        messages: {
+            first_name:       { required: 'กรุณากรอกชื่อ', minlength: 'อย่างน้อย 2 ตัวอักษร' },
+            last_name:        { required: 'กรุณากรอกนามสกุล', minlength: 'อย่างน้อย 2 ตัวอักษร' },
+            username:         { required: 'กรุณากรอกชื่อผู้ใช้', minlength: 'อย่างน้อย 4 ตัวอักษร' },
+            email:            { required: 'กรุณากรอกอีเมล', email: 'รูปแบบอีเมลไม่ถูกต้อง' },
+            password:         { required: 'กรุณากรอกรหัสผ่าน', minlength: 'อย่างน้อย 6 ตัวอักษร' },
+            password_confirm: { required: 'กรุณายืนยันรหัสผ่าน', equalTo: 'รหัสผ่านไม่ตรงกัน' },
+            member_type:      { required: 'กรุณาเลือกประเภทสมาชิก' },
+            phone:            { required: 'กรุณากรอกเบอร์มือถือ' },
+            prefix:           { required: 'กรุณาเลือกคำนำหน้า' },
+            national_id:      { required: 'กรุณากรอกเลขบัตรประชาชน', minlength: 'ต้อง 13 หลัก', maxlength: 'ต้อง 13 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
+            birth_date:       { required: 'กรุณาเลือกวันเกิด' },
+            position:         { required: 'กรุณาเลือกตำแหน่ง' },
+            position_other:   { required: 'กรุณาระบุตำแหน่ง', minlength: 'อย่างน้อย 2 ตัวอักษร' },
+            school_organization: { required: 'กรุณากรอกชื่อโรงเรียน/หน่วยงาน' },
+            h_subdistrict:    { required: 'กรุณากรอกตำบล' },
+            h_district:       { required: 'กรุณากรอกอำเภอ' },
+            h_province:       { required: 'กรุณากรอกจังหวัด' },
+            h_postal:         { required: 'กรุณากรอกรหัสไปรษณีย์', minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
+            w_subdistrict:    { required: 'กรุณากรอกตำบล' },
+            w_district:       { required: 'กรุณากรอกอำเภอ' },
+            w_province:       { required: 'กรุณากรอกจังหวัด' },
+            w_postal:         { required: 'กรุณากรอกรหัสไปรษณีย์', minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' }
+        },
+        errorClass: 'is-invalid',
+        validClass: 'is-valid',
+        errorPlacement(error, element) {
+            error.addClass('invalid-feedback');
+            element.closest('.input-group').length
+                ? error.insertAfter(element.closest('.input-group'))
+                : error.insertAfter(element);
+        },
+        highlight(el) { $(el).addClass('is-invalid').removeClass('is-valid'); },
+        unhighlight(el) { $(el).removeClass('is-invalid').addClass('is-valid'); },
+        submitHandler: function () {
+            const btn = $('#btnRegister');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังสมัคร...');
+
+            /* ---- compose birth_date from flatpickr ---- */
+            let birth_date = '';
+            if (fp.selectedDates.length > 0) {
+                const d = fp.selectedDates[0];
+                birth_date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            }
+
+            /* ---- compose position ---- */
+            let positionVal = $('#position').val();
+            if (positionVal === 'other') {
+                positionVal = $('#position_other').val().trim();
+            }
+
+            /* ---- compose addresses ---- */
+            const homeAddr = {
+                no: $('#h_no').val().trim(), soi: $('#h_soi').val().trim(), moo: $('#h_moo').val().trim(),
+                road: $('#h_road').val().trim(), subdistrict: $('#h_subdistrict').val().trim(),
+                district: $('#h_district').val().trim(), province: $('#h_province').val().trim(),
+                postal_code: $('#h_postal').val().trim()
+            };
+            const workAddr = {
+                no: $('#w_no').val().trim(), soi: $('#w_soi').val().trim(), moo: $('#w_moo').val().trim(),
+                road: $('#w_road').val().trim(), subdistrict: $('#w_subdistrict').val().trim(),
+                district: $('#w_district').val().trim(), province: $('#w_province').val().trim(),
+                postal_code: $('#w_postal').val().trim()
+            };
+
+            const firstName = $('#first_name').val().trim();
+            const lastName  = $('#last_name').val().trim();
+
+            const data = {
+                prefix:              $('#prefix').val(),
+                first_name:          firstName,
+                last_name:           lastName,
+                national_id:         $('#national_id').val().trim(),
+                birth_date:          birth_date,
+                username:            $('#username').val().trim(),
+                email:               $('#email').val().trim(),
+                password:            $('#reg_password').val(),
+                phone:               $('#phone').val().trim(),
+                member_type:         $('#member_type').val(),
+                position:            positionVal,
+                school_organization: (function() {
+                    const p = $('#school_prefix').val();
+                    const n = $('#school_organization').val().trim();
+                    return p ? p + n : n;
+                })(),
+                work_phone:          $('#work_phone').val().trim(),
+                education_area:      $('#education_area').val(),
+                region:              $('#region').val(),
+                home_address:        homeAddr,
+                work_address:        workAddr
+            };
+
+            API.register(data)
+                .then(function (result) {
+                    if (result.success) {
+                        // Auto-login: save auth data
+                        if (result.data.token) {
+                            API.saveAuth(result.data);
+                        }
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สมัครสมาชิกสำเร็จ!',
+                            html: 'ระบบกำลังนำท่านไปชำระค่าธรรมเนียม...',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            allowOutsideClick: false
+                        });
+                        setTimeout(function () {
+                            window.location.href = '../member/?page=fees&from=register';
+                        }, 1800);
+                    } else {
+                        App.error(result.message || 'ไม่สามารถสมัครสมาชิกได้');
+                        btn.prop('disabled', false).html('<i class="fas fa-user-plus mr-1"></i> สมัครสมาชิก');
+                    }
+                })
+                .catch(function (err) {
+                    console.error('Register error:', err);
+                    App.error('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message);
+                    btn.prop('disabled', false).html('<i class="fas fa-user-plus mr-1"></i> สมัครสมาชิก');
+                });
+
+            return false;
+        }
+    });
+});
+</script>
+
+<?php include ROOT_PATH . 'templates/auth/footer.php'; ?>

@@ -1,0 +1,362 @@
+/* ============================================
+   AdminLTE Theme Overrides for SDAK-KS
+   ============================================ */
+
+/* --- Brand Colors --- */
+:root {
+    --adminlte-primary: #6d28d9;
+    --adminlte-success: #1cc88a;
+    --adminlte-info: #8b5cf6;
+    --adminlte-warning: #f6c23e;
+    --adminlte-danger: #e74a3b;
+}
+
+/* --- Body & Font --- */
+body.adminlte-body {
+    font-family: 'Sarabun', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: .9rem;
+}
+
+/* --- Sidebar Dark Override --- */
+.main-sidebar {
+    box-shadow: 0 14px 28px rgba(0,0,0,.25), 0 10px 10px rgba(0,0,0,.22) !important;
+}
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%) !important;
+    box-shadow: 0 2px 10px rgba(109,40,217,.4);
+}
+.sidebar-dark-primary .nav-sidebar .nav-link:hover {
+    background: rgba(255,255,255,.08);
+}
+.sidebar-dark-primary .nav-header {
+    color: rgba(255,255,255,.4);
+    text-transform: uppercase;
+    font-size: .7rem;
+    letter-spacing: 1px;
+    padding: .75rem 1rem .25rem;
+}
+
+/* --- Brand Logo --- */
+.brand-link {
+    border-bottom: 1px solid rgba(255,255,255,.1) !important;
+    padding: .85rem 1rem !important;
+}
+.brand-link .brand-text {
+    font-weight: 700 !important;
+    font-size: 1rem;
+}
+
+/* --- Content --- */
+.content-wrapper {
+    background: #f0f2f5 !important;
+}
+.content-header h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* --- Gradient Info Cards (Dashboard) --- */
+.small-box {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.small-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.15);
+}
+.small-box .inner h3 {
+    font-size: 2.2rem;
+    font-weight: 800;
+}
+.small-box .inner p {
+    font-size: .95rem;
+}
+.small-box .icon {
+    font-size: 4.5rem;
+    opacity: .2;
+    top: 5px;
+}
+.small-box > .small-box-footer {
+    background: rgba(0,0,0,.1);
+    font-size: .85rem;
+    padding: .5rem;
+}
+
+/* Custom gradient backgrounds for cards */
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+}
+.bg-gradient-blue {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+.bg-gradient-teal {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+}
+.bg-gradient-orange {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+}
+.bg-gradient-info-custom {
+    background: linear-gradient(135deg, #36b9cc 0%, #1a8eaa 100%) !important;
+}
+.bg-gradient-danger-custom {
+    background: linear-gradient(135deg, #e74a3b 0%, #be2617 100%) !important;
+}
+.bg-gradient-success-custom {
+    background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%) !important;
+}
+.bg-gradient-warning-custom {
+    background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%) !important;
+}
+.bg-gradient-primary-custom {
+    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%) !important;
+}
+
+/* Overview cards - gradient with wave */
+.overview-card {
+    border-radius: 14px;
+    padding: 1.5rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    min-height: 130px;
+    box-shadow: 0 4px 15px rgba(0,0,0,.12);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.overview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+}
+.overview-card .ov-icon {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 2.5rem;
+    opacity: .25;
+}
+.overview-card .ov-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: .2rem;
+}
+.overview-card .ov-label {
+    font-size: .85rem;
+    opacity: .85;
+    font-weight: 500;
+}
+.overview-card .ov-sub {
+    font-size: .75rem;
+    opacity: .7;
+    margin-top: .3rem;
+}
+.overview-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 50'%3E%3Cpath fill='rgba(255,255,255,0.08)' d='M0,20L80,25C160,30,320,40,480,40C640,40,800,30,960,25C1120,20,1280,20,1360,20L1440,20L1440,50L1360,50C1280,50,1120,50,960,50C800,50,640,50,480,50C320,50,160,50,80,50L0,50Z'/%3E%3C/svg%3E") no-repeat bottom;
+    background-size: cover;
+}
+.overview-card .ov-sparkline {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    opacity: .3;
+}
+
+.bg-grad-members { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.bg-grad-news { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.bg-grad-activities { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.bg-grad-regs { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+/* --- Cards Refined --- */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    margin-bottom: 1.5rem;
+}
+.card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    font-weight: 600;
+}
+.card-header .card-title {
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* --- Tables --- */
+.table thead th {
+    font-weight: 600;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #6c757d;
+    border-bottom: 2px solid #e3e6f0;
+}
+.table td {
+    vertical-align: middle;
+}
+
+/* --- Badges --- */
+.badge {
+    font-weight: 600;
+    padding: .4rem .7rem;
+    border-radius: 6px;
+    font-size: .78rem;
+}
+
+/* --- Modal Header Override --- */
+.modal-header {
+    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+    color: #fff;
+    border-radius: 0;
+}
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* --- Responsive Fix --- */
+@media (max-width: 768px) {
+    .overview-card {
+        padding: 1.1rem;
+        min-height: 110px;
+    }
+    .overview-card .ov-value {
+        font-size: 1.4rem;
+    }
+    .overview-card .ov-label {
+        font-size: .78rem;
+    }
+    .overview-card .ov-sub {
+        font-size: .7rem;
+    }
+    .overview-card .ov-icon {
+        font-size: 1.6rem;
+        right: 10px;
+        top: 10px;
+    }
+}
+@media (max-width: 576px) {
+    .overview-card {
+        padding: 1rem;
+        min-height: 100px;
+        border-radius: 10px;
+    }
+    .overview-card .ov-value {
+        font-size: 1.25rem;
+    }
+    .overview-card .ov-label {
+        font-size: .72rem;
+    }
+    .overview-card .ov-sub {
+        font-size: .65rem;
+    }
+    .overview-card .ov-icon {
+        font-size: 1.4rem;
+    }
+}
+
+/* --- Chart Card --- */
+.chart-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,.06);
+}
+.chart-card .card-header {
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+}
+.chart-card .card-body {
+    padding: 1.25rem;
+}
+
+/* --- Custom scrollbar for sidebar --- */
+.main-sidebar ::-webkit-scrollbar { width: 6px; }
+.main-sidebar ::-webkit-scrollbar-track { background: transparent; }
+.main-sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.15);
+    border-radius: 3px;
+}
+
+/* --- SweetAlert2 fix Z-index over AdminLTE --- */
+.swal2-container {
+    z-index: 9999 !important;
+}
+
+/* --- Auth Pages (Login/Register) --- */
+.register-box {
+    width: 600px;
+    max-width: 95vw;
+}
+.login-box,
+.register-box {
+    margin: 2% auto;
+}
+.login-logo a,
+.register-logo a {
+    color: #495057;
+    font-size: 1.6rem;
+}
+.login-logo i,
+.register-logo i {
+    color: var(--adminlte-primary);
+}
+.login-card-body .form-group,
+.register-card-body .form-group {
+    margin-bottom: 1rem;
+}
+.login-page,
+.register-page {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+    min-height: 100vh;
+}
+.card-outline.card-primary {
+    border-top-color: var(--adminlte-primary) !important;
+}
+.card-outline.card-warning {
+    border-top-color: var(--adminlte-warning) !important;
+}
+
+/* --- AdminLTE form improvements --- */
+.form-group label {
+    font-weight: 500;
+    margin-bottom: .35rem;
+}
+.modal .form-group {
+    margin-bottom: .75rem;
+}
+.callout {
+    border-radius: .25rem;
+}
+
+/* --- BS5 → BS4 Utility Compatibility --- */
+/* margin-end → margin-right */
+.me-0{margin-right:0!important}.me-1{margin-right:.25rem!important}.me-2{margin-right:.5rem!important}.me-3{margin-right:1rem!important}
+/* margin-start → margin-left */
+.ms-0{margin-left:0!important}.ms-1{margin-left:.25rem!important}.ms-2{margin-left:.5rem!important}.ms-3{margin-left:1rem!important}
+/* padding-end → padding-right */
+.pe-0{padding-right:0!important}.pe-1{padding-right:.25rem!important}.pe-2{padding-right:.5rem!important}.pe-3{padding-right:1rem!important}
+/* padding-start → padding-left */
+.ps-0{padding-left:0!important}.ps-1{padding-left:.25rem!important}.ps-2{padding-left:.5rem!important}.ps-3{padding-left:1rem!important}
+/* d-grid (BS5) */
+.d-grid{display:grid!important}
+/* gap (BS5) */
+.gap-1{gap:.25rem!important}.gap-2{gap:.5rem!important}.gap-3{gap:1rem!important}
+/* g-* gutter (BS5) */
+.g-1,.gx-1{--bs-gutter-x:.25rem}.g-2,.gx-2{--bs-gutter-x:.5rem}.g-3,.gx-3{--bs-gutter-x:1rem}.g-4,.gx-4{--bs-gutter-x:1.5rem}
+.g-1,.gy-1{--bs-gutter-y:.25rem}.g-2,.gy-2{--bs-gutter-y:.5rem}.g-3,.gy-3{--bs-gutter-y:1rem}.g-4,.gy-4{--bs-gutter-y:1.5rem}
+/* form-label (BS5) */
+.form-label{display:inline-block;font-weight:500;margin-bottom:.35rem}
+/* btn-block helper — BS4 native, adding for clarity */
+/* end-0 (BS5 positioning) */
+.end-0{right:0!important}.start-0{left:0!important}.top-0{top:0!important}.bottom-0{bottom:0!important}
+/* fs-1..fs-5 (BS5 font-size) */
+.fs-1{font-size:2.5rem!important}.fs-2{font-size:2rem!important}.fs-3{font-size:1.75rem!important}.fs-4{font-size:1.5rem!important}.fs-5{font-size:1.25rem!important}

@@ -1,0 +1,20 @@
+{
+    "name": "sdak-ks/website",
+    "description": "สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์ (ส.ร.ม.ก.) SDAK-KS",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "catfan/medoo": "^2.1",
+        "phpmailer/phpmailer": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\Core\\": "api/Core/",
+            "App\\Models\\": "api/Models/",
+            "App\\Controllers\\": "api/Controllers/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
