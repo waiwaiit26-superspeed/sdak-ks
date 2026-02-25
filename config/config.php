@@ -1,6 +1,7 @@
 <?php
 /**
  * SDAK-KS Configuration
+ * @version 1.0.1
  */
 
 // Prevent direct access
