@@ -86,13 +86,13 @@
 
 <!-- Modal: Receipt Preview -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1">
-    <div class="modal-dialog" style="max-width:1180px;">
+    <div class="modal-dialog" style="max-width:95vw;width:1200px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow-x:auto;">
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow:hidden;">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
             </div>
             <div class="modal-footer">
@@ -231,10 +231,10 @@
     line-height: 1.8;
     padding: 30px;
     background: #fff;
-    margin: 0 auto;
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
     overflow: hidden;
     position: relative;
+    transform-origin: top left;
 }
 .receipt-render .receipt-watermark {
     position: absolute;
@@ -662,12 +662,27 @@ async function viewReceipt(id) {
         </div>
         </div>
     </div>`);
+
+    // Scale receipt to fit modal
+    setTimeout(function() {
+        const modalBody = document.getElementById('receiptPreviewBody');
+        const receipt = document.getElementById('modalReceiptCanvas');
+        if (modalBody && receipt) {
+            const bodyW = modalBody.clientWidth - 30;
+            const scale = Math.min(bodyW / 1123, 1);
+            receipt.style.transform = `scale(${scale})`;
+            modalBody.style.height = (794 * scale + 20) + 'px';
+        }
+    }, 50);
 }
 
 async function downloadModalPDF() {
     if (!modalReceiptData) return;
+    const el = document.getElementById('modalReceiptCanvas');
+    const origTransform = el.style.transform;
+    el.style.transform = 'none';
     try {
-        const canvas = await html2canvas(document.getElementById('modalReceiptCanvas'), {
+        const canvas = await html2canvas(el, {
             scale: 2,
             backgroundColor: '#fff',
             useCORS: true,
@@ -684,12 +699,16 @@ async function downloadModalPDF() {
         pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, Math.min(imgHeight, pageH - margin * 2));
         pdf.save(`receipt_${modalReceiptData.receipt_number}.pdf`);
     } catch (err) { console.error('PDF Error:', err); App.error('เกิดข้อผิดพลาดในการสร้าง PDF: ' + err.message); }
+    el.style.transform = origTransform;
 }
 
 async function downloadModalPNG() {
     if (!modalReceiptData) return;
+    const el = document.getElementById('modalReceiptCanvas');
+    const origTransform = el.style.transform;
+    el.style.transform = 'none';
     try {
-        const canvas = await html2canvas(document.getElementById('modalReceiptCanvas'), {
+        const canvas = await html2canvas(el, {
             scale: 2,
             backgroundColor: '#fff',
             useCORS: true,
@@ -700,6 +719,7 @@ async function downloadModalPNG() {
         link.href = canvas.toDataURL('image/png');
         link.click();
     } catch (err) { console.error('PNG Error:', err); App.error('เกิดข้อผิดพลาดในการสร้างรูป: ' + err.message); }
+    el.style.transform = origTransform;
 }
 
 $('#filterType').on('change', () => loadReceipts(1));

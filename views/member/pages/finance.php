@@ -469,13 +469,13 @@
 
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1">
-    <div class="modal-dialog" style="max-width:1180px;">
+    <div class="modal-dialog" style="max-width:95vw;width:1200px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow-x:auto;">
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow:hidden;">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
             </div>
             <div class="modal-footer">
@@ -950,7 +950,7 @@ async function mViewTxnReceipt(referenceNo) {
     var thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     var dateStr = 'วันที่ ' + d.getDate() + ' เดือน ' + thM[d.getMonth()] + ' พ.ศ. ' + (d.getFullYear() + 543);
 
-    body.html('<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;">' +
+    body.html('<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;transform-origin:top left;">' +
         (window._receiptLogoUrl ? '<img src="' + window._receiptLogoUrl + '" alt="" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:450px;height:450px;opacity:0.08;pointer-events:none;z-index:0;">' : '') +
         '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;z-index:1;">' +
         '<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
@@ -970,6 +970,18 @@ async function mViewTxnReceipt(referenceNo) {
         '</div></div>' +
         '</div>' +
     '</div>');
+
+    // Scale receipt to fit modal
+    setTimeout(function() {
+        var modalBody = document.getElementById('receiptPreviewBody');
+        var receipt = document.getElementById('modalReceiptCanvas');
+        if (modalBody && receipt) {
+            var bodyW = modalBody.clientWidth - 30;
+            var scale = Math.min(bodyW / 1123, 1);
+            receipt.style.transform = 'scale(' + scale + ')';
+            modalBody.style.height = (794 * scale + 20) + 'px';
+        }
+    }, 50);
 }
 
 function mToBase64(url) {
@@ -985,7 +997,10 @@ function mToBase64(url) {
 async function mDownloadReceiptPDF() {
     var el = document.getElementById('modalReceiptCanvas');
     if (!el) return;
+    var origTransform = el.style.transform;
+    el.style.transform = 'none';
     var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    el.style.transform = origTransform;
     var jsPDF = window.jspdf.jsPDF;
     var pdf = new jsPDF('l', 'mm', 'a4');
     var pageW = 297, pageH = 210, margin = 5;
@@ -998,7 +1013,10 @@ async function mDownloadReceiptPDF() {
 async function mDownloadReceiptPNG() {
     var el = document.getElementById('modalReceiptCanvas');
     if (!el) return;
+    var origTransform = el.style.transform;
+    el.style.transform = 'none';
     var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    el.style.transform = origTransform;
     var link = document.createElement('a');
     link.download = 'ใบเสร็จ_' + (_mReceiptData ? _mReceiptData.receipt_number : '') + '.png';
     link.href = canvas.toDataURL('image/png');

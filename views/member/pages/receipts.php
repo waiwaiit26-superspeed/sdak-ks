@@ -73,8 +73,10 @@
             </div>
 
             <div class="receipt-a4-wrapper">
-                <div id="receiptCanvas">
-                    <!-- Receipt will be rendered here -->
+                <div class="receipt-scale-container">
+                    <div id="receiptCanvas">
+                        <!-- Receipt will be rendered here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -200,11 +202,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-/* === A4 Landscape Fixed Size Receipt === */
+/* === A4 Landscape Responsive Scaled Receipt === */
 .receipt-a4-wrapper {
-    overflow-x: auto;
     padding: 20px;
     background: #e9ecef;
+    overflow: hidden;
+}
+.receipt-scale-container {
+    width: 1123px;
+    height: 794px;
+    transform-origin: top left;
 }
 #receiptCanvas {
     width: 1123px;  /* A4 landscape: 297mm */
@@ -290,6 +297,7 @@
 }
 @media print {
     .receipt-a4-wrapper { overflow: visible; padding: 0; background: #fff; }
+    .receipt-scale-container { transform: none !important; }
     #receiptCanvas { box-shadow: none; }
 }
 </style>
@@ -299,9 +307,21 @@ let currentReceiptData = null;
 let isFinanceManager = false;
 let membersCache = [];
 
+function scaleReceipt() {
+    const wrapper = document.querySelector('.receipt-a4-wrapper');
+    const container = document.querySelector('.receipt-scale-container');
+    if (!wrapper || !container) return;
+    const wrapperW = wrapper.clientWidth - 40; /* minus padding */
+    const scale = Math.min(wrapperW / 1123, 1);
+    container.style.transform = `scale(${scale})`;
+    wrapper.style.height = (794 * scale + 40) + 'px';
+}
+
 $(function () {
     App.requireLogin();
     loadReceipts();
+    scaleReceipt();
+    $(window).on('resize', scaleReceipt);
     checkFinancePermission();
 
     // Load receipt logo as base64 to avoid CORS
@@ -621,6 +641,7 @@ async function viewReceipt(id) {
     }
 
     renderReceipt(currentReceiptData);
+    scaleReceipt();
 
     $('#receiptListSection').hide();
     $('#receiptDetailSection').show();
@@ -695,6 +716,10 @@ async function downloadPNG() {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...';
 
+    const container = document.querySelector('.receipt-scale-container');
+    const origTransform = container.style.transform;
+    container.style.transform = 'none';
+
     try {
         const canvas = await html2canvas(document.getElementById('receiptCanvas'), {
             scale: 2,
@@ -710,6 +735,7 @@ async function downloadPNG() {
         App.error('เกิดข้อผิดพลาดในการสร้างรูป');
     }
 
+    container.style.transform = origTransform;
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-image me-1"></i> ดาวน์โหลด PNG';
 }
@@ -719,6 +745,10 @@ async function downloadPDF() {
     const btn = event.target.closest('button');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...';
+
+    const container = document.querySelector('.receipt-scale-container');
+    const origTransform = container.style.transform;
+    container.style.transform = 'none';
 
     try {
         const canvas = await html2canvas(document.getElementById('receiptCanvas'), {
@@ -742,6 +772,7 @@ async function downloadPDF() {
         App.error('เกิดข้อผิดพลาดในการสร้าง PDF');
     }
 
+    container.style.transform = origTransform;
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> ดาวน์โหลด PDF';
 }
