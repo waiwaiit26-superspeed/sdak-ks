@@ -653,7 +653,7 @@ function renderReceipt(r) {
                 <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
             </div>
 
-            <div style="text-align:right; margin-bottom:15px; font-size:16px;">
+            <div style="text-align:left; margin-bottom:15px; font-size:16px; padding-left:50%;">
                 ${dateStr}
             </div>
 

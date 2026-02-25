@@ -643,7 +643,7 @@ async function viewReceipt(id) {
             <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
             <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
         </div>
-        <div style="text-align:right;font-size:16px;margin-bottom:12px;">${dateStr}</div>
+        <div style="text-align:left;font-size:16px;margin-bottom:12px;padding-left:50%;">${dateStr}</div>
         <div class="receipt-body-section">
             <div style="margin-bottom:8px;font-size:18px;"><strong>ได้รับเงินจาก</strong> <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span></div>
             ${r.payer_address ? `<div style="margin-bottom:8px;font-size:18px;"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span></div>` : ''}

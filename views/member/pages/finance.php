@@ -955,7 +955,7 @@ async function mViewTxnReceipt(referenceNo) {
         '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;z-index:1;">' +
         '<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
         '<div style="text-align:center;margin-bottom:15px;"><div style="font-size:28px;font-weight:700;">ใบเสร็จรับเงิน</div><div style="font-size:20px;font-weight:600;">' + App.escHtml(r.organization_name) + '</div><div style="font-size:16px;">' + App.escHtml(r.organization_address) + '</div></div>' +
-        '<div style="text-align:right;font-size:16px;margin-bottom:12px;">' + dateStr + '</div>' +
+        '<div style="text-align:left;font-size:16px;margin-bottom:12px;padding-left:50%;">' + dateStr + '</div>' +
         '<div style="font-size:18px;flex-grow:1;">' +
         '<div style="margin-bottom:8px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:500px;">&nbsp;' + App.escHtml(r.payer_name) + '&nbsp;</span></div>' +
         (r.payer_address ? '<div style="margin-bottom:8px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(r.payer_address) + '&nbsp;</span></div>' : '') +

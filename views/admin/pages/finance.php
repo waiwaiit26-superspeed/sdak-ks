@@ -1591,7 +1591,7 @@ async function viewTxnReceipt(referenceNo) {
             <div style="font-size:18px;font-weight:600;">${App.escHtml(r.organization_name)}</div>
             <div style="font-size:15px;">${App.escHtml(r.organization_address)}</div>
         </div>
-        <div style="text-align:right;font-size:13px;margin-bottom:12px;">${dateStr}</div>
+        <div style="text-align:left;font-size:13px;margin-bottom:12px;padding-left:50%;">${dateStr}</div>
         <div style="margin-bottom:6px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:350px;">&nbsp;${App.escHtml(r.payer_name)}&nbsp;</span></div>
         ${r.payer_address ? `<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(r.payer_address)}&nbsp;</span></div>` : ''}
         <div style="margin-bottom:6px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:410px;">&nbsp;${App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
