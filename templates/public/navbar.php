@@ -25,7 +25,7 @@ $basePath = $basePath ?? './';
             </ul>
 
             <div class="d-flex align-items-center gap-2 ms-lg-3 mt-3 mt-lg-0" id="auth-nav">
-                <a class="btn btn-outline-light btn-sm" href="<?php echo $basePath; ?>auth/?page=login">
+                <a class="btn btn-light btn-sm text-primary-custom fw-semibold" href="<?php echo $basePath; ?>auth/?page=login">
                     <i class="bi bi-box-arrow-in-right me-1"></i>เข้าสู่ระบบ
                 </a>
                 <a class="btn btn-light btn-sm text-primary-custom fw-semibold" href="<?php echo $basePath; ?>auth/?page=register">
