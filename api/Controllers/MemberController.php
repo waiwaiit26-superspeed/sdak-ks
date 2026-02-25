@@ -465,6 +465,39 @@ class MemberController extends Controller
             }
         }
 
+        // Auto-create finance transaction for the confirmed fee
+        if ($fee) {
+            $txnModel = $this->model('FinanceTransactionModel');
+            $referenceNo = 'FEE-' . $feeId;
+            $existingTxn = $txnModel->findBy(['reference_no' => $referenceNo]);
+            if (!$existingTxn) {
+                $catModel = $this->model('FinanceCategoryModel');
+                $feeCategory = $catModel->findBy(['name' => 'ค่าธรรมเนียมสมาชิก', 'type' => 'income']);
+                if ($feeCategory) {
+                    $memberTypeLabels = [
+                        'ordinary'  => 'สามัญ',
+                        'associate' => 'วิสามัญ',
+                        'affiliate' => 'สมทบ',
+                        'honorary'  => 'กิตติมศักดิ์',
+                    ];
+                    $memberTypeText = isset($memberTypeLabels[$memberType]) ? ' (' . $memberTypeLabels[$memberType] . ')' : '';
+                    $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
+
+                    $txnModel->create([
+                        'category_id'      => (int)$feeCategory['id'],
+                        'type'             => 'income',
+                        'title'            => "ค่าธรรมเนียมสมาชิก: {$target['full_name']}{$memberTypeText}",
+                        'description'      => "ค่าธรรมเนียมสมาชิก ({$feeLabel})",
+                        'amount'           => $feeAmount,
+                        'transaction_date' => $today,
+                        'reference_no'     => $referenceNo,
+                        'created_by'       => $adminId,
+                        'status'           => 'approved',
+                    ]);
+                }
+            }
+        }
+
         Auth::logActivity($adminId, 'confirm_fee_payment', 'fee',
             "ยืนยันชำระค่าธรรมเนียม: {$target['full_name']} จำนวน " . number_format($feeAmount, 2) . " บาท",
             $feeId, 'fee');
