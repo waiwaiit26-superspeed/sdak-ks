@@ -86,13 +86,13 @@
 
 <!-- Modal: Receipt Preview -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog" style="max-width:1180px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body" id="receiptPreviewBody">
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow-x:auto;">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
             </div>
             <div class="modal-footer">
@@ -224,18 +224,34 @@
 
 <style>
 .receipt-render {
+    width: 1123px;
+    height: 794px;
     font-family: 'Sarabun', sans-serif;
     color: #1a3c5e;
     line-height: 1.8;
-    padding: 40px;
+    padding: 30px;
     background: #fff;
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,.15);
+    overflow: hidden;
+    position: relative;
+}
+.receipt-render .receipt-inner {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
+    padding: 40px 60px;
+    position: absolute;
+    top: 30px; left: 30px; right: 30px; bottom: 30px;
+    display: flex;
+    flex-direction: column;
 }
-.receipt-render .receipt-title { font-size: 22px; font-weight: 700; text-align: center; }
-.receipt-render .receipt-org { font-size: 16px; font-weight: 600; text-align: center; }
-.receipt-render .receipt-org-addr { font-size: 14px; text-align: center; margin-bottom: 10px; }
-.receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 200px; margin: 0 5px; }
+.receipt-render .receipt-title { font-size: 28px; font-weight: 700; text-align: center; }
+.receipt-render .receipt-org { font-size: 20px; font-weight: 600; text-align: center; }
+.receipt-render .receipt-org-addr { font-size: 16px; text-align: center; margin-bottom: 10px; }
+.receipt-render .receipt-body-section { font-size: 18px; flex-grow: 1; }
+.receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 280px; margin: 0 5px; }
+.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 12px 20px; margin: 15px 0; font-size: 20px; }
+.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 30px; font-size: 16px; }
 </style>
 
 <script>
@@ -605,27 +621,33 @@ async function viewReceipt(id) {
     const dateStr = `วันที่ ${issuedDate.getDate()} เดือน ${thaiMonths[issuedDate.getMonth()]} พ.ศ. ${issuedDate.getFullYear() + 543}`;
 
     body.html(`<div id="modalReceiptCanvas" class="receipt-render">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px;">
+        <div class="receipt-inner">
+        <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;">
             <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>
             <div>เลขที่ ${r.receipt_number}</div>
         </div>
-        ${window._receiptLogoUrl ? `<div style="text-align:center;margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:60px;"></div>` : ''}
-        <div class="receipt-title">ใบเสร็จรับเงิน</div>
-        <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
-        <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
-        <div style="text-align:right;font-size:13px;margin-bottom:12px;">${dateStr}</div>
-        <div style="margin-bottom:6px;"><strong>ได้รับเงินจาก</strong> <span class="dotted-line" style="min-width:350px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span></div>
-        ${r.payer_address ? `<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:390px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span></div>` : ''}
-        <div style="margin-bottom:6px;"><strong>เป็น</strong> <span class="dotted-line" style="min-width:410px">&nbsp;${App.escapeHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
-        <div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;">
-            <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
+        <div style="text-align:center;margin-bottom:15px;">
+            ${window._receiptLogoUrl ? `<div style="margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:70px;"></div>` : ''}
+            <div class="receipt-title">ใบเสร็จรับเงิน</div>
+            <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
+            <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:30px;">
+        <div style="text-align:right;font-size:16px;margin-bottom:12px;">${dateStr}</div>
+        <div class="receipt-body-section">
+            <div style="margin-bottom:8px;font-size:18px;"><strong>ได้รับเงินจาก</strong> <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span></div>
+            ${r.payer_address ? `<div style="margin-bottom:8px;font-size:18px;"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span></div>` : ''}
+            <div style="margin-bottom:8px;font-size:18px;"><strong>เป็น</strong> <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
+            <div class="receipt-amount-box">
+                <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
+            </div>
+        </div>
+        <div class="receipt-sign">
         <div style="text-align:center;">
             ${r.signature_mode === 'electronic' && r.signature_image ? `<div style="margin-bottom:-25px;"><img src="${signatureImgSrc}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:30px;"></div>'}
             <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>
             ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:5px;">(${App.escapeHtml(r.signature_name)})</div>` : ''}
             ${r.signature_show_position === '1' ? `<div style="margin-top:3px;">${App.escapeHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
+        </div>
         </div>
         </div>
     </div>`);
@@ -642,11 +664,13 @@ async function downloadModalPDF() {
         });
         const { jsPDF } = window.jspdf;
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 190;
+        // A4 landscape: 297 x 210 mm
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const pageW = 297, pageH = 210;
+        const margin = 5;
+        const imgWidth = pageW - margin * 2;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const xOffset = (210 - imgWidth) / 2;
-        pdf.addImage(imgData, 'PNG', xOffset, 10, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, Math.min(imgHeight, pageH - margin * 2));
         pdf.save(`receipt_${modalReceiptData.receipt_number}.pdf`);
     } catch (err) { console.error('PDF Error:', err); App.error('เกิดข้อผิดพลาดในการสร้าง PDF: ' + err.message); }
 }

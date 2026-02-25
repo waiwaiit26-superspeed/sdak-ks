@@ -72,11 +72,9 @@
                 </button>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-body p-0 d-flex justify-content-center">
-                    <div id="receiptCanvas" style="width:800px; background:#fff; padding:50px; position:relative;">
-                        <!-- Receipt will be rendered here -->
-                    </div>
+            <div class="receipt-a4-wrapper">
+                <div id="receiptCanvas">
+                    <!-- Receipt will be rendered here -->
                 </div>
             </div>
         </div>
@@ -202,65 +200,87 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+/* === A4 Landscape Fixed Size Receipt === */
+.receipt-a4-wrapper {
+    overflow-x: auto;
+    padding: 20px;
+    background: #e9ecef;
+}
 #receiptCanvas {
+    width: 1123px;  /* A4 landscape: 297mm */
+    height: 794px;  /* A4 landscape: 210mm */
+    background: #fff;
     font-family: 'Sarabun', sans-serif;
     color: #1a3c5e;
     line-height: 1.8;
+    position: relative;
+    margin: 0 auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,.15);
+    overflow: hidden;
+}
+#receiptCanvas .receipt-border {
+    border: 2px solid #1a3c5e;
+    border-radius: 12px;
+    padding: 40px 60px;
+    position: absolute;
+    top: 30px; left: 30px; right: 30px; bottom: 30px;
+    display: flex;
+    flex-direction: column;
 }
 #receiptCanvas .receipt-header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 #receiptCanvas .receipt-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 700;
     color: #1a3c5e;
 }
 #receiptCanvas .receipt-org {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
 }
 #receiptCanvas .receipt-org-addr {
-    font-size: 15px;
+    font-size: 16px;
 }
 #receiptCanvas .receipt-meta {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
-    font-size: 14px;
+    font-size: 16px;
 }
 #receiptCanvas .receipt-body {
-    font-size: 16px;
+    font-size: 18px;
     padding: 10px 0;
+    flex-grow: 1;
 }
 #receiptCanvas .receipt-body .row-label {
     display: inline-block;
-    min-width: 100px;
+    min-width: 140px;
 }
 #receiptCanvas .receipt-amount-box {
     margin-top: 15px;
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: 1px solid #1a3c5e;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 20px;
     text-align: center;
 }
 #receiptCanvas .receipt-footer {
-    margin-top: 40px;
+    margin-top: 30px;
     display: flex;
     justify-content: flex-end;
-    font-size: 15px;
+    font-size: 16px;
 }
 #receiptCanvas .dotted-line {
     border-bottom: 1px dotted #555;
     display: inline-block;
-    min-width: 200px;
+    min-width: 280px;
     margin: 0 5px;
 }
-#receiptCanvas .receipt-border {
-    border: 2px solid #1a3c5e;
-    border-radius: 12px;
-    padding: 40px;
+@media print {
+    .receipt-a4-wrapper { overflow: visible; padding: 0; background: #fff; }
+    #receiptCanvas { box-shadow: none; }
 }
 </style>
 
@@ -616,28 +636,28 @@ function renderReceipt(r) {
             </div>
 
             <div class="receipt-header">
-                ${window._receiptLogoUrl ? `<div style="text-align:center;margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:60px;"></div>` : ''}
+                ${window._receiptLogoUrl ? `<div style="text-align:center;margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:70px;"></div>` : ''}
                 <div class="receipt-title">ใบเสร็จรับเงิน</div>
                 <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
                 <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
             </div>
 
-            <div style="text-align:right; margin-bottom:15px; font-size:14px;">
+            <div style="text-align:right; margin-bottom:15px; font-size:16px;">
                 ${dateStr}
             </div>
 
             <div class="receipt-body">
                 <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>ได้รับเงินจาก</strong></span>
-                    <span class="dotted-line" style="min-width:400px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span>
+                    <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span>
                 </div>
                 ${r.payer_address ? `<div style="margin-bottom:8px;">
                     <span class="row-label"><strong>ที่อยู่</strong></span>
-                    <span class="dotted-line" style="min-width:440px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span>
+                    <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span>
                 </div>` : ''}
                 <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>เป็น</strong></span>
-                    <span class="dotted-line" style="min-width:460px">&nbsp;${App.escapeHtml(r.description)}&nbsp;</span>
+                    <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml(r.description)}&nbsp;</span>
                 </div>
             </div>
 
@@ -698,13 +718,13 @@ async function downloadPDF() {
 
         const { jsPDF } = window.jspdf;
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 190; // mm (A4 width minus margins)
+        // A4 landscape: 297 x 210 mm
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const pageW = 297, pageH = 210;
+        const margin = 5;
+        const imgWidth = pageW - margin * 2;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const xOffset = (210 - imgWidth) / 2;
-        const yOffset = 10;
-        pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, Math.min(imgHeight, pageH - margin * 2));
         pdf.save(`receipt_${currentReceiptData.receipt_number}.pdf`);
     } catch (err) {
         console.error(err);

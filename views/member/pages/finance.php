@@ -469,13 +469,13 @@
 
 <!-- Receipt Preview Modal -->
 <div class="modal fade" id="receiptPreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog" style="max-width:1180px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body" id="receiptPreviewBody">
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow-x:auto;">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
             </div>
             <div class="modal-footer">
@@ -950,20 +950,24 @@ async function mViewTxnReceipt(referenceNo) {
     var thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     var dateStr = 'วันที่ ' + d.getDate() + ' เดือน ' + thM[d.getMonth()] + ' พ.ศ. ' + (d.getFullYear() + 543);
 
-    body.html('<div id="modalReceiptCanvas" style="font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;padding:40px;border:2px solid #1a3c5e;border-radius:12px;">' +
-        '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
-        '<div style="text-align:center;margin-bottom:15px;"><div style="font-size:24px;font-weight:700;">ใบเสร็จรับเงิน</div><div style="font-size:18px;font-weight:600;">' + App.escHtml(r.organization_name) + '</div><div style="font-size:15px;">' + App.escHtml(r.organization_address) + '</div></div>' +
-        '<div style="text-align:right;font-size:13px;margin-bottom:12px;">' + dateStr + '</div>' +
-        '<div style="margin-bottom:6px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:350px;">&nbsp;' + App.escHtml(r.payer_name) + '&nbsp;</span></div>' +
-        (r.payer_address ? '<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;' + App.escHtml(r.payer_address) + '&nbsp;</span></div>' : '') +
-        '<div style="margin-bottom:6px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:410px;">&nbsp;' + App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,'')) + '&nbsp;</span></div>' +
-        '<div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;"><strong>จำนวน ' + App.formatCurrency(r.amount) + '</strong> (' + App.escHtml(r.amount_text) + ') ไว้ถูกต้องแล้ว</div>' +
-        '<div style="display:flex;justify-content:flex-end;margin-top:30px;"><div style="text-align:center;">' +
+    body.html('<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;">' +
+        '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;">' +
+        '<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
+        '<div style="text-align:center;margin-bottom:15px;"><div style="font-size:28px;font-weight:700;">ใบเสร็จรับเงิน</div><div style="font-size:20px;font-weight:600;">' + App.escHtml(r.organization_name) + '</div><div style="font-size:16px;">' + App.escHtml(r.organization_address) + '</div></div>' +
+        '<div style="text-align:right;font-size:16px;margin-bottom:12px;">' + dateStr + '</div>' +
+        '<div style="font-size:18px;flex-grow:1;">' +
+        '<div style="margin-bottom:8px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:500px;">&nbsp;' + App.escHtml(r.payer_name) + '&nbsp;</span></div>' +
+        (r.payer_address ? '<div style="margin-bottom:8px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(r.payer_address) + '&nbsp;</span></div>' : '') +
+        '<div style="margin-bottom:8px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:560px;">&nbsp;' + App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,'')) + '&nbsp;</span></div>' +
+        '<div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:12px 20px;margin:15px 0;font-size:20px;"><strong>จำนวน ' + App.formatCurrency(r.amount) + '</strong> (' + App.escHtml(r.amount_text) + ') ไว้ถูกต้องแล้ว</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:flex-end;margin-top:30px;font-size:16px;"><div style="text-align:center;">' +
             (r.signature_mode === 'electronic' && sigSrc ? '<div style="margin-bottom:-25px;"><img src="' + sigSrc + '" alt="ลายเซ็น" style="max-height:60px;"></div>' : '<div style="margin-bottom:30px;"></div>') +
             '<div>(ลงชื่อ) ................................... ผู้รับเงิน</div>' +
             (r.signature_show_name === '1' && r.signature_name ? '<div style="margin-top:5px;">(' + App.escHtml(r.signature_name) + ')</div>' : '') +
             (r.signature_show_position === '1' ? '<div style="margin-top:3px;">' + App.escHtml(r.signature_position || 'เหรัญญิก') + '</div>' : '') +
         '</div></div>' +
+        '</div>' +
     '</div>');
 }
 
@@ -982,10 +986,11 @@ async function mDownloadReceiptPDF() {
     if (!el) return;
     var canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
     var jsPDF = window.jspdf.jsPDF;
-    var pdf = new jsPDF('p', 'mm', 'a4');
-    var w = pdf.internal.pageSize.getWidth() - 20;
+    var pdf = new jsPDF('l', 'mm', 'a4');
+    var pageW = 297, pageH = 210, margin = 5;
+    var w = pageW - margin * 2;
     var h = (canvas.height * w) / canvas.width;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, w, h);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin, w, Math.min(h, pageH - margin * 2));
     pdf.save('ใบเสร็จ_' + (_mReceiptData ? _mReceiptData.receipt_number : '') + '.pdf');
 }
 
