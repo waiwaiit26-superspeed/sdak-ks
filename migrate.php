@@ -10,6 +10,12 @@
 
 require_once __DIR__ . '/config/config.php';
 
+// โหลด webhook secret (ถ้ายังไม่ได้โหลดจาก webhook.php)
+$secretFile = __DIR__ . '/webhook-secret.php';
+if (!defined('WEBHOOK_SECRET') && file_exists($secretFile)) {
+    require_once $secretFile;
+}
+
 // ============ PDO Connection (ไม่ใช้ Medoo เพื่อความเสถียร) ============
 function getMigratePDO() {
     static $pdo = null;
