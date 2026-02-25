@@ -951,7 +951,8 @@ async function mViewTxnReceipt(referenceNo) {
     var dateStr = 'วันที่ ' + d.getDate() + ' เดือน ' + thM[d.getMonth()] + ' พ.ศ. ' + (d.getFullYear() + 543);
 
     body.html('<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;">' +
-        '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;">' +
+        (window._receiptLogoUrl ? '<img src="' + window._receiptLogoUrl + '" alt="" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:450px;height:450px;opacity:0.08;pointer-events:none;z-index:0;">' : '') +
+        '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;z-index:1;">' +
         '<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
         '<div style="text-align:center;margin-bottom:15px;"><div style="font-size:28px;font-weight:700;">ใบเสร็จรับเงิน</div><div style="font-size:20px;font-weight:600;">' + App.escHtml(r.organization_name) + '</div><div style="font-size:16px;">' + App.escHtml(r.organization_address) + '</div></div>' +
         '<div style="text-align:right;font-size:16px;margin-bottom:12px;">' + dateStr + '</div>' +

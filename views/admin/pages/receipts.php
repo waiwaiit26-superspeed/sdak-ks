@@ -236,6 +236,15 @@
     overflow: hidden;
     position: relative;
 }
+.receipt-render .receipt-watermark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 450px; height: 450px;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+}
 .receipt-render .receipt-inner {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
@@ -244,6 +253,7 @@
     top: 30px; left: 30px; right: 30px; bottom: 30px;
     display: flex;
     flex-direction: column;
+    z-index: 1;
 }
 .receipt-render .receipt-title { font-size: 28px; font-weight: 700; text-align: center; }
 .receipt-render .receipt-org { font-size: 20px; font-weight: 600; text-align: center; }
@@ -621,6 +631,7 @@ async function viewReceipt(id) {
     const dateStr = `วันที่ ${issuedDate.getDate()} เดือน ${thaiMonths[issuedDate.getMonth()]} พ.ศ. ${issuedDate.getFullYear() + 543}`;
 
     body.html(`<div id="modalReceiptCanvas" class="receipt-render">
+        ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
         <div class="receipt-inner">
         <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;">
             <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>

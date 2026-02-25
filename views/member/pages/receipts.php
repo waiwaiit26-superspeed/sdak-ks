@@ -218,6 +218,15 @@
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
     overflow: hidden;
 }
+#receiptCanvas .receipt-watermark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 450px; height: 450px;
+    opacity: 0.08;
+    pointer-events: none;
+    z-index: 0;
+}
 #receiptCanvas .receipt-border {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
@@ -226,6 +235,7 @@
     top: 30px; left: 30px; right: 30px; bottom: 30px;
     display: flex;
     flex-direction: column;
+    z-index: 1;
 }
 #receiptCanvas .receipt-header {
     text-align: center;
@@ -629,6 +639,7 @@ function renderReceipt(r) {
 
     const canvas = document.getElementById('receiptCanvas');
     canvas.innerHTML = `
+        ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
         <div class="receipt-border">
             <div class="receipt-meta">
                 <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>
