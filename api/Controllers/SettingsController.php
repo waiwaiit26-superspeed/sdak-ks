@@ -81,6 +81,8 @@ class SettingsController extends Controller
             'smtp_from_email', 'smtp_from_name', 'smtp_encryption',
             'social_facebook', 'social_line', 'social_youtube',
             'social_tiktok', 'social_instagram', 'social_website',
+            'telegram_bot_token', 'telegram_chat_id', 'telegram_notify_new_member',
+            'telegram_notify_fee_slip', 'telegram_notify_activity_reg',
         ];
 
         $toSave = [];
@@ -104,5 +106,38 @@ class SettingsController extends Controller
         );
 
         Response::success(null, 'บันทึกการตั้งค่าสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=settings&action=test-telegram
+     * Admin: send test Telegram message
+     */
+    public function testTelegram(): void
+    {
+        $this->requirePost();
+
+        $settings = $this->model('SettingsModel');
+        $token = $settings->get('telegram_bot_token', '');
+        $chatId = $settings->get('telegram_chat_id', '');
+
+        if (empty($token) || empty($chatId)) {
+            Response::error('กรุณากรอก Bot Token และ Chat ID และบันทึกก่อน');
+        }
+
+        $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $message  = "✅ <b>ทดสอบการแจ้งเตือน Telegram</b>\n";
+        $message .= "━━━━━━━━━━━━━━━\n";
+        $message .= "การเชื่อมต่อ Telegram Bot สำเร็จแล้ว!\n";
+        $message .= "📅 " . date('d/m/') . (date('Y') + 543) . ' ' . date('H:i') . " น.\n";
+        $message .= "━━━━━━━━━━━━━━━\n";
+        $message .= "📌 {$siteName}";
+
+        $ok = \App\Core\Telegram::send($message, $token, $chatId);
+
+        if ($ok) {
+            Response::success(null, 'ส่งข้อความทดสอบสำเร็จ! กรุณาตรวจสอบที่ Telegram');
+        } else {
+            Response::error('ไม่สามารถส่งข้อความได้ กรุณาตรวจสอบ Bot Token และ Chat ID');
+        }
     }
 }

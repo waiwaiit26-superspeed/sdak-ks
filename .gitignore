@@ -1,0 +1,39 @@
+# =============================================
+# .gitignore — sdak-ks
+# =============================================
+
+# Dependencies
+vendor/
+node_modules/
+
+# Cache & Backups
+cache/
+backups/
+
+# Uploaded files (user content on server)
+uploads/activities/*
+uploads/finance/*
+uploads/logos/*
+uploads/news/*
+uploads/payment_slips/*
+uploads/payments/*
+uploads/profiles/*
+uploads/slips/*
+!uploads/**/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets — ห้าม push ขึ้น GitHub
+.env
+webhook-secret.php
+
+# Deploy log
+deploy-log.txt

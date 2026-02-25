@@ -121,6 +121,22 @@ class AuthController extends Controller
         (new Auth())->logAction((int)$userId, 'registered', null, null, "สมัครสมาชิกใหม่ ประเภท: {$memberType}");
         Auth::logActivity((int)$userId, 'register', 'auth', "สมัครสมาชิกใหม่ ประเภท: {$memberType}", (int)$userId, 'user');
 
+        // ── Telegram notification ──
+        try {
+            \App\Core\Telegram::notifyNewMember([
+                'full_name'           => $fullName,
+                'first_name'          => $firstName,
+                'last_name'           => $lastName,
+                'member_type'         => $memberType,
+                'email'               => $email,
+                'phone'               => trim($input['phone'] ?? ''),
+                'school_organization' => trim($input['school_organization'] ?? ''),
+            ]);
+        } catch (\Throwable $e) {
+            // ไม่ block การสมัคร หากส่ง Telegram ไม่สำเร็จ
+            error_log('Telegram notification error: ' . $e->getMessage());
+        }
+
         // ── Auto-login: generate token for the new user ──
         $auth  = new Auth();
         $token = $auth->generateToken((int)$userId);
@@ -349,6 +365,19 @@ class AuthController extends Controller
             ]);
             $auth->logAction($userId, 'registered', null, null, "สมัครผ่าน Google ประเภท: {$memberType}");
             Auth::logActivity($userId, 'register', 'auth', "สมัครสมาชิกใหม่ผ่าน Google ประเภท: {$memberType}", $userId, 'user');
+
+            // ── Telegram notification (Google register) ──
+            try {
+                \App\Core\Telegram::notifyNewMember([
+                    'full_name'           => $gFullName,
+                    'first_name'          => $gFirstName,
+                    'last_name'           => $gLastName,
+                    'member_type'         => $memberType,
+                    'email'               => $gUser['email'],
+                ]);
+            } catch (\Throwable $e) {
+                error_log('Telegram notification error: ' . $e->getMessage());
+            }
         }
 
         // ── สร้างรายการค่าธรรมเนียม + อัปโหลดสลิป (ถ้ามี) ──

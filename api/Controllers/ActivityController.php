@@ -264,6 +264,12 @@ class ActivityController extends Controller
         ]);
 
         Auth::logActivity((int)$this->currentUser['id'], 'register', 'activity', "ลงทะเบียนกิจกรรม: {$act['title']}", $actId, 'activity');
+
+        // แจ้งเตือน Telegram
+        try {
+            \App\Core\Telegram::notifyActivityRegistration($this->currentUser, $act);
+        } catch (\Throwable $e) { /* ไม่บล็อก flow หลัก */ }
+
         Response::success(['id' => $id], 'ลงทะเบียนสำเร็จ รอการอนุมัติ', 201);
     }
 

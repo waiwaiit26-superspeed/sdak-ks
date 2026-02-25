@@ -147,6 +147,11 @@ class FeeController extends Controller
             $feeId, 'fee'
         );
 
+        // แจ้งเตือน Telegram
+        try {
+            \App\Core\Telegram::notifyFeeSlipUpload($this->currentUser, $fee);
+        } catch (\Throwable $e) { /* ไม่บล็อก flow หลัก */ }
+
         Response::success(null, 'อัปโหลดหลักฐานสำเร็จ รอการตรวจสอบ');
     }
 

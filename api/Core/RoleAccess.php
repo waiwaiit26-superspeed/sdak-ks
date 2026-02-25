@@ -97,8 +97,9 @@ class RoleAccess
             'recent' => ['admin'],
         ],
         'settings' => [
-            'list'   => ['*'],
-            'update' => ['admin'],
+            'list'           => ['*'],
+            'update'         => ['admin'],
+            'test-telegram'  => ['admin'],
         ],
         'fee' => [
             'list'          => ['admin'],

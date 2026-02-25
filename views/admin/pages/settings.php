@@ -410,6 +410,61 @@
                             </div>
                         </div>
 
+                        <div class="card shadow-sm border-info">
+                            <div class="card-header bg-info text-white">
+                                <h3 class="card-title mb-0"><i class="bi bi-telegram me-2"></i>แจ้งเตือน Telegram</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    ใช้สำหรับรับแจ้งเตือนเมื่อมีสมาชิกสมัครใหม่ ผ่าน Telegram Bot
+                                    <br><small class="text-muted">
+                                        วิธีสร้าง Bot: ค้นหา <strong>@BotFather</strong> ใน Telegram → <code>/newbot</code> → จะได้รับ Bot Token<br>
+                                        วิธีหา Chat ID: ค้นหา <strong>@userinfobot</strong> ใน Telegram แล้วพิมพ์ <code>/start</code>
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Bot Token</label>
+                                    <input type="text" class="form-control" name="telegram_bot_token" placeholder="เช่น 123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                                    <small class="text-muted">ได้จาก @BotFather เมื่อสร้าง Bot</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Chat ID</label>
+                                    <input type="text" class="form-control" name="telegram_chat_id" placeholder="เช่น 123456789 หรือ -100123456789">
+                                    <small class="text-muted">Chat ID ของคุณ หรือ Group ID ที่ต้องการรับแจ้งเตือน</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="tgNotifyNewMember" name="telegram_notify_new_member" value="1">
+                                        <label class="custom-control-label" for="tgNotifyNewMember">
+                                            <i class="bi bi-bell me-1"></i> แจ้งเตือนเมื่อมีสมาชิกสมัครใหม่
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="tgNotifyFeeSlip" name="telegram_notify_fee_slip" value="1">
+                                        <label class="custom-control-label" for="tgNotifyFeeSlip">
+                                            <i class="bi bi-bell me-1"></i> แจ้งเตือนเมื่อสมาชิกอัปโหลดสลิปค่าธรรมเนียม
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="tgNotifyActivityReg" name="telegram_notify_activity_reg" value="1">
+                                        <label class="custom-control-label" for="tgNotifyActivityReg">
+                                            <i class="bi bi-bell me-1"></i> แจ้งเตือนเมื่อสมาชิกลงทะเบียนกิจกรรม
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="testTelegram()">
+                                        <i class="bi bi-send me-1"></i>ส่งข้อความทดสอบ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card shadow-sm border-danger">
                             <div class="card-header bg-danger text-white"><h3 class="card-title mb-0"><i class="bi bi-shield-lock me-2"></i>รหัสยืนยันลบข้อมูล (Reset)</h3></div>
                             <div class="card-body">
@@ -861,7 +916,43 @@ async function testSmtpEmail() {
     }
 }
 
-$('#settingsForm').on('submit', async function (e) {
+async function testTelegram() {
+    const token = $('[name="telegram_bot_token"]').val();
+    const chatId = $('[name="telegram_chat_id"]').val();
+    if (!token || !chatId) {
+        App.error('กรุณากรอก Bot Token และ Chat ID แล้วบันทึกก่อน');
+        return;
+    }
+
+    const confirmed = await Swal.fire({
+        title: 'ทดสอบ Telegram',
+        text: 'ส่งข้อความทดสอบไปยัง Telegram?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-send me-1"></i> ส่งทดสอบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#17a2b8',
+    });
+    if (!confirmed.isConfirmed) return;
+
+    Swal.fire({ title: 'กำลังส่ง...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const result = await API.post(API.apiUrl('settings', 'test-telegram'), {});
+        Swal.close();
+        if (result.success) {
+            App.success(result.message || 'ส่งข้อความทดสอบสำเร็จ! กรุณาตรวจสอบที่ Telegram');
+        } else {
+            App.error(result.message || 'ไม่สามารถส่งข้อความได้');
+        }
+    } catch (err) {
+        Swal.close();
+        const msg = (err.responseJSON && err.responseJSON.message) || 'เกิดข้อผิดพลาดในการส่ง';
+        App.error(msg);
+    }
+}
+
+$('#settingsForm').on('submit', async function(e) {
     e.preventDefault();
     const btn = $('#btnSaveSettings');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> กำลังบันทึก...');

@@ -1,0 +1,167 @@
+# =============================================
+# Deploy to Production — sdak-ks
+#
+# รองรับ 3 วิธี deploy:
+#   zip   — (default) GitHub Webhook → webhook.php ดาวน์โหลด zip อัตโนมัติ
+#   sftp  — SFTP upload ไฟล์ไป server โดยตรง
+#   ssh   — SSH เข้า server แล้วรัน git pull
+#
+# การใช้งาน:
+#   - push ไป main → ใช้ zip (webhook) อัตโนมัติ
+#   - Actions → Run workflow → เลือกวิธี deploy ได้
+#
+# Secrets ที่ต้องตั้ง (ตามวิธีที่เลือก):
+#   zip:  ไม่ต้องตั้ง secret (ใช้ webhook-secret.php บน server)
+#   sftp: SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY
+#   ssh:  SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY
+# =============================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+  # ให้เลือกวิธี deploy ได้จาก Actions tab
+  workflow_dispatch:
+    inputs:
+      deploy_method:
+        description: 'วิธี Deploy'
+        required: true
+        default: 'zip'
+        type: choice
+        options:
+          - zip
+          - sftp
+          - ssh
+
+# =============================================
+# ENV: กำหนด deploy method
+# - push event → ใช้ zip เสมอ
+# - workflow_dispatch → ใช้ค่าที่เลือก
+# =============================================
+env:
+  DEPLOY_METHOD: ${{ github.event.inputs.deploy_method || 'zip' }}
+  REMOTE_PATH: '/domains/sdak.obec.in/public_html/'
+  SITE_URL: 'https://sdak.obec.in'
+
+jobs:
+  # =============================================
+  # Job 1: CI — ตรวจสอบ PHP syntax ทุกครั้ง
+  # =============================================
+  ci:
+    name: "🔍 PHP Syntax Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Check PHP syntax
+        run: |
+          echo "🔍 Checking PHP syntax..."
+          errors=0
+          while IFS= read -r file; do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error: $file"
+              php -l "$file"
+              errors=$((errors + 1))
+            fi
+          done < <(find . -name "*.php" -not -path "./vendor/*")
+          if [ $errors -gt 0 ]; then
+            echo "❌ Found $errors syntax error(s)"
+            exit 1
+          fi
+          echo "✅ All PHP files OK"
+
+  # =============================================
+  # Job 2a: Deploy via ZIP (webhook) — DEFAULT
+  # GitHub Webhook จะเรียก webhook.php บน server
+  # webhook.php จะดาวน์โหลด zip จาก GitHub API แล้ว extract เอง
+  # =============================================
+  deploy-zip:
+    name: "📦 Deploy via ZIP (Webhook)"
+    needs: ci
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_method == 'zip' || github.event.inputs.deploy_method == '' || github.event_name == 'push' }}
+    steps:
+      - name: Deploy notice
+        run: |
+          echo "✅ Push to main complete"
+          echo "📡 GitHub Webhook → ${{ env.SITE_URL }}/webhook.php"
+          echo "📦 Server จะดาวน์โหลด zip แล้ว deploy อัตโนมัติ"
+          echo ""
+          echo "ℹ️ ถ้า deploy ไม่ทำงาน ตรวจสอบ:"
+          echo "  1. GitHub Webhook ตั้งค่าถูกต้อง (Settings → Webhooks)"
+          echo "  2. webhook-secret.php อยู่บน server"
+          echo "  3. GITHUB_TOKEN ใน webhook-secret.php ยังไม่หมดอายุ"
+
+  # =============================================
+  # Job 2b: Deploy via SFTP
+  # Upload ไฟล์ไป server โดยตรง
+  # ต้องตั้ง Secrets: SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY
+  # =============================================
+  deploy-sftp:
+    name: "📤 Deploy via SFTP"
+    needs: ci
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_method == 'sftp' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Remove files not needed on server
+        run: |
+          rm -rf .git .github node_modules cache .DS_Store
+          rm -f deploy-log.txt webhook-secret.php
+          rm -rf uploads
+
+      - name: Deploy via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.SSH_USER }}
+          server: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          local_path: './*'
+          remote_path: ${{ env.REMOTE_PATH }}
+          sftpArgs: '-o ConnectTimeout=15'
+
+      - name: Deploy success
+        run: |
+          echo "✅ SFTP deploy complete"
+          echo "📁 Uploaded to ${{ env.REMOTE_PATH }}"
+
+  # =============================================
+  # Job 2c: Deploy via SSH
+  # SSH เข้า server แล้วรัน git pull
+  # ต้องตั้ง Secrets: SSH_HOST, SSH_PORT, SSH_USER, SSH_PRIVATE_KEY
+  # =============================================
+  deploy-ssh:
+    name: "🔑 Deploy via SSH"
+    needs: ci
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_method == 'ssh' }}
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ env.REMOTE_PATH }}
+            echo "📥 Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+            echo "📦 Installing composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction 2>/dev/null || true
+            echo "✅ Deploy complete!"
