@@ -9,6 +9,7 @@ node_modules/
 # Cache & Backups
 cache/
 backups/
+BKK_DB/
 
 # Uploaded files (user content on server)
 uploads/activities/*
