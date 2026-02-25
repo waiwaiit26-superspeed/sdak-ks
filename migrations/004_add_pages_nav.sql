@@ -32,7 +32,14 @@ CREATE TABLE IF NOT EXISTS `nav_items` (
     INDEX `idx_sort` (`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `nav_items` (`title`, `url`, `icon`, `sort_order`, `is_active`) VALUES
-('หน้าแรก', './', 'bi-house-door', 1, 1),
-('ข่าวสาร', './web/?page=news', 'bi-newspaper', 2, 1),
-('กิจกรรม', './web/?page=activities', 'bi-calendar-event', 3, 1);
+INSERT IGNORE INTO `nav_items` (`title`, `url`, `icon`, `sort_order`, `is_active`)
+SELECT 'หน้าแรก', './', 'bi-house-door', 1, 1
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `nav_items` WHERE `title` = 'หน้าแรก' AND `url` = './');
+
+INSERT IGNORE INTO `nav_items` (`title`, `url`, `icon`, `sort_order`, `is_active`)
+SELECT 'ข่าวสาร', './web/?page=news', 'bi-newspaper', 2, 1
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `nav_items` WHERE `title` = 'ข่าวสาร' AND `url` = './web/?page=news');
+
+INSERT IGNORE INTO `nav_items` (`title`, `url`, `icon`, `sort_order`, `is_active`)
+SELECT 'กิจกรรม', './web/?page=activities', 'bi-calendar-event', 3, 1
+FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `nav_items` WHERE `title` = 'กิจกรรม' AND `url` = './web/?page=activities');
