@@ -259,25 +259,39 @@ function runComposer() {
 }
 
 function runMigrations() {
-    $migrateDir = DEPLOY_DIR . '/database';
-    if (!is_dir($migrateDir)) {
-        logMsg("MIGRATE: database/ directory not found — skipped");
-        return;
+    // ===== STEP 1: Backup DB ก่อน migrate =====
+    $backupFile = DEPLOY_DIR . '/backup-db.php';
+    if (file_exists($backupFile)) {
+        try {
+            $result = require $backupFile;
+            if (is_array($result)) {
+                if ($result['status'] === 'ok') {
+                    $sizeKB = round(($result['size'] ?? 0) / 1024, 1);
+                    logMsg("BACKUP: {$result['file']} ({$result['tables']} tables, {$sizeKB} KB)");
+                } else {
+                    logMsg("BACKUP ERROR: " . ($result['error'] ?? 'unknown'));
+                }
+            }
+        } catch (\Throwable $e) {
+            logMsg("BACKUP ERROR: " . $e->getMessage());
+        }
+    } else {
+        logMsg("BACKUP: backup-db.php not found — skipped");
     }
-    logMsg("MIGRATE: database/ directory exists — manual SQL execution may be needed");
-    // Note: ถ้าต้องการ auto-migrate ให้สร้าง migrate.php แยก
-    // แล้วจะถูกเรียกที่นี่
+
+    // ===== STEP 2: Run migrations =====
     $migrateFile = DEPLOY_DIR . '/migrate.php';
     if (!file_exists($migrateFile)) {
-        logMsg("MIGRATE: migrate.php not found — skipped auto-migration");
+        logMsg("MIGRATE: migrate.php not found — skipped");
         return;
     }
     try {
         $results = require $migrateFile;
         if (is_array($results)) {
             $runCount = count($results['run'] ?? []);
+            $skipCount = count($results['skipped'] ?? []);
             $errCount = count($results['errors'] ?? []);
-            logMsg("MIGRATE: {$runCount} run, {$errCount} errors");
+            logMsg("MIGRATE: {$runCount} run, {$skipCount} skipped, {$errCount} errors");
             foreach ($results['run'] ?? [] as $f) logMsg("  ✅ {$f}");
             foreach ($results['errors'] ?? [] as $e) logMsg("  ❌ {$e}");
         }
