@@ -217,12 +217,18 @@ const App = {
     },
 
     /**
-     * Initialize Bootstrap tooltips
+     * Initialize Bootstrap tooltips (BS4 & BS5 compatible)
      */
     initTooltips() {
-        $('[data-bs-toggle="tooltip"]').each(function() {
-            new bootstrap.Tooltip(this);
-        });
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            // Bootstrap 5
+            $('[data-bs-toggle="tooltip"]').each(function() {
+                new bootstrap.Tooltip(this);
+            });
+        } else if ($.fn.tooltip) {
+            // Bootstrap 4
+            $('[data-toggle="tooltip"]').tooltip();
+        }
     },
 
     /**
@@ -245,20 +251,24 @@ const App = {
         const $nav = $('#dynamic-nav');
         if (!$nav.length) return;
 
+        // Detect Bootstrap version: BS5 has bootstrap.Dropdown, BS4 has $.fn.dropdown
+        const isBS5 = (typeof bootstrap !== 'undefined' && bootstrap.Dropdown);
+        const toggleAttr = isBS5 ? 'data-bs-toggle="dropdown"' : 'data-toggle="dropdown"';
+
         API.getNavTree().then(res => {
             if (res.success && res.data) {
                 $nav.empty();
                 res.data.forEach(item => {
-                    const icon = item.icon ? `<i class="${this.escapeHtml(item.icon)} me-1"></i> ` : '';
+                    const icon = item.icon ? `<i class="${this.escapeHtml(item.icon)} me-1 mr-1"></i> ` : '';
                     const target = item.target === '_blank' ? ' target="_blank"' : '';
                     const url = this.resolveNavUrl(item.url);
 
                     if (item.children && item.children.length) {
                         const $dd = $(`<li class="nav-item dropdown"></li>`);
-                        $dd.append(`<a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">${icon}${this.escapeHtml(item.title)}</a>`);
+                        $dd.append(`<a class="nav-link dropdown-toggle" href="#" role="button" ${toggleAttr} aria-expanded="false">${icon}${this.escapeHtml(item.title)}</a>`);
                         const $menu = $('<ul class="dropdown-menu"></ul>');
                         item.children.forEach(child => {
-                            const cIcon = child.icon ? `<i class="${this.escapeHtml(child.icon)} me-1"></i> ` : '';
+                            const cIcon = child.icon ? `<i class="${this.escapeHtml(child.icon)} me-1 mr-1"></i> ` : '';
                             const cTarget = child.target === '_blank' ? ' target="_blank"' : '';
                             const cUrl = this.resolveNavUrl(child.url);
                             $menu.append(`<li><a class="dropdown-item" href="${this.escapeHtml(cUrl)}"${cTarget}>${cIcon}${this.escapeHtml(child.title)}</a></li>`);

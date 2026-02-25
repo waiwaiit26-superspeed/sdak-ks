@@ -21,12 +21,7 @@ $basePath = $basePath ?? './';
 
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav mr-auto" id="dynamic-nav">
-                <!-- Dynamic nav items loaded via JS -->
-                <li class="nav-item">
-                    <a class="nav-link" href="<?php echo $basePath; ?>member/">
-                        <i class="bi bi-house-door"></i> หน้าหลัก
-                    </a>
-                </li>
+                <!-- Dynamic nav items loaded via JS (loadDynamicNav) -->
             </ul>
 
             <ul class="navbar-nav ml-auto" id="auth-nav">
