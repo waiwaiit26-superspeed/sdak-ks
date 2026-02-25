@@ -73,7 +73,11 @@
             </div>
 
             <div class="receipt-a4-wrapper">
-                <div class="receipt-scale-container">
+                <div id="receiptLoading" style="display:none;text-align:center;padding:60px 20px;">
+                    <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
+                    <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptLoadPercent">0</span>%</div>
+                </div>
+                <div class="receipt-scale-container" style="visibility:hidden;">
                     <div id="receiptCanvas">
                         <!-- Receipt will be rendered here -->
                     </div>
@@ -312,15 +316,72 @@ function scaleReceipt() {
     const container = document.querySelector('.receipt-scale-container');
     if (!wrapper || !container) return;
     const wrapperW = wrapper.clientWidth - 40; /* minus padding */
+    if (wrapperW <= 0) return; /* element not visible yet */
     const scale = Math.min(wrapperW / 1123, 1);
     container.style.transform = `scale(${scale})`;
     wrapper.style.height = (794 * scale + 40) + 'px';
 }
 
+function showReceiptWithLoading() {
+    const loading = document.getElementById('receiptLoading');
+    const container = document.querySelector('.receipt-scale-container');
+    const percentEl = document.getElementById('receiptLoadPercent');
+    if (!loading || !container) return;
+
+    loading.style.display = 'block';
+    container.style.visibility = 'hidden';
+    percentEl.textContent = '0';
+
+    const images = container.querySelectorAll('img');
+    const total = images.length || 1;
+    let loaded = 0;
+
+    function updateProgress() {
+        loaded++;
+        const pct = Math.round((loaded / total) * 100);
+        percentEl.textContent = pct;
+        if (loaded >= total) {
+            requestAnimationFrame(() => {
+                scaleReceipt();
+                container.style.visibility = 'visible';
+                loading.style.display = 'none';
+            });
+        }
+    }
+
+    if (images.length === 0) {
+        percentEl.textContent = '100';
+        requestAnimationFrame(() => {
+            scaleReceipt();
+            container.style.visibility = 'visible';
+            loading.style.display = 'none';
+        });
+        return;
+    }
+
+    images.forEach(img => {
+        if (img.complete && img.naturalWidth > 0) {
+            updateProgress();
+        } else {
+            img.addEventListener('load', updateProgress, { once: true });
+            img.addEventListener('error', updateProgress, { once: true });
+        }
+    });
+
+    /* Safety timeout - show after 5s max */
+    setTimeout(() => {
+        if (container.style.visibility === 'hidden') {
+            percentEl.textContent = '100';
+            scaleReceipt();
+            container.style.visibility = 'visible';
+            loading.style.display = 'none';
+        }
+    }, 5000);
+}
+
 $(function () {
     App.requireLogin();
     loadReceipts();
-    scaleReceipt();
     $(window).on('resize', scaleReceipt);
     checkFinancePermission();
 
@@ -641,10 +702,12 @@ async function viewReceipt(id) {
     }
 
     renderReceipt(currentReceiptData);
-    scaleReceipt();
 
     $('#receiptListSection').hide();
     $('#receiptDetailSection').show();
+
+    /* Now element is visible, scale with loading */
+    showReceiptWithLoading();
 }
 
 function showList() {

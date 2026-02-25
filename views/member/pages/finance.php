@@ -950,7 +950,11 @@ async function mViewTxnReceipt(referenceNo) {
     var thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     var dateStr = 'วันที่ ' + d.getDate() + ' เดือน ' + thM[d.getMonth()] + ' พ.ศ. ' + (d.getFullYear() + 543);
 
-    body.html('<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;transform-origin:top left;">' +
+    body.html('<div id="mReceiptLoading" style="text-align:center;padding:60px 20px;">' +
+        '<div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>' +
+        '<div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="mReceiptPercent">0</span>%</div>' +
+    '</div>' +
+    '<div id="modalReceiptCanvas" style="width:1123px;height:794px;font-family:\'Sarabun\',sans-serif;color:#1a3c5e;line-height:1.8;background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.15);position:relative;overflow:hidden;transform-origin:top left;visibility:hidden;">' +
         (window._receiptLogoUrl ? '<img src="' + window._receiptLogoUrl + '" alt="" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:450px;height:450px;opacity:0.08;pointer-events:none;z-index:0;">' : '') +
         '<div style="border:2px solid #1a3c5e;border-radius:12px;padding:40px 60px;position:absolute;top:30px;left:30px;right:30px;bottom:30px;display:flex;flex-direction:column;z-index:1;">' +
         '<div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;"><div>เล่มที่ ' + App.escHtml(r.book_number) + '</div><div>เลขที่ ' + r.receipt_number + '</div></div>' +
@@ -971,17 +975,8 @@ async function mViewTxnReceipt(referenceNo) {
         '</div>' +
     '</div>');
 
-    // Scale receipt to fit modal
-    setTimeout(function() {
-        var modalBody = document.getElementById('receiptPreviewBody');
-        var receipt = document.getElementById('modalReceiptCanvas');
-        if (modalBody && receipt) {
-            var bodyW = modalBody.clientWidth - 30;
-            var scale = Math.min(bodyW / 1123, 1);
-            receipt.style.transform = 'scale(' + scale + ')';
-            modalBody.style.height = (794 * scale + 20) + 'px';
-        }
-    }, 50);
+    // Wait for images then scale
+    mScaleModalReceipt();
 }
 
 function mToBase64(url) {
@@ -992,6 +987,56 @@ function mToBase64(url) {
         img.onerror = reject;
         img.src = url;
     });
+}
+
+function mScaleModalReceipt() {
+    var modalBody = document.getElementById('receiptPreviewBody');
+    var receipt = document.getElementById('modalReceiptCanvas');
+    var loading = document.getElementById('mReceiptLoading');
+    var percentEl = document.getElementById('mReceiptPercent');
+    if (!modalBody || !receipt) return;
+
+    var images = receipt.querySelectorAll('img');
+    var total = images.length || 1;
+    var loaded = 0;
+
+    function done() {
+        setTimeout(function() {
+            var bodyW = modalBody.clientWidth - 30;
+            if (bodyW <= 0) return;
+            var scale = Math.min(bodyW / 1123, 1);
+            receipt.style.transform = 'scale(' + scale + ')';
+            modalBody.style.height = (794 * scale + 20) + 'px';
+            receipt.style.visibility = 'visible';
+            if (loading) loading.style.display = 'none';
+        }, 100);
+    }
+
+    function updateProgress() {
+        loaded++;
+        var pct = Math.round((loaded / total) * 100);
+        if (percentEl) percentEl.textContent = pct;
+        if (loaded >= total) done();
+    }
+
+    if (images.length === 0) {
+        if (percentEl) percentEl.textContent = '100';
+        done();
+        return;
+    }
+
+    images.forEach(function(img) {
+        if (img.complete && img.naturalWidth > 0) {
+            updateProgress();
+        } else {
+            img.addEventListener('load', updateProgress, { once: true });
+            img.addEventListener('error', updateProgress, { once: true });
+        }
+    });
+
+    setTimeout(function() {
+        if (receipt.style.visibility === 'hidden') done();
+    }, 5000);
 }
 
 async function mDownloadReceiptPDF() {

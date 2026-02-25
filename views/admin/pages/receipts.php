@@ -270,6 +270,57 @@ let modalReceiptData = null;
 let membersCache = [];
 let categoriesCache = [];
 
+function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
+    const modalBody = document.getElementById(bodyId);
+    const receipt = document.getElementById(canvasId);
+    const loading = document.getElementById(loadingId);
+    const percentEl = document.getElementById(percentId);
+    if (!modalBody || !receipt) return;
+
+    const images = receipt.querySelectorAll('img');
+    const total = images.length || 1;
+    let loaded = 0;
+
+    function done() {
+        setTimeout(function() {
+            const bodyW = modalBody.clientWidth - 30;
+            if (bodyW <= 0) return;
+            const scale = Math.min(bodyW / 1123, 1);
+            receipt.style.transform = `scale(${scale})`;
+            modalBody.style.height = (794 * scale + 20) + 'px';
+            receipt.style.visibility = 'visible';
+            if (loading) loading.style.display = 'none';
+        }, 100);
+    }
+
+    function updateProgress() {
+        loaded++;
+        const pct = Math.round((loaded / total) * 100);
+        if (percentEl) percentEl.textContent = pct;
+        if (loaded >= total) done();
+    }
+
+    if (images.length === 0) {
+        if (percentEl) percentEl.textContent = '100';
+        done();
+        return;
+    }
+
+    images.forEach(img => {
+        if (img.complete && img.naturalWidth > 0) {
+            updateProgress();
+        } else {
+            img.addEventListener('load', updateProgress, { once: true });
+            img.addEventListener('error', updateProgress, { once: true });
+        }
+    });
+
+    /* Safety timeout */
+    setTimeout(() => {
+        if (receipt.style.visibility === 'hidden') done();
+    }, 5000);
+}
+
 $(function () {
     App.requireAdmin();
     loadReceipts();
@@ -630,7 +681,11 @@ async function viewReceipt(id) {
                         'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const dateStr = `วันที่ ${issuedDate.getDate()} เดือน ${thaiMonths[issuedDate.getMonth()]} พ.ศ. ${issuedDate.getFullYear() + 543}`;
 
-    body.html(`<div id="modalReceiptCanvas" class="receipt-render">
+    body.html(`<div id="receiptModalLoading" style="text-align:center;padding:60px 20px;">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptModalPercent">0</span>%</div>
+    </div>
+    <div id="modalReceiptCanvas" class="receipt-render" style="visibility:hidden;">
         ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
         <div class="receipt-inner">
         <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;">
@@ -663,17 +718,8 @@ async function viewReceipt(id) {
         </div>
     </div>`);
 
-    // Scale receipt to fit modal
-    setTimeout(function() {
-        const modalBody = document.getElementById('receiptPreviewBody');
-        const receipt = document.getElementById('modalReceiptCanvas');
-        if (modalBody && receipt) {
-            const bodyW = modalBody.clientWidth - 30;
-            const scale = Math.min(bodyW / 1123, 1);
-            receipt.style.transform = `scale(${scale})`;
-            modalBody.style.height = (794 * scale + 20) + 'px';
-        }
-    }, 50);
+    // Wait for images then scale
+    scaleModalReceipt('receiptPreviewBody', 'modalReceiptCanvas', 'receiptModalLoading', 'receiptModalPercent');
 }
 
 async function downloadModalPDF() {
