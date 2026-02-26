@@ -11,7 +11,7 @@
 }
 
 .nav-mgmt-card .card-header {
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component, linear-gradient(135deg, #4c1d95, #7c3aed));
     color: #fff;
     border-bottom: none;
     padding: 14px 20px;
@@ -62,7 +62,7 @@
 /* Sortable states */
 .nav-item-row.sortable-ghost {
     background: #ede9fe;
-    border: 2px dashed #7c3aed;
+    border: 2px dashed var(--adminlte-primary, #7c3aed);
     opacity: .7;
     border-radius: 6px;
 }
@@ -84,7 +84,7 @@
 }
 
 .nav-item-row:hover .drag-handle {
-    color: #7c3aed;
+    color: var(--adminlte-primary, #7c3aed);
 }
 
 /* Nav info */
@@ -104,7 +104,7 @@
 }
 
 .nav-item-row .nav-info .nav-title i {
-    color: #7c3aed;
+    color: var(--adminlte-primary, #7c3aed);
     font-size: .9rem;
 }
 
@@ -124,7 +124,7 @@
     padding: 2px 8px;
     border-radius: 10px;
     background: #ede9fe;
-    color: #6d28d9;
+    color: var(--adminlte-primary, #6d28d9);
     letter-spacing: .02em;
 }
 
@@ -221,7 +221,7 @@
 
 .nav-indent-1:hover {
     background: #f5f3ff;
-    border-left-color: #7c3aed;
+    border-left-color: var(--adminlte-primary, #7c3aed);
 }
 
 .nav-indent-1 .drag-handle {
@@ -333,7 +333,7 @@
 
 /* Modal improvements */
 .nav-form-modal .modal-header {
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component, linear-gradient(135deg, #4c1d95, #7c3aed));
     color: #fff;
     border-bottom: none;
     padding: 16px 20px;
@@ -365,7 +365,7 @@
 }
 
 .nav-form-modal .form-control:focus {
-    border-color: #7c3aed;
+    border-color: var(--adminlte-primary, #7c3aed);
     box-shadow: 0 0 0 .2rem rgba(124,58,237,.15);
 }
 
@@ -415,7 +415,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component, linear-gradient(135deg, #4c1d95, #7c3aed));
     color: #fff;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -443,7 +443,7 @@
     width: 5px;
 }
 .icon-picker-grid::-webkit-scrollbar-thumb {
-    background: #c4b5fd;
+    background: var(--primary-very-light, #c4b5fd);
     border-radius: 3px;
 }
 
@@ -463,14 +463,14 @@
 
 .icon-picker-item:hover {
     background: #ede9fe;
-    color: #6d28d9;
+    color: var(--adminlte-primary, #6d28d9);
     transform: scale(1.1);
 }
 
 .icon-picker-item.active {
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component, linear-gradient(135deg, #4c1d95, #7c3aed));
     color: #fff;
-    border-color: #a78bfa;
+    border-color: var(--adminlte-info, #a78bfa);
     box-shadow: 0 2px 8px rgba(124,58,237,.3);
     transform: scale(1.1);
 }

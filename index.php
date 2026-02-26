@@ -88,7 +88,7 @@ include ROOT_PATH . 'templates/public/header.php';
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:#8b5cf6;color:#fff;">
+                    <div class="icon-wrapper" style="background:var(--primary-light);color:#fff;">
                         <i class="bi bi-person-badge"></i>
                     </div>
                     <h5>สมาชิกวิสามัญ</h5>
@@ -97,7 +97,7 @@ include ROOT_PATH . 'templates/public/header.php';
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:#a78bfa;color:#fff;">
+                    <div class="icon-wrapper" style="background:var(--primary-very-light);color:#fff;">
                         <i class="bi bi-heart-fill"></i>
                     </div>
                     <h5>สมาชิกสมทบ</h5>
@@ -106,7 +106,7 @@ include ROOT_PATH . 'templates/public/header.php';
             </div>
             <div class="col-md-6 col-lg-3">
                 <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:#c4b5fd;color:#5b21b6;">
+                    <div class="icon-wrapper" style="background:var(--primary-very-light);color:var(--primary-dark);opacity:.85;">
                         <i class="bi bi-award-fill"></i>
                     </div>
                     <h5>สมาชิกกิตติมศักดิ์</h5>

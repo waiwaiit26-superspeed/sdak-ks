@@ -182,28 +182,40 @@ const App = {
         const g = parseInt(hex.slice(3,5), 16);
         const b = parseInt(hex.slice(5,7), 16);
 
-        // Generate lighter variant (+25%)
+        // Color utility functions
         const lighten = (c, pct) => Math.min(255, Math.round(c + (255 - c) * pct));
         const darken = (c, pct) => Math.max(0, Math.round(c * (1 - pct)));
+        const toHex = (r, g, b) => '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
 
-        const lightR = lighten(r, 0.25), lightG = lighten(g, 0.25), lightB = lighten(b, 0.25);
-        const darkR = darken(r, 0.2), darkG = darken(g, 0.2), darkB = darken(b, 0.2);
-        const vdarkR = darken(r, 0.4), vdarkG = darken(g, 0.4), vdarkB = darken(b, 0.4);
-        const vlightR = lighten(r, 0.5), vlightG = lighten(g, 0.5), vlightB = lighten(b, 0.5);
-
-        const light = '#' + [lightR, lightG, lightB].map(c => c.toString(16).padStart(2, '0')).join('');
-        const dark = '#' + [darkR, darkG, darkB].map(c => c.toString(16).padStart(2, '0')).join('');
-        const vdark = '#' + [vdarkR, vdarkG, vdarkB].map(c => c.toString(16).padStart(2, '0')).join('');
-        const vlight = '#' + [vlightR, vlightG, vlightB].map(c => c.toString(16).padStart(2, '0')).join('');
+        // Generate color palette from single primary color
+        const light     = toHex(lighten(r, 0.25), lighten(g, 0.25), lighten(b, 0.25));
+        const dark      = toHex(darken(r, 0.2),   darken(g, 0.2),   darken(b, 0.2));
+        const vdark     = toHex(darken(r, 0.4),   darken(g, 0.4),   darken(b, 0.4));
+        const vlight    = toHex(lighten(r, 0.5),   lighten(g, 0.5),   lighten(b, 0.5));
+        const ultraDark = toHex(darken(r, 0.65),   darken(g, 0.65),   darken(b, 0.65));
+        const footerDark= toHex(darken(r, 0.75),   darken(g, 0.75),   darken(b, 0.75));
 
         const root = document.documentElement;
-        // Public site CSS variables
+
+        // Core palette
         root.style.setProperty('--primary', hex);
         root.style.setProperty('--primary-light', light);
         root.style.setProperty('--primary-dark', dark);
+        root.style.setProperty('--primary-very-dark', vdark);
+        root.style.setProperty('--primary-very-light', vlight);
+        root.style.setProperty('--primary-ultra-dark', ultraDark);
+
+        // Utility 
         root.style.setProperty('--light-bg', vlight + '1a');
+
+        // Gradients
         root.style.setProperty('--gradient-primary', 'linear-gradient(135deg, ' + vdark + ' 0%, ' + hex + ' 50%, ' + light + ' 100%)');
-        root.style.setProperty('--gradient-hero', 'linear-gradient(135deg, ' + vdark + ' 0%, ' + dark + ' 30%, ' + hex + ' 55%, ' + light + ' 80%, ' + vlight + ' 100%)');
+        root.style.setProperty('--gradient-hero', 'linear-gradient(135deg, ' + ultraDark + ' 0%, ' + vdark + ' 30%, ' + hex + ' 55%, ' + light + ' 80%, ' + vlight + ' 100%)');
+        root.style.setProperty('--gradient-component', 'linear-gradient(135deg, ' + vdark + ', ' + light + ')');
+        root.style.setProperty('--gradient-footer', 'linear-gradient(135deg, ' + ultraDark + ' 0%, ' + vdark + ' 100%)');
+        root.style.setProperty('--gradient-auth', 'linear-gradient(135deg, ' + ultraDark + ' 0%, ' + hex + ' 50%, ' + light + ' 100%)');
+        root.style.setProperty('--footer-bottom-bg', footerDark);
+
         // AdminLTE CSS variables
         root.style.setProperty('--adminlte-primary', hex);
         root.style.setProperty('--adminlte-info', light);

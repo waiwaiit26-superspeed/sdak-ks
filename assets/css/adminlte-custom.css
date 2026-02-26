@@ -86,7 +86,7 @@ body.adminlte-body {
 
 /* Custom gradient backgrounds for cards */
 .bg-gradient-purple {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%) !important;
+    background: linear-gradient(135deg, var(--adminlte-info, #8b5cf6) 0%, var(--adminlte-primary, #6d28d9) 100%) !important;
 }
 .bg-gradient-blue {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -211,7 +211,7 @@ body.adminlte-body {
 
 /* --- Modal Header Override --- */
 .modal-header {
-    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+    background: var(--gradient-component, linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%));
     color: #fff;
     border-radius: 0;
 }
@@ -315,7 +315,7 @@ body.adminlte-body {
 }
 .login-page,
 .register-page {
-    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+    background: var(--gradient-auth, linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%));
     min-height: 100vh;
 }
 .card-outline.card-primary {

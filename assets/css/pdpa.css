@@ -9,7 +9,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(135deg, #1e1044 0%, #2d1b69 100%);
+    background: var(--gradient-footer, linear-gradient(135deg, #1e1044 0%, #2d1b69 100%));
     color: #fff;
     z-index: 10000;
     padding: 1rem 0;
@@ -137,7 +137,7 @@
 }
 
 .pdpa-consent-header {
-    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
+    background: var(--gradient-component, linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%));
     color: #fff;
     padding: 1.5rem;
     text-align: center;
@@ -175,12 +175,12 @@
     background: #f1f1f1;
 }
 .pdpa-consent-scroll::-webkit-scrollbar-thumb {
-    background: #a78bfa;
+    background: var(--primary-light, #a78bfa);
     border-radius: 3px;
 }
 
 .pdpa-consent-scroll h6 {
-    color: #4c1d95;
+    color: var(--primary-very-dark, #4c1d95);
     margin-top: 1rem;
     padding-bottom: 0.3rem;
     border-bottom: 2px solid #ede9fe;
@@ -207,20 +207,20 @@
     margin-top: 0.15rem;
 }
 .pdpa-consent-footer .form-check-input:checked {
-    background-color: #6d28d9;
-    border-color: #6d28d9;
+    background-color: var(--primary, #6d28d9);
+    border-color: var(--primary, #6d28d9);
 }
 
 .pdpa-consent-footer .btn-primary {
-    background: #6d28d9;
-    border-color: #6d28d9;
+    background: var(--primary, #6d28d9);
+    border-color: var(--primary, #6d28d9);
     padding: 0.6rem;
     font-size: 1rem;
     border-radius: 10px;
     transition: all 0.3s;
 }
 .pdpa-consent-footer .btn-primary:hover:not(:disabled) {
-    background: #5b21b6;
+    background: var(--primary-dark, #5b21b6);
     box-shadow: 0 4px 15px rgba(109,40,217,0.3);
 }
 .pdpa-consent-footer .btn-primary:disabled {
@@ -230,7 +230,7 @@
 
 /* ── Privacy Policy Page ── */
 .privacy-content h4.privacy-heading {
-    color: #4c1d95;
+    color: var(--primary-very-dark, #4c1d95);
     margin-top: 2rem;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
@@ -270,7 +270,7 @@
     background: #fff;
 }
 .privacy-right-card:hover {
-    border-color: #a78bfa;
+    border-color: var(--primary-light, #a78bfa);
     box-shadow: 0 4px 15px rgba(109,40,217,0.1);
     transform: translateY(-2px);
 }
@@ -281,7 +281,7 @@
 }
 
 .privacy-table thead {
-    background: #4c1d95;
+    background: var(--primary-very-dark, #4c1d95);
     color: #fff;
 }
 .privacy-table thead th {

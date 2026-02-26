@@ -7,6 +7,9 @@
     --primary: #6d28d9;
     --primary-light: #8b5cf6;
     --primary-dark: #5b21b6;
+    --primary-very-dark: #4c1d95;
+    --primary-very-light: #a78bfa;
+    --primary-ultra-dark: #1e1044;
     --secondary: #d97706;
     --secondary-light: #f59e0b;
     --accent: #059669;
@@ -16,8 +19,11 @@
     --light-bg: #f5f3ff;
     --card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
     --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.10);
-    --gradient-primary: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%);
-    --gradient-hero: linear-gradient(135deg, #1e1044 0%, #4c1d95 30%, #6d28d9 55%, #8b5cf6 80%, #a78bfa 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary-very-dark) 0%, var(--primary) 50%, var(--primary-very-light) 100%);
+    --gradient-hero: linear-gradient(135deg, var(--primary-ultra-dark) 0%, var(--primary-very-dark) 30%, var(--primary) 55%, var(--primary-light) 80%, var(--primary-very-light) 100%);
+    --gradient-component: linear-gradient(135deg, var(--primary-very-dark), var(--primary-light));
+    --gradient-footer: linear-gradient(135deg, var(--primary-ultra-dark) 0%, var(--primary-very-dark) 100%);
+    --footer-bottom-bg: color-mix(in srgb, var(--primary-ultra-dark) 80%, #000);
     --border-radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -405,7 +411,7 @@ a:hover {
     border-left: 4px solid var(--primary-light);
 }
 .activity-card .activity-date {
-    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+    background: var(--gradient-component);
     color: #fff;
     text-align: center;
     padding: .8rem;
@@ -430,7 +436,7 @@ a:hover {
    Profile
    ============================================ */
 .profile-header {
-    background: linear-gradient(135deg, #4c1d95, #8b5cf6);
+    background: var(--gradient-component);
     padding: 3rem 0;
     color: #fff;
 }
@@ -455,7 +461,7 @@ a:hover {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, #1e1044 0%, #4c1d95 45%, #7c3aed 100%);
+    background: var(--gradient-hero);
     position: relative;
 }
 .auth-wrapper::before {
@@ -464,7 +470,7 @@ a:hover {
     top: -20%; right: -10%;
     width: 500px; height: 500px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
 }
 .auth-card {
     background: #fff;
@@ -627,7 +633,7 @@ a:hover {
     box-shadow: var(--card-shadow);
 }
 .table-custom thead {
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component);
     color: #fff;
 }
 .table-custom thead th {
@@ -653,7 +659,7 @@ a:hover {
     box-shadow: 0 25px 60px rgba(0,0,0,0.2);
 }
 .modal-header {
-    background: linear-gradient(135deg, #4c1d95, #7c3aed);
+    background: var(--gradient-component);
     color: #fff;
     border-radius: 16px 16px 0 0;
     border-bottom: none;
@@ -674,7 +680,7 @@ a:hover {
    Footer
    ============================================ */
 .footer-main {
-    background: linear-gradient(135deg, #1e1044 0%, #2d1b69 100%);
+    background: var(--gradient-footer);
     color: rgba(255,255,255,.65);
     padding: 4rem 0 2.5rem;
 }
@@ -690,14 +696,14 @@ a:hover {
     transition: var(--transition);
 }
 .footer-main a:hover {
-    color: #c4b5fd;
+    color: var(--primary-very-light);
     padding-left: 4px;
 }
 .footer-main .bi {
     color: rgba(255,255,255,.4);
 }
 .footer-bottom {
-    background: #0f0a1e;
+    background: var(--footer-bottom-bg, #0f0a1e);
     color: rgba(255,255,255,.35);
     padding: 1rem 0;
     font-size: .83rem;

@@ -11,7 +11,7 @@
     #membersDataTable td, #membersDataTable th { padding: .4rem .5rem; }
     table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control::before,
     table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control::before {
-        top: 50%; transform: translateY(-50%); background-color: #7c3aed;
+        top: 50%; transform: translateY(-50%); background-color: var(--adminlte-primary, #7c3aed);
     }
     .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { text-align: left !important; }
 }

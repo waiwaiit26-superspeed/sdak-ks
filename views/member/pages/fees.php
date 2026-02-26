@@ -153,7 +153,7 @@ $(function () {
             title: 'ยินดีต้อนรับสมาชิกใหม่! 🎉',
             html: 'กรุณาอัปโหลดหลักฐานการชำระค่าธรรมเนียม<br>เพื่อให้ทางสมาคมตรวจสอบและอนุมัติบัญชี',
             confirmButtonText: 'เข้าใจแล้ว',
-            confirmButtonColor: '#6d28d9',
+            confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#6d28d9',
         });
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname + '?page=fees');

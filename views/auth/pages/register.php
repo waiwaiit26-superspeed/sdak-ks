@@ -18,7 +18,7 @@ $extraCss = '
         box-shadow: 0 20px 60px rgba(0,0,0,.25); animation: slideUpSetup .4s cubic-bezier(.16,1,.3,1);
     }
     .setup-modal-header {
-        background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+        background: var(--gradient-component, linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%));
         color: #fff; padding: 24px 28px 20px; border-radius: 20px 20px 0 0;
     }
     .setup-modal-header h3 { margin: 0 0 4px; font-size: 1.3rem; font-weight: 700; }
@@ -28,7 +28,7 @@ $extraCss = '
     .setup-modal-body .step.active { display: block; }
     .step-indicators { display: flex; gap: 8px; margin-bottom: 24px; }
     .step-dot { flex: 1; height: 4px; border-radius: 4px; background: #e5e7eb; transition: background .3s; }
-    .step-dot.active { background: #7c3aed; }
+    .step-dot.active { background: var(--primary, #7c3aed); }
     .step-dot.done { background: #10b981; }
     .member-type-options { display: flex; flex-direction: column; gap: 12px; }
     .member-type-card {
@@ -36,22 +36,22 @@ $extraCss = '
         cursor: pointer; transition: all .25s; display: flex; align-items: center;
         gap: 14px; position: relative;
     }
-    .member-type-card:hover { border-color: #a78bfa; background: #faf5ff; }
-    .member-type-card.selected { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
+    .member-type-card:hover { border-color: var(--primary-light, #a78bfa); background: #faf5ff; }
+    .member-type-card.selected { border-color: var(--primary, #7c3aed); background: #f5f3ff; box-shadow: 0 0 0 3px rgba(124,58,237,.15); }
     .member-type-card .type-icon {
         width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center;
         justify-content: center; font-size: 1.3rem; flex-shrink: 0;
     }
     .member-type-card .type-info h4 { margin: 0 0 2px; font-size: 1rem; font-weight: 600; color: #1e1b4b; }
     .member-type-card .type-info p { margin: 0; font-size: .82rem; color: #6b7280; }
-    .member-type-card .type-fee { margin-left: auto; font-weight: 700; font-size: .95rem; color: #7c3aed; white-space: nowrap; }
-    .member-type-card .check-mark { display: none; position: absolute; top: 10px; right: 12px; color: #7c3aed; font-size: 1.1rem; }
+    .member-type-card .type-fee { margin-left: auto; font-weight: 700; font-size: .95rem; color: var(--primary, #7c3aed); white-space: nowrap; }
+    .member-type-card .check-mark { display: none; position: absolute; top: 10px; right: 12px; color: var(--primary, #7c3aed); font-size: 1.1rem; }
     .member-type-card.selected .check-mark { display: block; }
     .slip-upload-area {
         border: 2px dashed #d1d5db; border-radius: 14px; padding: 32px 20px;
         text-align: center; cursor: pointer; transition: all .25s; background: #fafafa; position: relative;
     }
-    .slip-upload-area:hover { border-color: #7c3aed; background: #faf5ff; }
+    .slip-upload-area:hover { border-color: var(--primary, #7c3aed); background: #faf5ff; }
     .slip-upload-area.has-file { border-color: #10b981; background: #f0fdf4; }
     .slip-upload-area .upload-icon { font-size: 2.5rem; color: #9ca3af; margin-bottom: 8px; }
     .slip-upload-area.has-file .upload-icon { color: #10b981; }
@@ -62,7 +62,7 @@ $extraCss = '
         font-weight: 600; font-family: inherit; cursor: pointer; transition: all .2s;
     }
     .btn-step-primary {
-        color: #fff; background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        color: #fff; background: var(--gradient-component, linear-gradient(135deg, #7c3aed, #5b21b6));
         box-shadow: 0 4px 12px rgba(109,40,217,.3);
     }
     .btn-step-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(109,40,217,.4); }
@@ -98,7 +98,7 @@ $extraCss = '
         background: #fff;
     }
     .setup-modal .setup-input-group:focus-within {
-        border-color: #7c3aed;
+        border-color: var(--primary, #7c3aed);
         box-shadow: 0 0 0 3px rgba(124,58,237,.12);
     }
     .setup-modal .setup-input-group .input-icon {
@@ -107,7 +107,7 @@ $extraCss = '
         justify-content: center;
         width: 44px;
         background: #f8f5ff;
-        color: #7c3aed;
+        color: var(--primary, #7c3aed);
         font-size: 1.1rem;
         flex-shrink: 0;
         border-right: 1px solid #e5e7eb;
@@ -423,7 +423,7 @@ $extraCss = '
 
             <!-- Step 1: กรอกชื่อ -->
             <div class="step active" id="setupStep1">
-                <h4 style="margin-bottom:4px;font-weight:700;color:#1e1b4b;"><i class="bi bi-person-vcard me-1" style="color:#7c3aed"></i> กรอกข้อมูลชื่อ</h4>
+                <h4 style="margin-bottom:4px;font-weight:700;color:#1e1b4b;"><i class="bi bi-person-vcard me-1" style="color:var(--primary, #7c3aed)"></i> กรอกข้อมูลชื่อ</h4>
                 <p style="color:#6b7280;font-size:.88rem;margin-bottom:20px;">กรุณากรอกคำนำหน้า ชื่อ และนามสกุล เพื่อใช้งานในระบบ</p>
 
                 <div class="setup-form-group">
@@ -852,7 +852,7 @@ $(function () {
                             ? 'บัญชีของท่านอยู่ระหว่างรอการตรวจสอบหลักฐาน<br>และอนุมัติจากผู้ดูแลระบบ'
                             : 'บัญชีของท่านอยู่ระหว่างรอการอนุมัติ<br>คุณสามารถอัปโหลดสลิปได้ภายหลังที่หน้าค่าธรรมเนียม',
                         confirmButtonText: 'เข้าสู่ระบบ',
-                        confirmButtonColor: '#7c3aed',
+                        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#7c3aed',
                         allowOutsideClick: false
                     }).then(function() {
                         redirectAfterSetup();
