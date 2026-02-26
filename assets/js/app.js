@@ -160,8 +160,53 @@ const App = {
                         socialEl.style.cssText = '';
                     }
                 }
+
+                // Theme color override from DB
+                const themeColor = result.data.theme_color || '';
+                if (themeColor) {
+                    App.applyThemeColor(themeColor);
+                }
             }
         }).catch(function() {});
+    },
+
+    /**
+     * Apply theme color from a single hex color
+     * Generates light, dark, and gradient variants automatically
+     */
+    applyThemeColor(hex) {
+        if (!hex || !hex.match(/^#[0-9A-Fa-f]{6}$/)) return;
+
+        // Parse hex to RGB
+        const r = parseInt(hex.slice(1,3), 16);
+        const g = parseInt(hex.slice(3,5), 16);
+        const b = parseInt(hex.slice(5,7), 16);
+
+        // Generate lighter variant (+25%)
+        const lighten = (c, pct) => Math.min(255, Math.round(c + (255 - c) * pct));
+        const darken = (c, pct) => Math.max(0, Math.round(c * (1 - pct)));
+
+        const lightR = lighten(r, 0.25), lightG = lighten(g, 0.25), lightB = lighten(b, 0.25);
+        const darkR = darken(r, 0.2), darkG = darken(g, 0.2), darkB = darken(b, 0.2);
+        const vdarkR = darken(r, 0.4), vdarkG = darken(g, 0.4), vdarkB = darken(b, 0.4);
+        const vlightR = lighten(r, 0.5), vlightG = lighten(g, 0.5), vlightB = lighten(b, 0.5);
+
+        const light = '#' + [lightR, lightG, lightB].map(c => c.toString(16).padStart(2, '0')).join('');
+        const dark = '#' + [darkR, darkG, darkB].map(c => c.toString(16).padStart(2, '0')).join('');
+        const vdark = '#' + [vdarkR, vdarkG, vdarkB].map(c => c.toString(16).padStart(2, '0')).join('');
+        const vlight = '#' + [vlightR, vlightG, vlightB].map(c => c.toString(16).padStart(2, '0')).join('');
+
+        const root = document.documentElement;
+        // Public site CSS variables
+        root.style.setProperty('--primary', hex);
+        root.style.setProperty('--primary-light', light);
+        root.style.setProperty('--primary-dark', dark);
+        root.style.setProperty('--light-bg', vlight + '1a');
+        root.style.setProperty('--gradient-primary', 'linear-gradient(135deg, ' + vdark + ' 0%, ' + hex + ' 50%, ' + light + ' 100%)');
+        root.style.setProperty('--gradient-hero', 'linear-gradient(135deg, ' + vdark + ' 0%, ' + dark + ' 30%, ' + hex + ' 55%, ' + light + ' 80%, ' + vlight + ' 100%)');
+        // AdminLTE CSS variables
+        root.style.setProperty('--adminlte-primary', hex);
+        root.style.setProperty('--adminlte-info', light);
     },
 
     /**

@@ -66,7 +66,7 @@ a:hover {
 .btn-primary:hover {
     background: var(--primary-dark);
     border-color: var(--primary-dark);
-    box-shadow: 0 4px 15px rgba(109,40,217,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 .btn-secondary-custom {
     background: var(--secondary);
@@ -85,7 +85,7 @@ a:hover {
 .btn-outline-primary:hover {
     background: var(--primary);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(109,40,217,0.25);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
 
 .bg-primary-custom {
@@ -105,8 +105,8 @@ a:hover {
    Navbar
    ============================================ */
 .navbar-main {
-    background: linear-gradient(135deg, #1e1044 0%, #4c1d95 60%, #6d28d9 100%);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 24px rgba(109,40,217,0.15);
+    background: var(--gradient-hero);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 24px rgba(0,0,0,0.15);
     padding: .35rem 0;
     backdrop-filter: blur(10px);
 }
@@ -281,8 +281,8 @@ a:hover {
 }
 .feature-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(109,40,217,0.10);
-    border-color: rgba(139,92,246,0.12);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+    border-color: rgba(0,0,0,0.06);
 }
 .feature-card .icon-wrapper {
     width: 80px;

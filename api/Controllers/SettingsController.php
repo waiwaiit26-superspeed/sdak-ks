@@ -34,6 +34,7 @@ class SettingsController extends Controller
                 'social_facebook', 'social_line', 'social_youtube',
                 'social_tiktok', 'social_instagram', 'social_website',
                 'embed_stats_code',
+                'theme_color',
             ];
             $filtered = [];
             foreach ($publicKeys as $key) {
@@ -89,6 +90,7 @@ class SettingsController extends Controller
             'embed_stats_code',
             'telegram_bot_token', 'telegram_chat_id', 'telegram_notify_new_member',
             'telegram_notify_fee_slip', 'telegram_notify_activity_reg',
+            'theme_color',
         ];
 
         $toSave = [];

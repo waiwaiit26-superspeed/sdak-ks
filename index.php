@@ -185,16 +185,25 @@ async function loadHeroFromSettings() {
         // Hero badge
         if (s.hero_badge) {
             $('#hero-badge-text').text(s.hero_badge);
+        } else if (s.site_name_en) {
+            $('#hero-badge-text').text(s.site_name_en);
         }
 
         // Hero title (supports \n for line breaks)
         if (s.hero_title) {
             $('#hero-title').html(s.hero_title.replace(/\n/g, '<br>'));
+        } else if (s.site_name) {
+            $('#hero-title').text(s.site_name);
         }
 
         // Hero subtitle (supports \n for line breaks)
         if (s.hero_subtitle) {
             $('#hero-subtitle').html(s.hero_subtitle.replace(/\n/g, '<br>'));
+        } else {
+            const short = s.site_name_short || '';
+            const en = s.site_name_en || '';
+            const parts = [short, en].filter(Boolean);
+            if (parts.length) $('#hero-subtitle').text(parts.join(' \u2014 '));
         }
 
         // About section subtitle

@@ -40,6 +40,45 @@
                             </div>
                         </div>
 
+                        <div class="card shadow-sm border-primary">
+                            <div class="card-header"><h3 class="card-title"><i class="bi bi-palette me-2"></i>สี Theme</h3></div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    เลือกสีหลักของเว็บไซต์ ระบบจะสร้างสีอ่อน-เข้มและ gradient อัตโนมัติ
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">สีหลัก (Primary Color)</label>
+                                    <div class="d-flex align-items-center" style="gap:1rem;">
+                                        <input type="color" class="form-control form-control-color" name="theme_color" id="themeColorPicker" value="#6d28d9" style="width:60px;height:42px;cursor:pointer;">
+                                        <input type="text" class="form-control form-control-sm" id="themeColorHex" value="#6d28d9" style="width:100px;font-family:monospace;" maxlength="7">
+                                        <div id="themePreviewBadge" class="badge px-3 py-2" style="font-size:.9em;background:#6d28d9;color:#fff;">ตัวอย่าง</div>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small text-muted mb-1">ธีมสำเร็จรูป</label>
+                                    <div class="d-flex flex-wrap" style="gap:.5rem;">
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#6d28d9" style="background:#6d28d9;color:#fff;min-width:80px;" title="ม่วง (Purple)">ม่วง</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#2563eb" style="background:#2563eb;color:#fff;min-width:80px;" title="น้ำเงิน (Blue)">น้ำเงิน</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#0891b2" style="background:#0891b2;color:#fff;min-width:80px;" title="ฟ้า (Cyan)">ฟ้า</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#059669" style="background:#059669;color:#fff;min-width:80px;" title="เขียว (Green)">เขียว</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#d97706" style="background:#d97706;color:#fff;min-width:80px;" title="ส้ม (Amber)">ส้ม</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#dc2626" style="background:#dc2626;color:#fff;min-width:80px;" title="แดง (Red)">แดง</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#db2777" style="background:#db2777;color:#fff;min-width:80px;" title="ชมพู (Pink)">ชมพู</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#4f46e5" style="background:#4f46e5;color:#fff;min-width:80px;" title="คราม (Indigo)">คราม</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#0f766e" style="background:#0f766e;color:#fff;min-width:80px;" title="เขียวเข้ม (Teal)">เขียวเข้ม</button>
+                                        <button type="button" class="btn btn-sm theme-preset" data-color="#374151" style="background:#374151;color:#fff;min-width:80px;" title="เทาดำ (Slate)">เทาดำ</button>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="form-label small text-muted mb-1">ตัวอย่าง Gradient</label>
+                                    <div id="themePreviewGradient" class="rounded p-3 text-white text-center" style="background:linear-gradient(135deg, #4c1d95 0%, #6d28d9 50%, #8b5cf6 100%);">
+                                        <strong>Preview Gradient</strong> — Navbar & Hero Section
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card shadow-sm">
                             <div class="card-header"><h3 class="card-title"><i class="bi bi-telephone me-2"></i>ข้อมูลติดต่อ</h3></div>
                             <div class="card-body">
@@ -667,6 +706,9 @@ async function loadSettings() {
     toggleSignatureSection();
     updateSignaturePreview();
 
+    // Theme color preview
+    updateThemePreview();
+
     // Random default for reset_confirm_code if empty
     if (!$('[name="reset_confirm_code"]').val()) {
         randomizeResetCode();
@@ -902,6 +944,45 @@ function highlightSaveButton() {
         btn.html('<i class="bi bi-check-lg me-2"></i>บันทึกการตั้งค่า');
     }, 5000);
 }
+
+// ─── Theme Color ───
+function updateThemePreview() {
+    const hex = $('#themeColorPicker').val() || '#6d28d9';
+    $('#themeColorHex').val(hex);
+    $('#themePreviewBadge').css('background', hex);
+
+    // Generate gradient preview
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    const lighten = (c, p) => Math.min(255, Math.round(c + (255 - c) * p));
+    const darken = (c, p) => Math.max(0, Math.round(c * (1 - p)));
+    const toHex = (c) => c.toString(16).padStart(2, '0');
+    const dark = '#' + [darken(r,.4), darken(g,.4), darken(b,.4)].map(toHex).join('');
+    const light = '#' + [lighten(r,.25), lighten(g,.25), lighten(b,.25)].map(toHex).join('');
+    const grad = 'linear-gradient(135deg, ' + dark + ' 0%, ' + hex + ' 50%, ' + light + ' 100%)';
+    $('#themePreviewGradient').css('background', grad);
+}
+
+$('#themeColorPicker').on('input change', function() {
+    $('[name="theme_color"]').val(this.value);
+    updateThemePreview();
+});
+$('#themeColorHex').on('input change', function() {
+    let v = this.value.trim();
+    if (v && !v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
+        $('#themeColorPicker').val(v);
+        $('[name="theme_color"]').val(v);
+        updateThemePreview();
+    }
+});
+$(document).on('click', '.theme-preset', function() {
+    const c = $(this).data('color');
+    $('#themeColorPicker').val(c);
+    $('[name="theme_color"]').val(c);
+    updateThemePreview();
+});
 
 // ─── SMTP Toggle & Test ───
 function fillGmailSmtp() {
