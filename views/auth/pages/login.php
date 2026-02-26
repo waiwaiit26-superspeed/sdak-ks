@@ -768,8 +768,12 @@ $(function () {
                 window.location.href = (user && user.role === 'admin') ? '../admin/' : '../member/';
             } else {
                 API.clearAuth();
+                window.location.reload(); // reload to re-init everything properly
             }
-        }).catch(function() { API.clearAuth(); });
+        }).catch(function() {
+            API.clearAuth();
+            window.location.reload();
+        });
         return;
     }
 

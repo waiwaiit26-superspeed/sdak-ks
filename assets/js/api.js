@@ -80,7 +80,10 @@ const API = {
             if (response.status === 401 && !options._retry) {
                 const isAuthAction = url.indexOf('controller=auth&action=login') !== -1
                     || url.indexOf('controller=auth&action=register') !== -1
-                    || url.indexOf('controller=auth&action=google-login') !== -1;
+                    || url.indexOf('controller=auth&action=google-login') !== -1
+                    || url.indexOf('controller=auth&action=complete-google-register') !== -1
+                    || url.indexOf('controller=auth&action=forget-password') !== -1
+                    || url.indexOf('controller=auth&action=reset-password') !== -1;
 
                 if (isAuthAction) {
                     // Auth actions: return the error data directly (don't try refresh)
@@ -106,8 +109,8 @@ const API = {
 
             return data;
         } catch (error) {
-            console.error('API Error:', error);
-            return { success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อ' };
+            console.error('API Error:', error, 'URL:', url);
+            return { success: false, message: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง' };
         }
     },
 

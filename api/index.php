@@ -4,6 +4,10 @@
  * URL: /api/?controller=auth&action=login
  */
 
+// ─── Prevent PHP errors from corrupting JSON output ───
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 // ─── CORS ───
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -14,6 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
+// ─── Catch fatal errors (memory, timeout, etc.) ───
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        // Clear any partial output
+        if (ob_get_length()) ob_end_clean();
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        error_log("API Fatal: {$error['message']} in {$error['file']}:{$error['line']}");
+        echo json_encode(['success' => false, 'message' => 'เกิดข้อผิดพลาดภายในระบบ'], JSON_UNESCAPED_UNICODE);
+    }
+});
 
 // ─── Autoloader & Config ───
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -136,4 +153,9 @@ if (!method_exists($ctrl, $method)) {
     jsonResponse(false, "Action '{$action}' not found", null, 404);
 }
 
-$ctrl->$method();
+try {
+    $ctrl->$method();
+} catch (\Throwable $e) {
+    error_log("API Error [{$controller}/{$action}]: " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    jsonResponse(false, 'เกิดข้อผิดพลาดภายในระบบ', null, 500);
+}
