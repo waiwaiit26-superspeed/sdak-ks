@@ -325,6 +325,41 @@ body.adminlte-body {
     border-top-color: var(--adminlte-warning) !important;
 }
 
+/* --- AdminLTE Bootstrap Overrides for Theme --- */
+.btn-primary {
+    background-color: var(--adminlte-primary) !important;
+    border-color: var(--adminlte-primary) !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--adminlte-primary) !important;
+    border-color: var(--adminlte-primary) !important;
+    filter: brightness(0.9);
+}
+.btn-outline-primary {
+    color: var(--adminlte-primary) !important;
+    border-color: var(--adminlte-primary) !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--adminlte-primary) !important;
+    border-color: var(--adminlte-primary) !important;
+    color: #fff !important;
+}
+.text-primary {
+    color: var(--adminlte-primary) !important;
+}
+a.text-primary:hover {
+    color: var(--adminlte-primary) !important;
+    filter: brightness(0.85);
+}
+.form-control:focus {
+    border-color: var(--adminlte-primary);
+    box-shadow: 0 0 0 .2rem rgba(109, 40, 217, .15);
+}
+.page-item.active .page-link {
+    background-color: var(--adminlte-primary);
+    border-color: var(--adminlte-primary);
+}
+
 /* --- AdminLTE form improvements --- */
 .form-group label {
     font-weight: 500;

@@ -31,10 +31,10 @@ $basePath = $basePath ?? './';
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <!-- Custom AdminLTE Theme -->
-    <link href="<?php echo $basePath; ?>assets/css/adminlte-custom.css" rel="stylesheet">
+    <link href="<?php echo $basePath; ?>assets/css/adminlte-custom.css?v=<?php echo time(); ?>" rel="stylesheet">
 
     <!-- PDPA CSS -->
-    <link href="<?php echo $basePath; ?>assets/css/pdpa.css" rel="stylesheet">
+    <link href="<?php echo $basePath; ?>assets/css/pdpa.css?v=<?php echo time(); ?>" rel="stylesheet">
 
     <?php if (!empty($extraCss)) echo $extraCss; ?>
 </head>

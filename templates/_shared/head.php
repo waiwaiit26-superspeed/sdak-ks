@@ -26,7 +26,7 @@ $basePath = $basePath ?? './';
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
-    <link href="<?php echo $basePath; ?>assets/css/style.css" rel="stylesheet">
+    <link href="<?php echo $basePath; ?>assets/css/style.css?v=<?php echo time(); ?>" rel="stylesheet">
 
     <!-- PDPA CSS -->
-    <link href="<?php echo $basePath; ?>assets/css/pdpa.css" rel="stylesheet">
+    <link href="<?php echo $basePath; ?>assets/css/pdpa.css?v=<?php echo time(); ?>" rel="stylesheet">
