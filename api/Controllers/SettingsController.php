@@ -33,6 +33,7 @@ class SettingsController extends Controller
                 'cta_title', 'cta_subtitle',
                 'social_facebook', 'social_line', 'social_youtube',
                 'social_tiktok', 'social_instagram', 'social_website',
+                'embed_stats_code',
             ];
             $filtered = [];
             foreach ($publicKeys as $key) {
@@ -85,6 +86,7 @@ class SettingsController extends Controller
             'smtp_from_email', 'smtp_from_name', 'smtp_encryption',
             'social_facebook', 'social_line', 'social_youtube',
             'social_tiktok', 'social_instagram', 'social_website',
+            'embed_stats_code',
             'telegram_bot_token', 'telegram_chat_id', 'telegram_notify_new_member',
             'telegram_notify_fee_slip', 'telegram_notify_activity_reg',
         ];

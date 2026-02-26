@@ -502,6 +502,21 @@
                             </div>
                         </div>
 
+                        <div class="card shadow-sm">
+                            <div class="card-header"><h3 class="card-title"><i class="bi bi-bar-chart me-2"></i>โค้ดสถิติผู้เข้าชม (Embed Stats)</h3></div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    วาง HTML/Script ของ Histats, Google Analytics, หรือตัวนับผู้เข้าชมอื่นๆ จะแสดงที่ footer
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Embed Code</label>
+                                    <textarea class="form-control font-monospace" name="embed_stats_code" rows="8" placeholder="วาง HTML/Script โค้ดที่นี่..."></textarea>
+                                    <small class="text-muted">รองรับ HTML + JavaScript เช่น โค้ดจาก Histats.com, StatCounter, Google Analytics ฯลฯ</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card shadow-sm border-danger">
                             <div class="card-header bg-danger text-white"><h3 class="card-title mb-0"><i class="bi bi-shield-lock me-2"></i>รหัสยืนยันลบข้อมูล (Reset)</h3></div>
                             <div class="card-body">

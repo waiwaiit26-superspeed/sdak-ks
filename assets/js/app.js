@@ -108,6 +108,25 @@ const App = {
                     }
                 }
 
+                // Footer embed stats code (Histats, etc.)
+                const embedStats = result.data.embed_stats_code || '';
+                if (embedStats) {
+                    const embedEl = document.getElementById('footer-embed-stats');
+                    if (embedEl) {
+                        embedEl.innerHTML = embedStats;
+                        // Execute script tags inside the embed
+                        embedEl.querySelectorAll('script').forEach(function(oldScript) {
+                            const newScript = document.createElement('script');
+                            if (oldScript.src) {
+                                newScript.src = oldScript.src;
+                            } else {
+                                newScript.textContent = oldScript.textContent;
+                            }
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        });
+                    }
+                }
+
                 // Dynamic page title
                 if (shortName || siteNameEn) {
                     const titleParts = document.title.split('|');
