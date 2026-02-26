@@ -335,6 +335,43 @@
                         </div>
 
                         <div class="card shadow-sm">
+                            <div class="card-header"><h3 class="card-title"><i class="bi bi-house-heart me-2"></i>หน้าแรก (Hero Section)</h3></div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    ข้อความที่แสดงบนหน้าแรก หากว่าง จะใช้ชื่อสมาคมจากตั้งค่าข้อมูลเว็บไซต์แทน
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Badge (ป้ายเล็กด้านบน)</label>
+                                    <input type="text" class="form-control" name="hero_badge" placeholder="เช่น SDAK-KS">
+                                    <small class="text-muted">ข้อความในป้ายเล็กเหนือหัวข้อหลัก หากว่างจะใช้ชื่อภาษาอังกฤษ</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">หัวข้อหลัก (Hero Title)</label>
+                                    <textarea class="form-control" name="hero_title" rows="3" placeholder="เช่น สมาคมรองผู้อำนวยการ&#10;โรงเรียนมัธยมศึกษา&#10;จังหวัดกาฬสินธุ์"></textarea>
+                                    <small class="text-muted">ข้อความหัวข้อใหญ่ ขึ้นบรรทัดใหม่ได้ หากว่างจะใช้ชื่อสมาคม</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">คำอธิบายใต้หัวข้อ (Subtitle)</label>
+                                    <textarea class="form-control" name="hero_subtitle" rows="2" placeholder="เช่น ส.ร.ม.ก. — Secondary Deputy Administrator of Kalasin&#10;ร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์ให้ก้าวไกล"></textarea>
+                                    <small class="text-muted">แสดงใต้หัวข้อหลัก ขึ้นบรรทัดใหม่ได้ หากว่างจะใช้ชื่อย่อ + ชื่อภาษาอังกฤษ</small>
+                                </div>
+                                <hr>
+                                <p class="fw-bold text-muted mb-2"><small>ส่วนเชิญชวนสมัครสมาชิก (CTA)</small></p>
+                                <div class="mb-3">
+                                    <label class="form-label">หัวข้อ CTA</label>
+                                    <input type="text" class="form-control" name="cta_title" placeholder="เช่น ร่วมเป็นส่วนหนึ่งของ ส.ร.ม.ก.">
+                                    <small class="text-muted">หากว่างจะใช้: "ร่วมเป็นส่วนหนึ่งของ [ชื่อย่อ]"</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">คำอธิบาย CTA</label>
+                                    <input type="text" class="form-control" name="cta_subtitle" placeholder="เช่น สมัครสมาชิกวันนี้ เพื่อร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์">
+                                    <small class="text-muted">หากว่างจะใช้: "สมัครสมาชิกวันนี้ เพื่อร่วมเป็นส่วนหนึ่งของ[ชื่อสมาคม]"</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm">
                             <div class="card-header"><h3 class="card-title"><i class="bi bi-google me-2"></i>Google Login</h3></div>
                             <div class="card-body">
                                 <div class="mb-3">

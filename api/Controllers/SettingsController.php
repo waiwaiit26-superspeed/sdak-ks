@@ -29,6 +29,8 @@ class SettingsController extends Controller
                 'bank_name', 'bank_account_name', 'bank_account_number',
                 'google_client_id',
                 'login_title', 'login_subtitle',
+                'hero_badge', 'hero_title', 'hero_subtitle', 'hero_tagline',
+                'cta_title', 'cta_subtitle',
                 'social_facebook', 'social_line', 'social_youtube',
                 'social_tiktok', 'social_instagram', 'social_website',
             ];
@@ -77,6 +79,8 @@ class SettingsController extends Controller
             'member_number_prefix', 'member_number_digits',
             'reset_confirm_code',
             'login_title', 'login_subtitle',
+            'hero_badge', 'hero_title', 'hero_subtitle', 'hero_tagline',
+            'cta_title', 'cta_subtitle',
             'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
             'smtp_from_email', 'smtp_from_name', 'smtp_encryption',
             'social_facebook', 'social_line', 'social_youtube',

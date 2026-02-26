@@ -11,10 +11,9 @@ include ROOT_PATH . 'templates/public/header.php';
     <div class="container">
         <div class="row align-items-center hero-content">
             <div class="col-lg-7">
-                <span class="badge badge-hero mb-3"><i class="bi bi-mortarboard-fill me-1"></i> SDAK-KS</span>
-                <h1 class="mb-3">สมาคมรองผู้อำนวยการ<br>โรงเรียนมัธยมศึกษา<br>จังหวัดกาฬสินธุ์</h1>
-                <p class="lead mb-4">ส.ร.ม.ก. — Secondary Deputy Administrator of Kalasin<br>
-                ร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์ให้ก้าวไกล</p>
+                <span class="badge badge-hero mb-3" id="hero-badge"><i class="bi bi-mortarboard-fill me-1"></i> <span id="hero-badge-text"><?php echo SITE_NAME_EN; ?></span></span>
+                <h1 class="mb-3" id="hero-title"><?php echo htmlspecialchars(SITE_NAME); ?></h1>
+                <p class="lead mb-4" id="hero-subtitle"><?php echo htmlspecialchars(SITE_NAME_SHORT); ?> — <?php echo htmlspecialchars(SITE_NAME_EN); ?></p>
                 <div class="d-flex gap-3 flex-wrap">
                     <a href="./auth/?page=login" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
                         <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
@@ -74,7 +73,7 @@ include ROOT_PATH . 'templates/public/header.php';
         <div class="text-center mb-5">
             <h2 class="section-title">เกี่ยวกับสมาคม</h2>
             <div class="section-divider mx-auto"></div>
-            <p class="section-subtitle">ส.ร.ม.ก. สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์</p>
+            <p class="section-subtitle" id="about-subtitle"><?php echo htmlspecialchars(SITE_NAME_SHORT . ' ' . SITE_NAME); ?></p>
         </div>
 
         <div class="row g-4">
@@ -159,8 +158,8 @@ include ROOT_PATH . 'templates/public/header.php';
 <!-- CTA Section -->
 <section class="section-padding bg-gradient-primary text-white text-center">
     <div class="container">
-        <h2 class="fw-bold mb-3">ร่วมเป็นส่วนหนึ่งของ ส.ร.ม.ก.</h2>
-        <p class="lead mb-4 opacity-75">สมัครสมาชิกวันนี้ เพื่อร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์</p>
+        <h2 class="fw-bold mb-3" id="cta-title">ร่วมเป็นส่วนหนึ่งของ <?php echo htmlspecialchars(SITE_NAME_SHORT); ?></h2>
+        <p class="lead mb-4 opacity-75" id="cta-subtitle">สมัครสมาชิกวันนี้ เพื่อร่วมเป็นส่วนหนึ่งของ<?php echo htmlspecialchars(SITE_NAME); ?></p>
         <a href="./auth/?page=register" class="btn btn-light btn-lg px-5 fw-bold text-primary-custom">
             <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
         </a>
@@ -171,10 +170,54 @@ include ROOT_PATH . 'templates/public/header.php';
 
 <script>
 $(document).ready(function() {
+    loadHeroFromSettings();
     loadLatestNews();
     loadUpcomingActivities();
     loadPublicStats();
 });
+
+async function loadHeroFromSettings() {
+    try {
+        const res = await API.getSettings();
+        if (!res.success || !res.data) return;
+        const s = res.data;
+
+        // Hero badge
+        if (s.hero_badge) {
+            $('#hero-badge-text').text(s.hero_badge);
+        }
+
+        // Hero title (supports \n for line breaks)
+        if (s.hero_title) {
+            $('#hero-title').html(s.hero_title.replace(/\n/g, '<br>'));
+        }
+
+        // Hero subtitle (supports \n for line breaks)
+        if (s.hero_subtitle) {
+            $('#hero-subtitle').html(s.hero_subtitle.replace(/\n/g, '<br>'));
+        }
+
+        // About section subtitle
+        const shortName = s.site_name_short || '';
+        const siteName = s.site_name || '';
+        if (shortName || siteName) {
+            $('#about-subtitle').text((shortName ? shortName + ' ' : '') + siteName);
+        }
+
+        // CTA section
+        if (s.cta_title) {
+            $('#cta-title').text(s.cta_title);
+        } else if (shortName) {
+            $('#cta-title').text('ร่วมเป็นส่วนหนึ่งของ ' + shortName);
+        }
+
+        if (s.cta_subtitle) {
+            $('#cta-subtitle').text(s.cta_subtitle);
+        } else if (siteName) {
+            $('#cta-subtitle').text('สมัครสมาชิกวันนี้ เพื่อร่วมเป็นส่วนหนึ่งของ' + siteName);
+        }
+    } catch(e) { console.error(e); }
+}
 
 async function loadPublicStats() {
     try {
