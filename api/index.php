@@ -156,6 +156,8 @@ if (!method_exists($ctrl, $method)) {
 try {
     $ctrl->$method();
 } catch (\Throwable $e) {
-    error_log("API Error [{$controller}/{$action}]: " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    jsonResponse(false, 'เกิดข้อผิดพลาดภายในระบบ', null, 500);
+    $errMsg = $e->getMessage();
+    $errFile = basename($e->getFile()) . ':' . $e->getLine();
+    error_log("API Error [{$controller}/{$action}]: {$errMsg} in {$e->getFile()}:{$e->getLine()}");
+    jsonResponse(false, "เกิดข้อผิดพลาดภายในระบบ: [{$errFile}] {$errMsg}", null, 500);
 }
