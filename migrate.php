@@ -90,7 +90,23 @@ try {
             $insert->execute([$filename]);
             $results['run'][] = $filename;
         } catch (PDOException $e) {
-            $results['errors'][] = $filename . ': ' . $e->getMessage();
+            // บาง error ถือว่า "safe" — เช่น column มีอยู่แล้ว, table มีอยู่แล้ว
+            $safeErrors = ['Duplicate column', 'already exists', 'Duplicate key name'];
+            $isSafe = false;
+            foreach ($safeErrors as $pattern) {
+                if (stripos($e->getMessage(), $pattern) !== false) {
+                    $isSafe = true;
+                    break;
+                }
+            }
+            if ($isSafe) {
+                // บันทึกว่ารันแล้ว (ถือว่า schema ถูกต้องอยู่แล้ว)
+                $insert = $pdo->prepare("INSERT INTO migrations (filename) VALUES (?)");
+                $insert->execute([$filename]);
+                $results['run'][] = $filename . ' (already applied)';
+            } else {
+                $results['errors'][] = $filename . ': ' . $e->getMessage();
+            }
         }
     }
 } catch (PDOException $e) {
