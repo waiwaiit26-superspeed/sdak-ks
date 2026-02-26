@@ -13,7 +13,7 @@
         <div class="mb-1">
             <div id="footer-embed-stats"></div>
         </div>
-        <strong>&copy; <?php echo date('Y') + 543; ?> <a href="../"><?php echo defined('SITE_NAME_SHORT') ? SITE_NAME_SHORT : 'ส.ร.ม.ก.'; ?></a></strong> <?php echo defined('SITE_NAME') ? SITE_NAME : 'สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์'; ?>
+        <strong>&copy; <?php echo date('Y') + 543; ?> <a href="../"><?php echo siteConfig('site_name_short'); ?></a></strong> <?php echo siteConfig('site_name'); ?>
         <div class="d-none d-sm-block mt-1"><small>Dev by <a href="https://www.facebook.com/kroowaiwai" target="_blank" rel="noopener">Waiwai jaidee</a></small></div>
     </footer>
 </div><!-- ./wrapper -->

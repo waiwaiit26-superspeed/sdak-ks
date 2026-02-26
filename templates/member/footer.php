@@ -14,7 +14,7 @@ $basePath = $basePath ?? './';
     <footer class="main-footer text-center">
         <div><div id="footer-embed-stats" style="display:inline-block"></div></div>
         <div class="mt-1">
-            <strong>&copy; <?php echo date('Y') + 543; ?> <?php echo defined('SITE_NAME_SHORT') ? SITE_NAME_SHORT : 'ส.ร.ม.ก.'; ?></strong> <?php echo defined('SITE_NAME') ? SITE_NAME : 'สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์'; ?>
+            <strong>&copy; <?php echo date('Y') + 543; ?> <?php echo siteConfig('site_name_short'); ?></strong> <?php echo siteConfig('site_name'); ?>
             <span class="d-none d-sm-inline ml-2">| Dev by <a href="https://www.facebook.com/kroowaiwai" target="_blank" rel="noopener">Waiwai jaidee</a></span>
         </div>
     </footer>

@@ -11,7 +11,7 @@ $basePath = $basePath ?? './';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo ($pageTitle ?? 'สมาชิก') . ' | ' . SITE_NAME_SHORT; ?></title>
+    <title><?php echo ($pageTitle ?? 'สมาชิก') . ' | ' . siteConfig('site_name_short'); ?></title>
     <link id="dynamic-favicon" rel="icon" type="image/png" href="">
 
     <!-- Google Fonts -->

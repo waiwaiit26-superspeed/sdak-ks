@@ -152,7 +152,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Badge (ป้ายเล็กด้านบน)</label>
-                                    <input type="text" class="form-control" name="hero_badge" placeholder="เช่น <?php echo SITE_NAME_EN; ?>">
+                                    <input type="text" class="form-control" name="hero_badge" placeholder="เช่น <?php echo siteConfig('site_name_en'); ?>">
                                     <small class="text-muted">ข้อความในป้ายเล็กเหนือหัวข้อหลัก หากว่างจะใช้ชื่อภาษาอังกฤษ</small>
                                 </div>
                                 <div class="mb-3">
@@ -162,14 +162,14 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">คำอธิบายใต้หัวข้อ (Subtitle)</label>
-                                    <textarea class="form-control" name="hero_subtitle" rows="2" placeholder="เช่น <?php echo SITE_NAME_SHORT; ?> — Secondary Deputy Administrator of Kalasin&#10;ร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์ให้ก้าวไกล"></textarea>
+                                    <textarea class="form-control" name="hero_subtitle" rows="2" placeholder="เช่น <?php echo siteConfig('site_name_short'); ?> — Secondary Deputy Administrator of Kalasin&#10;ร่วมพัฒนาการศึกษาจังหวัดกาฬสินธุ์ให้ก้าวไกล"></textarea>
                                     <small class="text-muted">แสดงใต้หัวข้อหลัก ขึ้นบรรทัดใหม่ได้ หากว่างจะใช้ชื่อย่อ + ชื่อภาษาอังกฤษ</small>
                                 </div>
                                 <hr>
                                 <p class="fw-bold text-muted mb-2"><small>ส่วนเชิญชวนสมัครสมาชิก (CTA)</small></p>
                                 <div class="mb-3">
                                     <label class="form-label">หัวข้อ CTA</label>
-                                    <input type="text" class="form-control" name="cta_title" placeholder="เช่น ร่วมเป็นส่วนหนึ่งของ <?php echo SITE_NAME_SHORT; ?>">
+                                    <input type="text" class="form-control" name="cta_title" placeholder="เช่น ร่วมเป็นส่วนหนึ่งของ <?php echo siteConfig('site_name_short'); ?>">
                                     <small class="text-muted">หากว่างจะใช้: "ร่วมเป็นส่วนหนึ่งของ [ชื่อย่อ]"</small>
                                 </div>
                                 <div class="mb-3">
@@ -201,7 +201,7 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">คำนำหน้าเล่มที่ (Prefix)</label>
-                                        <input type="text" class="form-control" name="receipt_book_number" id="receiptBookPrefix" placeholder="เช่น <?php echo SITE_NAME_SHORT; ?>">
+                                        <input type="text" class="form-control" name="receipt_book_number" id="receiptBookPrefix" placeholder="เช่น <?php echo siteConfig('site_name_short'); ?>">
                                         <small class="text-muted">ระบบจะเติมปี พ.ศ. (2 หลักท้าย) ต่อท้ายให้อัตโนมัติ</small>
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -478,7 +478,7 @@
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">ชื่อผู้ส่ง (From Name)</label>
-                                        <input type="text" class="form-control" name="smtp_from_name" placeholder="เช่น <?php echo SITE_NAME_SHORT; ?>">
+                                        <input type="text" class="form-control" name="smtp_from_name" placeholder="เช่น <?php echo siteConfig('site_name_short'); ?>">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">อีเมลผู้ส่ง (From Email)</label>

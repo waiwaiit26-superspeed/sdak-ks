@@ -75,7 +75,7 @@ $(function () {
             </div>
         `);
 
-        document.title = n.title + ' - <?php echo SITE_NAME_SHORT; ?>';
+        document.title = n.title + ' - <?php echo siteConfig('site_name_short'); ?>';
     }
 
     loadNewsDetail();

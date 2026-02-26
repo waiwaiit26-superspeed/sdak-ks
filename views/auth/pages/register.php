@@ -145,7 +145,7 @@ $extraCss = '
             <div class="register-logo mb-2" id="registerLogo">
                 <a href="<?php echo $basePath; ?>">
                     <img id="regLogoImg" src="" alt="Logo" style="display:none;max-height:70px;">
-                    <span class="reg-logo-text"><i class="bi bi-mortarboard-fill"></i> <b><?php echo SITE_NAME_SHORT; ?></b></span>
+                    <span class="reg-logo-text"><i class="bi bi-mortarboard-fill"></i> <b><?php echo siteConfig('site_name_short'); ?></b></span>
                 </a>
             </div>
             <h4>สมัครสมาชิก</h4>
@@ -562,7 +562,7 @@ $(function () {
                     $('#regSubtitle').text(subtitle);
                 }
                 // Page title
-                const shortName = s.site_name_short || '<?php echo SITE_NAME_SHORT; ?>';
+                const shortName = s.site_name_short || '<?php echo siteConfig('site_name_short'); ?>';
                 document.title = 'สมัครสมาชิก | ' + shortName;
 
                 // Google Sign-In

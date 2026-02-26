@@ -39,3 +39,44 @@ function getDB() {
     }
     return $db;
 }
+
+/**
+ * Get site config from DB (cached), fallback to PHP constant
+ * Usage: siteConfig('site_name_short') → ดึงจาก site_settings ก่อน, ถ้าไม่มีใช้ค่าจาก config
+ */
+function siteConfig(string $key): string
+{
+    static $cache = null;
+    if ($cache === null) {
+        try {
+            $db = getDB();
+            $rows = $db->select('site_settings', ['setting_key', 'setting_value'], [
+                'setting_key' => ['site_name', 'site_name_short', 'site_name_en']
+            ]);
+            $cache = [];
+            foreach ($rows as $row) {
+                if ($row['setting_value'] !== null && $row['setting_value'] !== '') {
+                    $cache[$row['setting_key']] = $row['setting_value'];
+                }
+            }
+        } catch (\Exception $e) {
+            $cache = [];
+        }
+    }
+
+    if (!empty($cache[$key])) {
+        return $cache[$key];
+    }
+
+    // Fallback to config constant
+    $map = [
+        'site_name'       => 'SITE_NAME',
+        'site_name_short' => 'SITE_NAME_SHORT',
+        'site_name_en'    => 'SITE_NAME_EN',
+    ];
+    if (isset($map[$key]) && defined($map[$key])) {
+        return constant($map[$key]);
+    }
+
+    return '';
+}

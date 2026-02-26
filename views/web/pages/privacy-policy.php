@@ -3,7 +3,7 @@
  * Privacy Policy Page — PDPA Compliance
  * นโยบายความเป็นส่วนตัว ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562
  */
-$pageTitle = 'นโยบายความเป็นส่วนตัว | ' . SITE_NAME_SHORT . ' ' . SITE_NAME_EN;
+$pageTitle = 'นโยบายความเป็นส่วนตัว | ' . siteConfig('site_name_short') . ' ' . siteConfig('site_name_en');
 $currentPage = 'privacy-policy';
 include ROOT_PATH . 'templates/public/header.php';
 ?>
@@ -26,7 +26,7 @@ include ROOT_PATH . 'templates/public/header.php';
 
                     <!-- 1. บทนำ -->
                     <h4 class="privacy-heading"><i class="bi bi-1-circle-fill me-2"></i>บทนำ</h4>
-                    <p><?php echo SITE_NAME; ?> (<?php echo SITE_NAME_SHORT; ?>) หรือ <?php echo SITE_NAME_EN; ?> (ต่อไปนี้เรียกว่า "สมาคม") ตระหนักถึงความสำคัญของการคุ้มครองข้อมูลส่วนบุคคลของท่าน และมุ่งมั่นที่จะปฏิบัติตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) อย่างเคร่งครัด</p>
+                    <p><?php echo siteConfig('site_name'); ?> (<?php echo siteConfig('site_name_short'); ?>) หรือ <?php echo siteConfig('site_name_en'); ?> (ต่อไปนี้เรียกว่า "สมาคม") ตระหนักถึงความสำคัญของการคุ้มครองข้อมูลส่วนบุคคลของท่าน และมุ่งมั่นที่จะปฏิบัติตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA) อย่างเคร่งครัด</p>
                     <p>นโยบายฉบับนี้จัดทำขึ้นเพื่อแจ้งให้ท่านทราบถึงวิธีการที่สมาคมเก็บรวบรวม ใช้ และเปิดเผยข้อมูลส่วนบุคคลของท่าน รวมถึงสิทธิต่าง ๆ ของท่านในฐานะเจ้าของข้อมูลส่วนบุคคล</p>
 
                     <!-- 2. ข้อมูลที่เก็บรวบรวม -->
@@ -283,7 +283,7 @@ include ROOT_PATH . 'templates/public/header.php';
                     <h4 class="privacy-heading"><i class="bi bi-envelope-fill me-2"></i>ช่องทางการติดต่อ</h4>
                     <div class="privacy-info-box bg-light">
                         <h6 class="fw-bold">เจ้าหน้าที่คุ้มครองข้อมูลส่วนบุคคล (DPO)</h6>
-                        <p class="mb-1"><i class="bi bi-building me-2"></i><?php echo SITE_NAME; ?> (<?php echo SITE_NAME_SHORT; ?>)</p>
+                        <p class="mb-1"><i class="bi bi-building me-2"></i><?php echo siteConfig('site_name'); ?> (<?php echo siteConfig('site_name_short'); ?>)</p>
                         <p class="mb-1"><i class="bi bi-geo-alt me-2"></i>จังหวัดกาฬสินธุ์</p>
                         <p class="mb-1"><i class="bi bi-envelope me-2"></i>อีเมล: <a href="mailto:contact@sdak.org">contact@sdak.org</a></p>
                     </div>

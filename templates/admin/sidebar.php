@@ -11,7 +11,7 @@ $page = $page ?? '';
     <!-- Brand Logo -->
     <a href="./?page=dashboard" class="brand-link">
         <i class="bi bi-mortarboard-fill brand-image" style="font-size:1.5rem;margin:0 .5rem 0 .3rem;color:#fff;"></i>
-        <span class="brand-text font-weight-bold"><?php echo SITE_NAME_SHORT; ?> Admin</span>
+        <span class="brand-text font-weight-bold"><?php echo siteConfig('site_name_short'); ?> Admin</span>
     </a>
 
     <!-- Sidebar -->

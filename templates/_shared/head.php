@@ -8,9 +8,9 @@ $basePath = $basePath ?? './';
 ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle ?? (SITE_NAME_SHORT . ' | ' . SITE_NAME_EN); ?></title>
+    <title><?php echo $pageTitle ?? (siteConfig('site_name_short') . ' | ' . siteConfig('site_name_en')); ?></title>
     <link id="dynamic-favicon" rel="icon" type="image/png" href="">
-    <meta name="description" content="<?php echo htmlspecialchars(SITE_NAME . ' (' . SITE_NAME_SHORT . ') ' . SITE_NAME_EN); ?>">
+    <meta name="description" content="<?php echo htmlspecialchars(siteConfig('site_name') . ' (' . siteConfig('site_name_short') . ') ' . siteConfig('site_name_en')); ?>">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

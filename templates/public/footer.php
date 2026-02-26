@@ -13,10 +13,10 @@ $basePath = $basePath ?? './';
             <div class="col-lg-4">
                 <h5>
                     <img id="footer-logo" src="" alt="" style="display:none;height:32px;width:auto;object-fit:contain;margin-right:8px;vertical-align:middle;">
-                    <i class="bi bi-mortarboard-fill me-2" id="footer-icon"></i><span id="footer-brand-text"><?php echo SITE_NAME_SHORT; ?></span>
+                    <i class="bi bi-mortarboard-fill me-2" id="footer-icon"></i><span id="footer-brand-text"><?php echo siteConfig('site_name_short'); ?></span>
                 </h5>
-                <p id="footer-description"><?php echo htmlspecialchars(SITE_NAME); ?><br>
-                   <?php echo htmlspecialchars(SITE_NAME_EN); ?></p>
+                <p id="footer-description"><?php echo htmlspecialchars(siteConfig('site_name')); ?><br>
+                   <?php echo htmlspecialchars(siteConfig('site_name_en')); ?></p>
                 <div id="footer-social" class="d-flex gap-3 mt-3" style="display:none!important">
                 </div>
             </div>
@@ -53,7 +53,7 @@ $basePath = $basePath ?? './';
 </footer>
 <div class="footer-bottom text-center">
     <div class="container">
-        &copy; <?php echo date('Y') + 543; ?> <span id="footer-copyright-text"><?php echo htmlspecialchars(SITE_NAME . ' (' . SITE_NAME_SHORT . ')'); ?></span> | <?php echo htmlspecialchars(SITE_NAME_EN); ?>
+        &copy; <?php echo date('Y') + 543; ?> <span id="footer-copyright-text"><?php echo htmlspecialchars(siteConfig('site_name') . ' (' . siteConfig('site_name_short') . ')'); ?></span> | <?php echo htmlspecialchars(siteConfig('site_name_en')); ?>
         <br><a href="<?php echo $basePath; ?>web/?page=privacy-policy" class="small text-white-50"><i class="bi bi-shield-lock me-1"></i>นโยบายความเป็นส่วนตัว (PDPA)</a>
         <br><small class="text-white-50">Dev by <a href="https://www.facebook.com/kroowaiwai" target="_blank" rel="noopener" class="text-white-50" style="text-decoration:underline">Waiwai jaidee</a></small>
     </div>
