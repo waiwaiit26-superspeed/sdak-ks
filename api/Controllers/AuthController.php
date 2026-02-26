@@ -457,7 +457,7 @@ class AuthController extends Controller
                 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '.';
                 $resetUrl = $baseUrl . '/auth/?page=resetpass&token=' . urlencode($token);
 
-                $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+                $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
                 $userName = $user['full_name'] ?: $user['username'];
 
                 // สร้างเนื้อหาอีเมล
@@ -658,7 +658,7 @@ class AuthController extends Controller
 
         try {
             $settings = $this->model('SettingsModel');
-            $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+            $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
 
             $bodyContent = '
                 <p>สวัสดี,</p>

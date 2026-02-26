@@ -13,10 +13,10 @@ $basePath = $basePath ?? './';
             <div class="col-lg-4">
                 <h5>
                     <img id="footer-logo" src="" alt="" style="display:none;height:32px;width:auto;object-fit:contain;margin-right:8px;vertical-align:middle;">
-                    <i class="bi bi-mortarboard-fill me-2" id="footer-icon"></i><span id="footer-brand-text">ส.ร.ม.ก.</span>
+                    <i class="bi bi-mortarboard-fill me-2" id="footer-icon"></i><span id="footer-brand-text"><?php echo SITE_NAME_SHORT; ?></span>
                 </h5>
-                <p id="footer-description">สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์<br>
-                   Secondary Deputy Administrator of Kalasin</p>
+                <p id="footer-description"><?php echo htmlspecialchars(SITE_NAME); ?><br>
+                   <?php echo htmlspecialchars(SITE_NAME_EN); ?></p>
                 <div id="footer-social" class="d-flex gap-3 mt-3" style="display:none!important">
                 </div>
             </div>

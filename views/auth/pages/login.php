@@ -519,8 +519,8 @@ $basePath = $basePath ?? './';
 <div class="login-wrapper">
     <div class="login-logo" id="loginLogo">
         <a href="<?php echo $basePath; ?>">
-            <img id="logoImg" src="" alt="ส.ร.ม.ก." style="display:none;">
-            <span class="logo-text"><i class="bi bi-mortarboard-fill"></i> ส.ร.ม.ก.</span>
+            <img id="logoImg" src="" alt="<?php echo SITE_NAME_SHORT; ?>" style="display:none;">
+            <span class="logo-text"><i class="bi bi-mortarboard-fill"></i> <?php echo SITE_NAME_SHORT; ?></span>
         </a>
     </div>
 
@@ -720,7 +720,7 @@ $(function () {
                     $('#loginSubtitle').text(subtitle);
                 }
                 // Page title
-                const shortName = s.site_name_short || 'ส.ร.ม.ก.';
+                const shortName = s.site_name_short || '<?php echo SITE_NAME_SHORT; ?>';
                 document.title = 'เข้าสู่ระบบ | ' + shortName;
 
                 // Google Sign-In

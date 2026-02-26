@@ -11,8 +11,8 @@ $basePath = $basePath ?? './';
     <div class="container">
         <a class="navbar-brand" href="<?php echo $basePath; ?>">
             <i class="bi bi-mortarboard-fill"></i>
-            <span class="d-none d-sm-inline">ส.ร.ม.ก.</span>
-            <span class="d-sm-none">SDAK-KS</span>
+            <span class="d-none d-sm-inline"><?php echo SITE_NAME_SHORT; ?></span>
+            <span class="d-sm-none"><?php echo SITE_NAME_EN; ?></span>
         </a>
 
         <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">

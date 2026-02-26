@@ -144,7 +144,7 @@ class ReceiptController extends Controller
     public function nextNumber(): void
     {
         $settings = $this->model('SettingsModel');
-        $prefix = trim($settings->get('receipt_book_number', 'ส.ร.ม.ก.'));
+        $prefix = trim($settings->get('receipt_book_number', SITE_NAME_SHORT));
 
         $issuedDate = $this->query('issued_date') ?: date('Y-m-d');
         $receipts = $this->model('ReceiptModel');

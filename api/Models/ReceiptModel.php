@@ -19,7 +19,7 @@ class ReceiptModel extends Model
     public function createReceipt(array $data): int
     {
         $settings = new SettingsModel();
-        $prefix = trim($settings->get('receipt_book_number', 'ส.ร.ม.ก.'));
+        $prefix = trim($settings->get('receipt_book_number', SITE_NAME_SHORT));
 
         // Determine issued_date and derive Buddhist year
         $issuedDate = $data['issued_date'] ?? date('Y-m-d');
@@ -53,7 +53,7 @@ class ReceiptModel extends Model
 
     /**
      * Build book_number string: prefix + " " + 2-digit Buddhist year
-     * e.g. "ส.ร.ม.ก." + "2026-02-14" → "ส.ร.ม.ก. 69" (พ.ศ.2569)
+     * e.g. "SITE_NAME_SHORT" + "2026-02-14" → "SITE_NAME_SHORT 69" (พ.ศ.2569)
      */
     public static function buildBookNumber(string $prefix, string $date): string
     {

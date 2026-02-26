@@ -61,7 +61,7 @@ class Telegram
         $enabled = $settings->get('telegram_notify_new_member', '0');
         if ($enabled !== '1') return false;
 
-        $siteName  = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName  = $settings->get('site_name_short', SITE_NAME_SHORT);
         $typeLabels = [
             'ordinary'  => 'สามัญ',
             'associate' => 'วิสามัญ',
@@ -104,7 +104,7 @@ class Telegram
         $enabled = $settings->get('telegram_notify_fee_slip', '0');
         if ($enabled !== '1') return false;
 
-        $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
         $name     = $userData['full_name'] ?? ($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '');
         $year     = $feeData['year'] ?? '-';
         $amount   = isset($feeData['amount']) ? number_format((float)$feeData['amount'], 2) : '-';
@@ -132,7 +132,7 @@ class Telegram
         $enabled = $settings->get('telegram_notify_activity_reg', '0');
         if ($enabled !== '1') return false;
 
-        $siteName  = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName  = $settings->get('site_name_short', SITE_NAME_SHORT);
         $name      = $userData['full_name'] ?? ($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '');
         $actTitle  = $activityData['title'] ?? '-';
         $hasFee    = !empty($activityData['has_fee']) ? 'มีค่าใช้จ่าย' : 'ไม่มีค่าใช้จ่าย';
@@ -157,7 +157,7 @@ class Telegram
     public static function notifyAdmin(string $title, string $body): bool
     {
         $settings = new \App\Models\SettingsModel();
-        $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
 
         $message  = "📢 <b>{$title}</b>\n";
         $message .= "━━━━━━━━━━━━━━━\n";

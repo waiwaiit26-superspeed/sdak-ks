@@ -10,7 +10,7 @@ $basePath = $basePath ?? './';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? (SITE_NAME_SHORT . ' | ' . SITE_NAME_EN); ?></title>
     <link id="dynamic-favicon" rel="icon" type="image/png" href="">
-    <meta name="description" content="สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์ (ส.ร.ม.ก.) SDAK-KS">
+    <meta name="description" content="<?php echo htmlspecialchars(SITE_NAME . ' (' . SITE_NAME_SHORT . ') ' . SITE_NAME_EN); ?>">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

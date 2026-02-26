@@ -132,7 +132,7 @@ class SettingsController extends Controller
             Response::error('กรุณากรอก Bot Token และ Chat ID และบันทึกก่อน');
         }
 
-        $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
         $message  = "✅ <b>ทดสอบการแจ้งเตือน Telegram</b>\n";
         $message .= "━━━━━━━━━━━━━━━\n";
         $message .= "การเชื่อมต่อ Telegram Bot สำเร็จแล้ว!\n";

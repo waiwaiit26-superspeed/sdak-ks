@@ -5,7 +5,7 @@
     <div class="login-logo">
         <a href="<?php echo $basePath; ?>">
             <img id="logoImg" src="" alt="Logo" style="display:none;max-height:72px;" class="mb-2"><br>
-            <span id="siteName"><i class="bi bi-mortarboard-fill"></i> <b>ส.ร.ม.ก.</b></span>
+            <span id="siteName"><i class="bi bi-mortarboard-fill"></i> <b><?php echo SITE_NAME_SHORT; ?></b></span>
         </a>
     </div>
     <div class="card card-outline card-warning">
@@ -86,7 +86,7 @@ $(function () {
                     const favSrc = fav.startsWith('http') ? fav : ('../' + fav);
                     $('link[rel="icon"]').attr('href', favSrc);
                 }
-                const shortName = s.site_name_short || 'ส.ร.ม.ก.';
+                const shortName = s.site_name_short || '<?php echo SITE_NAME_SHORT; ?>';
                 $('#siteName b').text(shortName);
                 document.title = 'ลืมรหัสผ่าน | ' + shortName;
             }

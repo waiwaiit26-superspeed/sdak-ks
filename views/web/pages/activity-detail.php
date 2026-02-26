@@ -171,7 +171,7 @@ $(function () {
                     <i class="bi bi-arrow-left me-1"></i> กลับไปหน้ากิจกรรม
                 </a>
             `);
-            document.title = a.title + ' - ส.ร.ม.ก.';
+            document.title = a.title + ' - <?php echo SITE_NAME_SHORT; ?>';
             return;
         }
 
@@ -312,7 +312,7 @@ $(function () {
             </a>
         `);
 
-        document.title = a.title + ' - ส.ร.ม.ก.';
+        document.title = a.title + ' - <?php echo SITE_NAME_SHORT; ?>';
         bindEvents();
     }
 

@@ -62,7 +62,7 @@ async function loadDynamicPage() {
         const res = await API.getPageDetail(pageSlug);
         if (res.success && res.data) {
             const pg = res.data;
-            document.title = pg.title + ' | ส.ร.ม.ก.';
+            document.title = pg.title + ' | <?php echo SITE_NAME_SHORT; ?>';
             $('#pageTitle').text(pg.title);
             $('#breadcrumbTitle').text(pg.title);
 

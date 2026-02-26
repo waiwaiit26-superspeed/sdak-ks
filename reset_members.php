@@ -18,7 +18,7 @@ $db = getDB();
 $logoWeb   = $db->get('site_settings', 'setting_value', ['setting_key' => 'logo_web']) ?: '';
 $logoLogin = $db->get('site_settings', 'setting_value', ['setting_key' => 'logo_login']) ?: '';
 $logo      = $logoLogin ?: $logoWeb;
-$siteName  = $db->get('site_settings', 'setting_value', ['setting_key' => 'site_name_short']) ?: 'ส.ร.ม.ก.';
+$siteName  = $db->get('site_settings', 'setting_value', ['setting_key' => 'site_name_short']) ?: SITE_NAME_SHORT;
 
 // ─── ตรวจสอบ Auth Token ───
 $authToken = $_POST['_token'] ?? $_GET['_token'] ?? '';

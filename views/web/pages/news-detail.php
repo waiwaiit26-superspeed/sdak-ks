@@ -75,7 +75,7 @@ $(function () {
             </div>
         `);
 
-        document.title = n.title + ' - ส.ร.ม.ก.';
+        document.title = n.title + ' - <?php echo SITE_NAME_SHORT; ?>';
     }
 
     loadNewsDetail();

@@ -29,7 +29,7 @@ class Mailer
         $smtpUser = $settings->get('smtp_username', '');
         $smtpPass = $settings->get('smtp_password', '');
         $smtpFrom = $settings->get('smtp_from_email', '') ?: $smtpUser;
-        $smtpFromName = $settings->get('smtp_from_name', '') ?: ($settings->get('site_name_short', 'ส.ร.ม.ก.'));
+        $smtpFromName = $settings->get('smtp_from_name', '') ?: ($settings->get('site_name_short', SITE_NAME_SHORT));
         $smtpEncryption = $settings->get('smtp_encryption', 'tls'); // tls | ssl | none
 
         if (empty($smtpHost) || empty($smtpUser)) {
@@ -67,7 +67,7 @@ class Mailer
     public static function buildTemplate(string $title, string $bodyContent, string $footerText = ''): string
     {
         $settings = new \App\Models\SettingsModel();
-        $siteName = $settings->get('site_name_short', 'ส.ร.ม.ก.');
+        $siteName = $settings->get('site_name_short', SITE_NAME_SHORT);
         $logo     = $settings->get('logo_web', '');
 
         if (!$footerText) {
