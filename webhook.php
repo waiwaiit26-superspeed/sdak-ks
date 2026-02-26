@@ -199,6 +199,7 @@ $protectedFiles = [
     'webhook.php',          // อย่าเขียนทับตัวเอง
     'webhook-secret.php',   // secrets ของ server
     'config/config.php',    // config มี DB credentials ของ production
+    'config/sites',         // site configs มี credentials แต่ละสมาคม
     'deploy-log.txt',       // log
     '.git',                 // git history
     'vendor',               // composer (จะรัน composer install แทน)

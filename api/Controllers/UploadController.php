@@ -133,8 +133,9 @@ class UploadController extends Controller
 
         $finalSize = filesize($target);
 
-        // Build public URL — use path relative to project root
-        $url = 'uploads/' . $subDir . '/' . $filename;
+        // Build public URL — use path relative to project root (แยกตาม domain)
+        $siteDomain = defined('SITE_DOMAIN') ? SITE_DOMAIN : '';
+        $url = $siteDomain ? 'uploads/' . $siteDomain . '/' . $subDir . '/' . $filename : 'uploads/' . $subDir . '/' . $filename;
 
         Response::success([
             'url'      => $url,
@@ -253,7 +254,8 @@ class UploadController extends Controller
         $finalH = imagesy($src);
         imagedestroy($src);
 
-        $url = 'uploads/logos/' . $filename;
+        $siteDomain = defined('SITE_DOMAIN') ? SITE_DOMAIN : '';
+        $url = $siteDomain ? 'uploads/' . $siteDomain . '/logos/' . $filename : 'uploads/logos/' . $filename;
 
         Response::success([
             'url'      => $url,

@@ -11,7 +11,11 @@ cache/
 backups/
 BKK_DB/
 
-# Uploaded files (user content on server)
+# Uploaded files (user content — แยกตาม domain)
+uploads/sdak.obec.in/
+uploads/saak.obec.in/
+uploads/localhost/
+# Legacy upload folders (ก่อนย้ายเป็น multi-site)
 uploads/activities/*
 uploads/finance/*
 uploads/logos/*
@@ -35,7 +39,12 @@ Thumbs.db
 # Secrets — ห้าม push ขึ้น GitHub
 .env
 webhook-secret.php
-config/config.php
+
+# Site-specific configs (มี DB credentials)
+config/sites/localhost.php
+config/sites/sdak.obec.in.php
+config/sites/saak.obec.in.php
+# config/config.php อยู่ใน git ได้ (เป็นแค่ loader ไม่มี credentials)
 
 # Deploy log
 deploy-log.txt

@@ -716,7 +716,8 @@ class AuthController extends Controller
         $filePath = $dir . $fileName;
         file_put_contents($filePath, $data);
 
-        return 'uploads/' . $subFolder . '/' . $fileName;
+        $siteDomain = defined('SITE_DOMAIN') ? SITE_DOMAIN : '';
+        return $siteDomain ? 'uploads/' . $siteDomain . '/' . $subFolder . '/' . $fileName : 'uploads/' . $subFolder . '/' . $fileName;
     }
 
     private function verifyGoogleToken(string $token): ?array
