@@ -97,6 +97,8 @@ const API = {
                     this.clearAuth();
                     if (window.location.href.indexOf('login') === -1 && window.location.href.indexOf('register') === -1) {
                         window.location.href = this.baseUrl + 'auth/?page=login';
+                        // Never resolve — prevent error popups while redirecting
+                        return new Promise(() => {});
                     }
                     return data;
                 }
