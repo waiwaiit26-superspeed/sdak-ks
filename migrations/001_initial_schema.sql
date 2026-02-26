@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `google_id` VARCHAR(255) DEFAULT NULL,
     `role` ENUM('admin','member') NOT NULL DEFAULT 'member',
     `member_type` ENUM('ordinary','associate','affiliate','honorary') DEFAULT NULL,
+    `member_number` VARCHAR(50) DEFAULT NULL COMMENT 'เลขที่สมาชิก',
     `status` ENUM('pending','active','cancelled','suspended') NOT NULL DEFAULT 'pending',
     `prefix` VARCHAR(50) DEFAULT NULL COMMENT 'คำนำหน้าชื่อ',
     `full_name` VARCHAR(255) NOT NULL,
