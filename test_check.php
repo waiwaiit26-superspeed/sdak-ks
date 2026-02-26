@@ -56,6 +56,20 @@ if (file_exists($vendorPath) && file_exists($configPath)) {
             ]
         ]);
         echo "<b>Medoo connection:</b> <span style='color:green'>✅ Connected!</span><br>";
+        
+        // Check users table columns
+        echo "<br><b>Users table columns:</b><br>";
+        $cols = $db->query("SHOW COLUMNS FROM users")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($cols as $col) {
+            echo "  - {$col['Field']} ({$col['Type']})<br>";
+        }
+        
+        // Check all tables
+        echo "<br><b>All tables:</b><br>";
+        $tables = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($tables as $t) {
+            echo "  - {$t}<br>";
+        }
     } catch (Exception $e) {
         echo "<b>Medoo connection:</b> <span style='color:red'>❌ " . $e->getMessage() . "</span><br>";
     }
