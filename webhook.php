@@ -207,6 +207,13 @@ $protectedFiles = [
     'backups',
 ];
 
+// ไฟล์ที่ต้องลบออกจาก server (script ชั่วคราวที่ไม่ใช้แล้ว)
+$filesToDelete = [
+    'setup-multisite.php',
+    'fix-config.php',
+    'config/config.php.bak.*',  // backup files จาก fix-config
+];
+
 $sourceDir = $extractDir . '/' . rtrim($rootDir, '/');
 
 $copied = 0;
@@ -215,7 +222,10 @@ copyDir($sourceDir, DEPLOY_DIR, $protectedFiles, $copied, $skipped);
 
 logMsg("Copied {$copied} files, skipped {$skipped}");
 
-// Cleanup
+// ลบไฟล์ที่ไม่ต้องการออกจาก server
+cleanupObsoleteFiles($filesToDelete);
+
+// Cleanup temp
 deleteDir($extractDir);
 @unlink($zipFile);
 
@@ -340,6 +350,33 @@ function deleteDir($dir) {
         is_dir($path) ? deleteDir($path) : @unlink($path);
     }
     @rmdir($dir);
+}
+
+function cleanupObsoleteFiles($filesToDelete) {
+    $deleted = 0;
+    foreach ($filesToDelete as $pattern) {
+        $fullPattern = DEPLOY_DIR . '/' . $pattern;
+        // Support glob patterns (e.g., config/config.php.bak.*)
+        if (strpos($pattern, '*') !== false) {
+            $matches = glob($fullPattern);
+            foreach ($matches as $file) {
+                if (@unlink($file)) {
+                    $deleted++;
+                    logMsg("CLEANUP: deleted " . basename($file));
+                }
+            }
+        } else {
+            if (file_exists($fullPattern)) {
+                if (@unlink($fullPattern)) {
+                    $deleted++;
+                    logMsg("CLEANUP: deleted {$pattern}");
+                }
+            }
+        }
+    }
+    if ($deleted > 0) {
+        logMsg("CLEANUP: removed {$deleted} obsolete file(s)");
+    }
 }
 
 function logMsg($msg) {
