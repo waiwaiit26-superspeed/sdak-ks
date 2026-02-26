@@ -87,6 +87,27 @@ const App = {
                     if (fc) fc.textContent = siteName + ' (' + shortName + ')';
                 }
 
+                // Footer contact info
+                const contactAddress = result.data.contact_address || '';
+                const contactEmail = result.data.contact_email || '';
+                const contactPhone = result.data.contact_phone || '';
+                if (contactAddress) {
+                    const addrEl = document.querySelector('#footer-address span');
+                    if (addrEl) addrEl.textContent = contactAddress;
+                }
+                if (contactEmail) {
+                    const emailEl = document.querySelector('#footer-email span');
+                    if (emailEl) emailEl.textContent = contactEmail;
+                }
+                if (contactPhone) {
+                    const phoneEl = document.getElementById('footer-phone');
+                    if (phoneEl) {
+                        phoneEl.style.display = '';
+                        const phoneSpan = phoneEl.querySelector('span');
+                        if (phoneSpan) phoneSpan.textContent = contactPhone;
+                    }
+                }
+
                 // Dynamic page title
                 if (shortName || siteNameEn) {
                     const titleParts = document.title.split('|');

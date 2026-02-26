@@ -41,9 +41,10 @@ $basePath = $basePath ?? './';
             </div>
             <div class="col-lg-3">
                 <h5>ติดต่อเรา</h5>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><i class="bi bi-geo-alt me-2"></i>จังหวัดกาฬสินธุ์</li>
-                    <li class="mb-2"><i class="bi bi-envelope me-2"></i>contact@sdak-ks.org</li>
+                <ul class="list-unstyled" id="footer-contact">
+                    <li class="mb-2" id="footer-address"><i class="bi bi-geo-alt me-2"></i><span>จังหวัดกาฬสินธุ์</span></li>
+                    <li class="mb-2" id="footer-email"><i class="bi bi-envelope me-2"></i><span>contact@sdak-ks.org</span></li>
+                    <li class="mb-2" id="footer-phone" style="display:none"><i class="bi bi-telephone me-2"></i><span></span></li>
                 </ul>
                 <!-- Histats.com  (div with counter) --><div id="histats_counter"></div>
                 <!-- Histats.com  START  (aync)-->
@@ -64,7 +65,7 @@ $basePath = $basePath ?? './';
 </footer>
 <div class="footer-bottom text-center">
     <div class="container">
-        &copy; <?php echo date('Y') + 543; ?> <span id="footer-copyright-text">สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์ (ส.ร.ม.ก.)</span> | SDAK-KS
+        &copy; <?php echo date('Y') + 543; ?> <span id="footer-copyright-text"><?php echo htmlspecialchars(SITE_NAME . ' (' . SITE_NAME_SHORT . ')'); ?></span> | <?php echo htmlspecialchars(SITE_NAME_EN); ?>
         <br><a href="<?php echo $basePath; ?>web/?page=privacy-policy" class="small text-white-50"><i class="bi bi-shield-lock me-1"></i>นโยบายความเป็นส่วนตัว (PDPA)</a>
         <br><small class="text-white-50">Dev by <a href="https://www.facebook.com/kroowaiwai" target="_blank" rel="noopener" class="text-white-50" style="text-decoration:underline">Waiwai jaidee</a></small>
     </div>
