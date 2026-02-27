@@ -51,7 +51,7 @@ function siteConfig(string $key): string
         try {
             $db = getDB();
             $rows = $db->select('site_settings', ['setting_key', 'setting_value'], [
-                'setting_key' => ['site_name', 'site_name_short', 'site_name_en']
+                'setting_key' => ['site_name', 'site_name_short', 'site_name_en', 'logo_favicon', 'logo_web']
             ]);
             $cache = [];
             foreach ($rows as $row) {
