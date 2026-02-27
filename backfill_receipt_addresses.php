@@ -37,7 +37,7 @@ $updated = 0;
 $skipped = 0;
 
 foreach ($receipts as $r) {
-    $user = $db->get('users', ['id', 'full_name', 'work_address', 'school_organization'], [
+    $user = $db->get('users', ['id', 'full_name', 'work_address', 'home_address', 'school_organization'], [
         'id' => $r['user_id'],
     ]);
 
@@ -48,26 +48,29 @@ foreach ($receipts as $r) {
     }
 
     // Build address (same logic as FeeController::buildPayerAddress)
+    // Try work_address first, then home_address
     $payerAddress = null;
-    $workAddr = $user['work_address'] ?? null;
+    foreach (['work_address', 'home_address'] as $field) {
+        $raw = $user[$field] ?? null;
+        if ($raw) {
+            $addr = is_string($raw) ? json_decode($raw, true) : $raw;
+            if (is_array($addr)) {
+                $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
+                $subdistrict = trim($addr['subdistrict'] ?? '');
+                $district    = trim($addr['district'] ?? '');
+                $province    = trim($addr['province'] ?? '');
+                $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
 
-    if ($workAddr) {
-        $addr = is_string($workAddr) ? json_decode($workAddr, true) : $workAddr;
-        if (is_array($addr)) {
-            $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
-            $subdistrict = trim($addr['subdistrict'] ?? '');
-            $district    = trim($addr['district'] ?? '');
-            $province    = trim($addr['province'] ?? '');
-            $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
-
-            if ($detail || $subdistrict || $district || $province) {
-                $payerAddress = json_encode([
-                    'detail'      => $detail,
-                    'subdistrict' => $subdistrict,
-                    'district'    => $district,
-                    'province'    => $province,
-                    'zipcode'     => $zipcode,
-                ], JSON_UNESCAPED_UNICODE);
+                if ($detail || $subdistrict || $district || $province) {
+                    $payerAddress = json_encode([
+                        'detail'      => $detail,
+                        'subdistrict' => $subdistrict,
+                        'district'    => $district,
+                        'province'    => $province,
+                        'zipcode'     => $zipcode,
+                    ], JSON_UNESCAPED_UNICODE);
+                    break;
+                }
             }
         }
     }

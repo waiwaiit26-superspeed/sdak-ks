@@ -350,7 +350,7 @@ class ActivityController extends Controller
         if (!$act || !$act['has_fee'] || $act['fee_amount'] <= 0) return;
 
         $users = $this->model('UserModel');
-        $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address']);
+        $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address', 'home_address']);
         if (!$user) return;
 
         $payerAddress = FeeController::buildPayerAddress($user);

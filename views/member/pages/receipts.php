@@ -670,18 +670,21 @@ function toBase64(url) {
 // Build payer address from member data → returns JSON string (mirrors PHP FeeController::buildPayerAddress)
 function buildPayerAddress(member) {
     if (!member) return '';
-    let wa = member.work_address;
-    if (typeof wa === 'string' && wa) {
-        try { wa = JSON.parse(wa); } catch(e) { return wa; }
-    }
-    if (wa && typeof wa === 'object') {
-        const detail      = (wa.address || wa.detail || '').trim();
-        const subdistrict = (wa.subdistrict || '').trim();
-        const district    = (wa.district || '').trim();
-        const province    = (wa.province || '').trim();
-        const zipcode     = (wa.zipcode || '').trim();
-        if (detail || subdistrict || district || province) {
-            return JSON.stringify({ detail, subdistrict, district, province, zipcode });
+    // Try work_address first, then home_address
+    for (const field of ['work_address', 'home_address']) {
+        let wa = member[field];
+        if (typeof wa === 'string' && wa) {
+            try { wa = JSON.parse(wa); } catch(e) { if (field === 'work_address') return wa; continue; }
+        }
+        if (wa && typeof wa === 'object') {
+            const detail      = (wa.address || wa.detail || '').trim();
+            const subdistrict = (wa.subdistrict || '').trim();
+            const district    = (wa.district || '').trim();
+            const province    = (wa.province || '').trim();
+            const zipcode     = (wa.zipcode || '').trim();
+            if (detail || subdistrict || district || province) {
+                return JSON.stringify({ detail, subdistrict, district, province, zipcode });
+            }
         }
     }
     return member.school_organization || '';

@@ -303,7 +303,7 @@ class FeeController extends Controller
         if (!$fee) Response::error('ไม่พบรายการค่าธรรมเนียม', 404);
 
         $users = $this->model('UserModel');
-        $member = $users->find((int)$fee['user_id'], ['full_name', 'member_type', 'school_organization', 'work_address']);
+        $member = $users->find((int)$fee['user_id'], ['full_name', 'member_type', 'school_organization', 'work_address', 'home_address']);
 
         switch ($action) {
             case 'approve':
@@ -400,26 +400,28 @@ class FeeController extends Controller
      */
     public static function buildPayerAddress(array $member): ?string
     {
-        // Try work_address JSON first
-        $workAddr = $member['work_address'] ?? null;
-        if ($workAddr) {
-            $addr = is_string($workAddr) ? json_decode($workAddr, true) : $workAddr;
-            if (is_array($addr)) {
-                $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
-                $subdistrict = trim($addr['subdistrict'] ?? '');
-                $district    = trim($addr['district'] ?? '');
-                $province    = trim($addr['province'] ?? '');
-                $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
+        // Try work_address JSON first, then home_address as fallback
+        foreach (['work_address', 'home_address'] as $field) {
+            $raw = $member[$field] ?? null;
+            if ($raw) {
+                $addr = is_string($raw) ? json_decode($raw, true) : $raw;
+                if (is_array($addr)) {
+                    $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
+                    $subdistrict = trim($addr['subdistrict'] ?? '');
+                    $district    = trim($addr['district'] ?? '');
+                    $province    = trim($addr['province'] ?? '');
+                    $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
 
-                // Return structured JSON so receipt renderer can display multi-line
-                if ($detail || $subdistrict || $district || $province) {
-                    return json_encode([
-                        'detail'      => $detail,
-                        'subdistrict' => $subdistrict,
-                        'district'    => $district,
-                        'province'    => $province,
-                        'zipcode'     => $zipcode,
-                    ], JSON_UNESCAPED_UNICODE);
+                    // Return structured JSON so receipt renderer can display multi-line
+                    if ($detail || $subdistrict || $district || $province) {
+                        return json_encode([
+                            'detail'      => $detail,
+                            'subdistrict' => $subdistrict,
+                            'district'    => $district,
+                            'province'    => $province,
+                            'zipcode'     => $zipcode,
+                        ], JSON_UNESCAPED_UNICODE);
+                    }
                 }
             }
         }
