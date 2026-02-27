@@ -16,6 +16,9 @@ if (php_sapi_name() !== 'cli') {
     header('Content-Type: text/plain; charset=utf-8');
 }
 
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
 $_SERVER['SCRIPT_FILENAME'] = 'index.php';
 require_once __DIR__ . '/config/database.php';
 
