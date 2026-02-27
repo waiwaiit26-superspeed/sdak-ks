@@ -194,6 +194,8 @@ include ROOT_PATH . 'templates/admin/sidebar.php';
     </div>
 </div>
 
+<?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
+
 <script>
 const API_BASE = '<?php echo $basePath; ?>api/';
 const API = window.API || new ApiClient(API_BASE);
