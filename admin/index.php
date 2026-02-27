@@ -23,7 +23,8 @@ $allowed = [
     'fees',
     'receipts',
     'logo',
-    'finance'
+    'finance',
+    'member-types'
 ];
 
 if (in_array($page, $allowed)) {

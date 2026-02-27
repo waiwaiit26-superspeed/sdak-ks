@@ -1546,6 +1546,24 @@ async function generateFinancePDF(transactions, summary, label, exported_at, exp
     }
 }
 
+// === RECEIPT ADDRESS HELPER ===
+function renderPayerAddressFinance(raw, fontSize) {
+    fontSize = fontSize || '13px';
+    if (!raw) return '';
+    try {
+        const a = JSON.parse(raw);
+        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
+            let html = '';
+            html += `<div style="margin-bottom:4px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;${App.escHtml(a.detail || '')}&nbsp;</span>`;
+            html += ` <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:130px;">&nbsp;${App.escHtml(a.subdistrict || '')}&nbsp;</span></div>`;
+            html += `<div style="margin-bottom:6px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;${App.escHtml(a.district || '')}&nbsp;</span>`;
+            html += ` <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;${App.escHtml(a.province || '')}&nbsp;</span></div>`;
+            return html;
+        }
+    } catch(e) {}
+    return `<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(raw)}&nbsp;</span></div>`;
+}
+
 // === RECEIPT PREVIEW ===
 let _currentReceiptData = null;
 
@@ -1593,7 +1611,7 @@ async function viewTxnReceipt(referenceNo) {
         </div>
         <div style="text-align:left;font-size:13px;margin-bottom:12px;padding-left:50%;">${dateStr}</div>
         <div style="margin-bottom:6px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:350px;">&nbsp;${App.escHtml(r.payer_name)}&nbsp;</span></div>
-        ${r.payer_address ? `<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(r.payer_address)}&nbsp;</span></div>` : ''}
+        ${renderPayerAddressFinance(r.payer_address, '13px')}
         <div style="margin-bottom:6px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:410px;">&nbsp;${App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
         <div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;">
             <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escHtml(r.amount_text)}) ไว้ถูกต้องแล้ว

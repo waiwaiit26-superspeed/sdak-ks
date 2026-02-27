@@ -917,6 +917,23 @@ async function mGeneratePDF(transactions, summary, label, exported_at, exported_
     }
 }
 
+// === RECEIPT ADDRESS HELPER ===
+function mRenderPayerAddress(raw) {
+    if (!raw) return '';
+    try {
+        var a = JSON.parse(raw);
+        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
+            var html = '';
+            html += '<div style="margin-bottom:4px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:300px;">&nbsp;' + App.escHtml(a.detail || '') + '&nbsp;</span>';
+            html += ' <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;' + App.escHtml(a.subdistrict || '') + '&nbsp;</span></div>';
+            html += '<div style="margin-bottom:8px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:250px;">&nbsp;' + App.escHtml(a.district || '') + '&nbsp;</span>';
+            html += ' <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;' + App.escHtml(a.province || '') + '&nbsp;</span></div>';
+            return html;
+        }
+    } catch(e) {}
+    return '<div style="margin-bottom:8px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(raw) + '&nbsp;</span></div>';
+}
+
 // === RECEIPT PREVIEW ===
 var _mReceiptData = null;
 
@@ -962,7 +979,7 @@ async function mViewTxnReceipt(referenceNo) {
         '<div style="text-align:left;font-size:16px;margin-bottom:12px;padding-left:50%;">' + dateStr + '</div>' +
         '<div style="font-size:18px;flex-grow:1;">' +
         '<div style="margin-bottom:8px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:500px;">&nbsp;' + App.escHtml(r.payer_name) + '&nbsp;</span></div>' +
-        (r.payer_address ? '<div style="margin-bottom:8px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(r.payer_address) + '&nbsp;</span></div>' : '') +
+        mRenderPayerAddress(r.payer_address) +
         '<div style="margin-bottom:8px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:560px;">&nbsp;' + App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,'')) + '&nbsp;</span></div>' +
         '<div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:12px 20px;margin:15px 0;font-size:20px;"><strong>จำนวน ' + App.formatCurrency(r.amount) + '</strong> (' + App.escHtml(r.amount_text) + ') ไว้ถูกต้องแล้ว</div>' +
         '</div>' +

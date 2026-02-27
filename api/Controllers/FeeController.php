@@ -405,18 +405,25 @@ class FeeController extends Controller
         if ($workAddr) {
             $addr = is_string($workAddr) ? json_decode($workAddr, true) : $workAddr;
             if (is_array($addr)) {
-                $parts = array_filter([
-                    $addr['address'] ?? $addr['detail'] ?? '',
-                    !empty($addr['subdistrict']) ? 'ตำบล' . $addr['subdistrict'] : '',
-                    !empty($addr['district']) ? 'อำเภอ' . $addr['district'] : '',
-                    !empty($addr['province']) ? 'จังหวัด' . $addr['province'] : '',
-                    $addr['zipcode'] ?? $addr['postal_code'] ?? '',
-                ]);
-                $result = implode(' ', $parts);
-                if (trim($result)) return trim($result);
+                $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
+                $subdistrict = trim($addr['subdistrict'] ?? '');
+                $district    = trim($addr['district'] ?? '');
+                $province    = trim($addr['province'] ?? '');
+                $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
+
+                // Return structured JSON so receipt renderer can display multi-line
+                if ($detail || $subdistrict || $district || $province) {
+                    return json_encode([
+                        'detail'      => $detail,
+                        'subdistrict' => $subdistrict,
+                        'district'    => $district,
+                        'province'    => $province,
+                        'zipcode'     => $zipcode,
+                    ], JSON_UNESCAPED_UNICODE);
+                }
             }
         }
-        // Fallback to school/organization name
+        // Fallback to school/organization name (plain string)
         $org = $member['school_organization'] ?? '';
         return $org ?: null;
     }

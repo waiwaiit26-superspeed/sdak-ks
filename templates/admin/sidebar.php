@@ -34,6 +34,12 @@ $page = $page ?? '';
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="./?page=member-types" class="nav-link <?= $page === 'member-types' ? 'active' : '' ?>">
+                        <i class="nav-icon bi bi-people-fill"></i>
+                        <p>ประเภทสมาชิก</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="./?page=news" class="nav-link <?= $page === 'news' ? 'active' : '' ?>">
                         <i class="nav-icon bi bi-newspaper"></i>
                         <p>จัดการข่าวสาร</p>

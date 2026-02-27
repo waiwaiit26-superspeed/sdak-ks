@@ -455,7 +455,7 @@ $(function () {
             receipt_number: $('#createReceiptNumber').val().trim() || undefined,
         };
 
-        const payerAddress = $('#createPayerAddress').val().trim();
+        const payerAddress = $('#createPayerAddress').data('addrJson') || $('#createPayerAddress').val().trim();
         if (payerAddress) data.payer_address = payerAddress;
 
         if (userId) {
@@ -556,14 +556,15 @@ function initPayerSelect2() {
             if (member) {
                 $('#createPayerName').val(member.full_name).prop('readonly', true);
                 $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
-                $('#createPayerAddress').val(buildPayerAddress(member));
+                const addrJson = buildPayerAddress(member);
+                $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
             }
         } else {
             // Non-member (custom tag)
             $('#createUserId').val('');
             const cleanName = data.text.replace(' (บุคคลภายนอก)', '');
             $('#createPayerName').val(cleanName).prop('readonly', false);
-            $('#createPayerAddress').val('');
+            $('#createPayerAddress').val('').removeData('addrJson');
             $('#payerNameHint').text('บุคคลภายนอก - แก้ไขชื่อได้');
         }
     });
@@ -666,7 +667,7 @@ function toBase64(url) {
     });
 }
 
-// Build payer address from member data (mirrors PHP FeeController::buildPayerAddress)
+// Build payer address from member data → returns JSON string (mirrors PHP FeeController::buildPayerAddress)
 function buildPayerAddress(member) {
     if (!member) return '';
     let wa = member.work_address;
@@ -674,16 +675,57 @@ function buildPayerAddress(member) {
         try { wa = JSON.parse(wa); } catch(e) { return wa; }
     }
     if (wa && typeof wa === 'object') {
-        const parts = [];
-        const detail = (wa.address || wa.detail || '').trim();
-        if (detail) parts.push(detail);
-        if (wa.subdistrict) parts.push('ต.' + wa.subdistrict);
-        if (wa.district) parts.push('อ.' + wa.district);
-        if (wa.province) parts.push('จ.' + wa.province);
-        if (wa.zipcode) parts.push(wa.zipcode);
-        if (parts.length) return parts.join(' ');
+        const detail      = (wa.address || wa.detail || '').trim();
+        const subdistrict = (wa.subdistrict || '').trim();
+        const district    = (wa.district || '').trim();
+        const province    = (wa.province || '').trim();
+        const zipcode     = (wa.zipcode || '').trim();
+        if (detail || subdistrict || district || province) {
+            return JSON.stringify({ detail, subdistrict, district, province, zipcode });
+        }
     }
     return member.school_organization || '';
+}
+
+// Flat display for form inputs
+function flatPayerAddress(val) {
+    if (!val) return '';
+    try {
+        const a = typeof val === 'string' ? JSON.parse(val) : val;
+        if (a && typeof a === 'object' && (a.detail || a.subdistrict)) {
+            const parts = [];
+            if (a.detail) parts.push(a.detail);
+            if (a.subdistrict) parts.push('ต.' + a.subdistrict);
+            if (a.district) parts.push('อ.' + a.district);
+            if (a.province) parts.push('จ.' + a.province);
+            if (a.zipcode) parts.push(a.zipcode);
+            return parts.join(' ');
+        }
+    } catch(e) {}
+    return val;
+}
+
+// Render structured address for receipt preview (multi-line like SAAK paper receipt)
+function renderPayerAddressHtml(raw, fontSize) {
+    fontSize = fontSize || '18px';
+    if (!raw) return '';
+    try {
+        const a = JSON.parse(raw);
+        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
+            let html = '';
+            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
+            html += `<strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:300px">&nbsp;${App.escapeHtml(a.detail || '')}&nbsp;</span>`;
+            html += ` <strong>ตำบล</strong> <span class="dotted-line" style="min-width:180px">&nbsp;${App.escapeHtml(a.subdistrict || '')}&nbsp;</span>`;
+            html += `</div>`;
+            html += `<div style="margin-bottom:8px;font-size:${fontSize};">`;
+            html += `<strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;${App.escapeHtml(a.district || '')}&nbsp;</span>`;
+            html += ` <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;${App.escapeHtml(a.province || '')}&nbsp;</span>`;
+            html += `</div>`;
+            return html;
+        }
+    } catch(e) {}
+    // Plain text fallback
+    return `<div style="margin-bottom:8px;font-size:${fontSize};"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(raw)}&nbsp;</span></div>`;
 }
 
 async function loadReceipts() {
@@ -785,10 +827,7 @@ function renderReceipt(r) {
                     <span class="row-label"><strong>ได้รับเงินจาก</strong></span>
                     <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span>
                 </div>
-                ${r.payer_address ? `<div style="margin-bottom:8px;">
-                    <span class="row-label"><strong>ที่อยู่</strong></span>
-                    <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(r.payer_address)}&nbsp;</span>
-                </div>` : ''}
+                ${renderPayerAddressHtml(r.payer_address, '16px')}
                 <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>เป็น</strong></span>
                     <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml(r.description)}&nbsp;</span>

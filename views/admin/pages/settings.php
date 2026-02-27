@@ -325,14 +325,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <hr>
-                                <h6 class="mb-3">ค่าธรรมเนียมสมาชิก</h6>
-
-                                <!-- Dynamic member type fee cards (loaded from DB) -->
-                                <div id="memberTypeFeeCards">
-                                    <div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i> กำลังโหลด...</div>
-                                </div>
                             </div>
                         </div>
 
@@ -511,140 +503,9 @@
                     </div>
                 </div>
                 </form>
-
-                <!-- ══════════════════════════════════════════════════════════════
-                     จัดการประเภทสมาชิก (CRUD)
-                     ══════════════════════════════════════════════════════════════ -->
-                <div class="card shadow-sm border-success mt-4">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0"><i class="bi bi-people-fill me-2"></i>จัดการประเภทสมาชิก</h3>
-                        <button type="button" class="btn btn-sm btn-light" onclick="openCreateMemberTypeModal()">
-                            <i class="bi bi-plus-circle me-1"></i> เพิ่มประเภทใหม่
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="bg-light">
-                                    <tr>
-                                        <th style="width:50px">#</th>
-                                        <th>ไอคอน</th>
-                                        <th>ชื่อประเภท</th>
-                                        <th>Key</th>
-                                        <th>ค่าธรรมเนียม</th>
-                                        <th>ลำดับ</th>
-                                        <th>สถานะ</th>
-                                        <th style="width:100px">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="memberTypesTableBody">
-                                    <tr><td colspan="8" class="text-center py-3 text-muted"><i class="fas fa-spinner fa-spin"></i> กำลังโหลด...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     </div>
-
-<!-- Modal: Create/Edit Member Type -->
-<div class="modal fade" id="memberTypeModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="memberTypeModalTitle"><i class="bi bi-plus-circle me-2"></i>เพิ่มประเภทสมาชิก</h5>
-                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <form id="memberTypeForm">
-            <div class="modal-body">
-                <input type="hidden" id="mtEditKey" value="">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">Type Key <span class="text-danger" id="mtKeyRequired">*</span></label>
-                        <input type="text" id="mtTypeKey" class="form-control" placeholder="เช่น ordinary" pattern="^[a-z][a-z0-9_]{1,49}$" required>
-                        <small class="text-muted">ภาษาอังกฤษตัวเล็ก, ตัวเลข, _ (ห้ามเปลี่ยนหลังสร้าง)</small>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">ชื่อประเภท <span class="text-danger">*</span></label>
-                        <input type="text" id="mtLabel" class="form-control" placeholder="เช่น สมาชิกสามัญ" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">ชื่อย่อ</label>
-                        <input type="text" id="mtLabelShort" class="form-control" placeholder="เช่น สามัญ">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">คำอธิบาย</label>
-                    <input type="text" id="mtDescription" class="form-control" placeholder="คำอธิบายสั้นๆ">
-                </div>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">รูปแบบค่าธรรมเนียม</label>
-                        <select id="mtFeeMode" class="form-control">
-                            <option value="none">ไม่เก็บ</option>
-                            <option value="onetime">จ่ายครั้งเดียว</option>
-                            <option value="annual">จ่ายรายปี</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3" id="mtFeeAmountGroup">
-                        <label class="form-label fw-bold">จำนวนเงิน (บาท)</label>
-                        <input type="number" id="mtFeeAmount" class="form-control" min="0" step="0.01" value="0">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">ลำดับการแสดง</label>
-                        <input type="number" id="mtSortOrder" class="form-control" min="0" value="0">
-                    </div>
-                </div>
-                <hr>
-                <h6><i class="bi bi-palette me-1"></i> ไอคอน & สี</h6>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">Bootstrap Icon</label>
-                        <div class="input-group">
-                            <span class="input-group-text" id="mtIconPreview"><i class="bi bi-person-fill"></i></span>
-                            <input type="text" id="mtIcon" class="form-control" placeholder="bi-person-fill" value="bi-person-fill">
-                        </div>
-                        <small class="text-muted">ชื่อ icon จาก <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a></small>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">สีพื้นหลัง</label>
-                        <div class="d-flex" style="gap:.5rem">
-                            <input type="color" id="mtIconBg" class="form-control form-control-color" value="#a78bfa" style="width:50px;height:38px;">
-                            <input type="text" id="mtIconBgHex" class="form-control form-control-sm" value="#a78bfa" style="width:90px;font-family:monospace;">
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">สีไอคอน</label>
-                        <div class="d-flex" style="gap:.5rem">
-                            <input type="color" id="mtIconColor" class="form-control form-control-color" value="#3b0764" style="width:50px;height:38px;">
-                            <input type="text" id="mtIconColorHex" class="form-control form-control-sm" value="#3b0764" style="width:90px;font-family:monospace;">
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mb-2">
-                    <label class="form-label small text-muted">ตัวอย่าง</label>
-                    <div>
-                        <span id="mtIconLivePreview" class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:48px;height:48px;background:#a78bfa;color:#3b0764;font-size:24px;">
-                            <i class="bi bi-person-fill"></i>
-                        </span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="mtIsActive" checked>
-                        <label class="custom-control-label" for="mtIsActive">เปิดใช้งาน</label>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" class="btn btn-success" id="btnSaveMemberType"><i class="bi bi-check-circle me-1"></i> บันทึก</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-            </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- Signature Modal -->
 <div class="modal fade" id="signatureModal" tabindex="-1" data-backdrop="static">
@@ -751,14 +612,6 @@ async function loadSettings() {
         }
     });
 
-    // Load member types for fee cards
-    await loadMemberTypeFeeCards();
-
-    // Toggle fee amount visibility based on mode
-    $('.fee-mode-select').each(function () {
-        toggleFeeAmount($(this));
-    });
-
     // Update member number preview
     updateMnPreview();
 
@@ -776,82 +629,6 @@ async function loadSettings() {
     if (!$('[name="reset_confirm_code"]').val()) {
         randomizeResetCode();
     }
-}
-
-function toggleFeeAmount($select) {
-    const target = $select.data('target');
-    if ($select.val() === 'none') {
-        $('#' + target).slideUp(150);
-    } else {
-        $('#' + target).slideDown(150);
-    }
-}
-
-$(document).on('change', '.fee-mode-select', function () {
-    toggleFeeAmount($(this));
-});
-
-// ─── Dynamic Member Type Fee Cards ───
-let _memberTypesCache = [];
-const cardColors = ['primary','info','warning','secondary','success','danger'];
-
-async function loadMemberTypeFeeCards() {
-    const res = await API.getMemberTypes();
-    if (!res.success) {
-        $('#memberTypeFeeCards').html('<div class="text-danger">โหลดข้อมูลประเภทสมาชิกไม่สำเร็จ</div>');
-        return;
-    }
-    _memberTypesCache = res.data || [];
-    renderMemberTypeFeeCards();
-}
-
-function renderMemberTypeFeeCards() {
-    let html = '';
-    _memberTypesCache.forEach((t, i) => {
-        const color = cardColors[i % cardColors.length];
-        const key = t.type_key;
-        const showAmount = (t.fee_mode !== 'none') ? '' : 'display:none';
-        html += `
-        <div class="card card-outline card-${color} mb-3" data-type-key="${key}">
-            <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                <strong>${App.escapeHtml(t.label)}</strong>
-                <small class="text-muted">${App.escapeHtml(t.description || '')}</small>
-            </div>
-            <div class="card-body py-2">
-                <div class="form-group mb-2">
-                    <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
-                    <select class="form-control form-control-sm fee-mode-select mt-fee-mode"
-                            data-type-key="${key}" data-target="fee_${key}_amount">
-                        <option value="none"${t.fee_mode==='none'?' selected':''}>ไม่เก็บค่าใช้จ่าย</option>
-                        <option value="onetime"${t.fee_mode==='onetime'?' selected':''}>จ่ายครั้งเดียว</option>
-                        <option value="annual"${t.fee_mode==='annual'?' selected':''}>จ่ายรายปี</option>
-                    </select>
-                </div>
-                <div class="form-group mb-0" id="fee_${key}_amount" style="${showAmount}">
-                    <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
-                    <input type="number" class="form-control form-control-sm mt-fee-amount"
-                           data-type-key="${key}" min="0" step="0.01" value="${parseFloat(t.fee_amount)||0}">
-                </div>
-            </div>
-        </div>`;
-    });
-    $('#memberTypeFeeCards').html(html);
-
-    // Re-apply toggle
-    $('.fee-mode-select').each(function(){ toggleFeeAmount($(this)); });
-}
-
-async function saveMemberTypeFees() {
-    const promises = [];
-    _memberTypesCache.forEach(t => {
-        const key = t.type_key;
-        const mode   = $(`.mt-fee-mode[data-type-key="${key}"]`).val() || 'none';
-        const amount = parseFloat($(`.mt-fee-amount[data-type-key="${key}"]`).val()) || 0;
-        if (mode !== t.fee_mode || amount !== parseFloat(t.fee_amount)) {
-            promises.push(API.updateMemberType({ type_key: key, fee_mode: mode, fee_amount: amount }));
-        }
-    });
-    if (promises.length) await Promise.all(promises);
 }
 
 // Member number preview
@@ -1221,8 +998,6 @@ $('#settingsForm').on('submit', async function(e) {
     $(this).find('input, textarea, select').each(function () {
         const name = $(this).attr('name');
         if (!name) return;
-        // Skip dynamic member-type fee fields (saved separately)
-        if ($(this).hasClass('mt-fee-mode') || $(this).hasClass('mt-fee-amount')) return;
         if ($(this).is(':checkbox')) {
             settings[name] = $(this).is(':checked') ? '1' : '0';
         } else {
@@ -1237,9 +1012,6 @@ $('#settingsForm').on('submit', async function(e) {
         console.log('[Settings] signature_image is empty');
     }
 
-    // Save member type fees in parallel
-    await saveMemberTypeFees();
-
     const result = await API.updateSettings(settings);
     if (result.success) {
         App.success(result.message);
@@ -1250,178 +1022,7 @@ $('#settingsForm').on('submit', async function(e) {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// จัดการประเภทสมาชิก (CRUD)
-// ═══════════════════════════════════════════════════════════════
-let _allMemberTypes = [];
 
-async function loadMemberTypesTable() {
-    const res = await API.getMemberTypes();
-    if (!res.success) {
-        $('#memberTypesTableBody').html('<tr><td colspan="8" class="text-center text-danger py-3">โหลดข้อมูลไม่สำเร็จ</td></tr>');
-        return;
-    }
-    _allMemberTypes = res.data || [];
-    renderMemberTypesTable();
-}
-
-function renderMemberTypesTable() {
-    if (!_allMemberTypes.length) {
-        $('#memberTypesTableBody').html('<tr><td colspan="8" class="text-center text-muted py-3">ยังไม่มีประเภทสมาชิก</td></tr>');
-        return;
-    }
-    const feeModeLabels = { none: 'ไม่เก็บ', onetime: 'ครั้งเดียว', annual: 'รายปี' };
-    let html = '';
-    _allMemberTypes.forEach((t, i) => {
-        const feeText = t.fee_mode === 'none' ? '<span class="text-muted">-</span>' : `${feeModeLabels[t.fee_mode] || t.fee_mode} / ${App.formatCurrency(t.fee_amount)}`;
-        const statusBadge = t.is_active == 1
-            ? '<span class="badge bg-success">เปิดใช้งาน</span>'
-            : '<span class="badge bg-secondary">ปิดใช้งาน</span>';
-        html += `<tr class="${t.is_active == 1 ? '' : 'table-secondary'}">
-            <td>${i + 1}</td>
-            <td>
-                <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                      style="width:32px;height:32px;background:${App.escapeHtml(t.icon_bg || '#a78bfa')};color:${App.escapeHtml(t.icon_color || '#3b0764')};font-size:16px;">
-                    <i class="bi ${App.escapeHtml(t.icon || 'bi-person-fill')}"></i>
-                </span>
-            </td>
-            <td>
-                <strong>${App.escapeHtml(t.label)}</strong>
-                ${t.label_short ? '<br><small class="text-muted">' + App.escapeHtml(t.label_short) + '</small>' : ''}
-                ${t.description ? '<br><small class="text-muted">' + App.escapeHtml(t.description) + '</small>' : ''}
-            </td>
-            <td><code>${App.escapeHtml(t.type_key)}</code></td>
-            <td>${feeText}</td>
-            <td>${t.sort_order}</td>
-            <td>${statusBadge}</td>
-            <td>
-                <button class="btn btn-outline-warning btn-sm" onclick="openEditMemberType('${App.escapeHtml(t.type_key)}')" title="แก้ไข">
-                    <i class="bi bi-pencil"></i>
-                </button>
-            </td>
-        </tr>`;
-    });
-    $('#memberTypesTableBody').html(html);
-}
-
-function openCreateMemberTypeModal() {
-    $('#mtEditKey').val('');
-    $('#mtTypeKey').val('').prop('readonly', false);
-    $('#mtKeyRequired').show();
-    $('#mtLabel').val('');
-    $('#mtLabelShort').val('');
-    $('#mtDescription').val('');
-    $('#mtFeeMode').val('none');
-    $('#mtFeeAmount').val(0);
-    $('#mtSortOrder').val(0);
-    $('#mtIcon').val('bi-person-fill');
-    $('#mtIconBg').val('#a78bfa');
-    $('#mtIconBgHex').val('#a78bfa');
-    $('#mtIconColor').val('#3b0764');
-    $('#mtIconColorHex').val('#3b0764');
-    $('#mtIsActive').prop('checked', true);
-    updateMtIconPreview();
-    toggleMtFeeAmount();
-    $('#memberTypeModalTitle').html('<i class="bi bi-plus-circle me-2"></i>เพิ่มประเภทสมาชิก');
-    $('#btnSaveMemberType').html('<i class="bi bi-check-circle me-1"></i> สร้าง');
-    $('#memberTypeModal').modal('show');
-}
-
-function openEditMemberType(typeKey) {
-    const t = _allMemberTypes.find(x => x.type_key === typeKey);
-    if (!t) return;
-    $('#mtEditKey').val(t.type_key);
-    $('#mtTypeKey').val(t.type_key).prop('readonly', true);
-    $('#mtKeyRequired').hide();
-    $('#mtLabel').val(t.label);
-    $('#mtLabelShort').val(t.label_short || '');
-    $('#mtDescription').val(t.description || '');
-    $('#mtFeeMode').val(t.fee_mode || 'none');
-    $('#mtFeeAmount').val(parseFloat(t.fee_amount) || 0);
-    $('#mtSortOrder').val(t.sort_order || 0);
-    $('#mtIcon').val(t.icon || 'bi-person-fill');
-    $('#mtIconBg').val(t.icon_bg || '#a78bfa');
-    $('#mtIconBgHex').val(t.icon_bg || '#a78bfa');
-    $('#mtIconColor').val(t.icon_color || '#3b0764');
-    $('#mtIconColorHex').val(t.icon_color || '#3b0764');
-    $('#mtIsActive').prop('checked', t.is_active == 1);
-    updateMtIconPreview();
-    toggleMtFeeAmount();
-    $('#memberTypeModalTitle').html('<i class="bi bi-pencil-square me-2"></i>แก้ไขประเภทสมาชิก: ' + App.escapeHtml(t.label));
-    $('#btnSaveMemberType').html('<i class="bi bi-check-circle me-1"></i> บันทึก');
-    $('#memberTypeModal').modal('show');
-}
-
-function updateMtIconPreview() {
-    const icon = $('#mtIcon').val() || 'bi-person-fill';
-    const bg   = $('#mtIconBg').val() || '#a78bfa';
-    const clr  = $('#mtIconColor').val() || '#3b0764';
-    $('#mtIconPreview').html('<i class="bi ' + App.escapeHtml(icon) + '"></i>');
-    $('#mtIconLivePreview').css({ background: bg, color: clr }).html('<i class="bi ' + App.escapeHtml(icon) + '"></i>');
-}
-
-function toggleMtFeeAmount() {
-    if ($('#mtFeeMode').val() === 'none') {
-        $('#mtFeeAmountGroup').slideUp(150);
-    } else {
-        $('#mtFeeAmountGroup').slideDown(150);
-    }
-}
-
-$('#mtIcon').on('input', updateMtIconPreview);
-$('#mtIconBg').on('input', function(){ $('#mtIconBgHex').val(this.value); updateMtIconPreview(); });
-$('#mtIconBgHex').on('input', function(){ const v = this.value.trim(); if(/^#[0-9a-fA-F]{6}$/.test(v)){ $('#mtIconBg').val(v); updateMtIconPreview(); }});
-$('#mtIconColor').on('input', function(){ $('#mtIconColorHex').val(this.value); updateMtIconPreview(); });
-$('#mtIconColorHex').on('input', function(){ const v = this.value.trim(); if(/^#[0-9a-fA-F]{6}$/.test(v)){ $('#mtIconColor').val(v); updateMtIconPreview(); }});
-$('#mtFeeMode').on('change', toggleMtFeeAmount);
-
-$('#memberTypeForm').on('submit', async function(e) {
-    e.preventDefault();
-    const editKey = $('#mtEditKey').val();
-    const isCreate = !editKey;
-
-    const data = {
-        type_key:    isCreate ? $('#mtTypeKey').val().trim() : editKey,
-        label:       $('#mtLabel').val().trim(),
-        label_short: $('#mtLabelShort').val().trim() || null,
-        description: $('#mtDescription').val().trim() || null,
-        fee_mode:    $('#mtFeeMode').val(),
-        fee_amount:  parseFloat($('#mtFeeAmount').val()) || 0,
-        sort_order:  parseInt($('#mtSortOrder').val()) || 0,
-        icon:        $('#mtIcon').val().trim() || 'bi-person-fill',
-        icon_bg:     $('#mtIconBg').val() || '#a78bfa',
-        icon_color:  $('#mtIconColor').val() || '#3b0764',
-        is_active:   $('#mtIsActive').is(':checked') ? 1 : 0,
-    };
-
-    if (!data.type_key) { App.error('กรุณาระบุ Type Key'); return; }
-    if (!data.label) { App.error('กรุณาระบุชื่อประเภท'); return; }
-
-    const btn = $('#btnSaveMemberType');
-    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
-
-    let result;
-    if (isCreate) {
-        result = await API.createMemberType(data);
-    } else {
-        result = await API.updateMemberType(data);
-    }
-
-    btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i> บันทึก');
-
-    if (result.success) {
-        App.success(result.message || (isCreate ? 'สร้างสำเร็จ' : 'บันทึกสำเร็จ'));
-        $('#memberTypeModal').modal('hide');
-        await loadMemberTypesTable();
-        await loadMemberTypeFeeCards(); // Refresh fee cards in settings form too
-    } else {
-        App.error(result.message || 'เกิดข้อผิดพลาด');
-    }
-});
-
-// Load member types table on page load (after settings loaded)
-$(function() {
-    loadMemberTypesTable();
-});
 </script>
 
 <?php include ROOT_PATH . 'templates/admin/footer.php'; ?>
