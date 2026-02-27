@@ -12,14 +12,19 @@ require_once __DIR__ . '/config/database.php';
 $db = getDB();
 
 // Find receipts with user_id but no payer_address
-$receipts = $db->select('receipts', ['id', 'user_id', 'payer_name', 'payer_address'], [
-    'user_id[>]' => 0,
-    'OR' => [
-        'payer_address' => null,
-        'payer_address' => '',
-    ],
-    'ORDER' => ['id' => 'ASC'],
-]);
+// Use raw SQL because Medoo can't do OR on same column with NULL check easily
+$pdo = $db->pdo;
+$stmt = $pdo->query("SELECT id, user_id, payer_name, payer_address FROM receipts WHERE user_id > 0 AND (payer_address IS NULL OR payer_address = '') ORDER BY id ASC");
+$receipts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Also show total receipt count for diagnostics
+$totalStmt = $pdo->query("SELECT COUNT(*) as cnt FROM receipts");
+$total = $totalStmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+echo "📊 ใบเสร็จทั้งหมด: {$total} รายการ\n";
+
+$withAddr = $pdo->query("SELECT COUNT(*) as cnt FROM receipts WHERE payer_address IS NOT NULL AND payer_address != ''")->fetch(PDO::FETCH_ASSOC)['cnt'];
+echo "📊 มีที่อยู่แล้ว: {$withAddr} รายการ\n";
+echo "📊 ไม่มีที่อยู่ (มี user_id): " . count($receipts) . " รายการ\n\n";
 
 if (!$receipts) {
     echo "✅ ไม่มีใบเสร็จที่ต้อง backfill\n";
