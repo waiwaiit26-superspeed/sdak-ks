@@ -120,7 +120,7 @@ if ($currentUser && $currentUser['status'] !== 'active') {
         'nav'      => ['tree'],
         'member'   => ['profile', 'update', 'notifications'],
         'fee'      => ['my-fees', 'my-current', 'upload-slip', 'create-my-fee'],
-        'receipt'  => ['my-receipts', 'detail', 'find-by-ref'],
+        'receipt'  => ['my-receipts', 'detail', 'find-by-ref', 'update-my-address'],
         'finance'  => ['my-permissions'],
         'news'     => ['list', 'detail'],
         'activity' => ['list', 'detail', 'register', 'cancel-registration', 'upload-slip', 'registrations', 'pending-payments'],

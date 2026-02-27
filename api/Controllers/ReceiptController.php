@@ -307,4 +307,41 @@ class ReceiptController extends Controller
 
         Response::success(null, 'แก้ไขใบเสร็จสำเร็จ');
     }
+
+    /**
+     * POST  ?controller=receipt&action=update-my-address
+     * Member updates payer_address on their own receipt (address only)
+     */
+    public function updateMyAddress(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+
+        $id = (int)($input['id'] ?? 0);
+        if (!$id) Response::error('กรุณาระบุ id ใบเสร็จ');
+
+        $receipts = $this->model('ReceiptModel');
+        $receipt = $receipts->find($id);
+        if (!$receipt) Response::error('ไม่พบใบเสร็จ', 404);
+
+        // Must be own receipt
+        if ((int)$receipt['user_id'] !== (int)$this->currentUser['id']) {
+            Response::error('คุณไม่มีสิทธิ์แก้ไขใบเสร็จนี้', 403);
+        }
+
+        $payerAddress = $input['payer_address'] ?? null;
+        if ($payerAddress === null) {
+            Response::error('กรุณาระบุที่อยู่');
+        }
+
+        $receipts->update(['payer_address' => $payerAddress], ['id' => $id]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'update_receipt_address', 'receipt',
+            "แก้ไขที่อยู่ใบเสร็จ #" . ($receipt['receipt_number'] ?? $id),
+            $id, 'receipt'
+        );
+
+        Response::success(null, 'แก้ไขที่อยู่ใบเสร็จสำเร็จ');
+    }
 }

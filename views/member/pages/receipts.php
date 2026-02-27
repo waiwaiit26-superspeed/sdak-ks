@@ -70,6 +70,9 @@
                 <button class="btn btn-warning" onclick="openEditReceiptNumber()" id="btnEditReceiptNumMember" style="display:none">
                     <i class="bi bi-pencil-square me-1"></i> แก้ไขใบเสร็จ
                 </button>
+                <button class="btn btn-info" onclick="openEditAddress()" id="btnEditAddress">
+                    <i class="bi bi-geo-alt me-1"></i> แก้ไขที่อยู่
+                </button>
             </div>
 
             <div class="receipt-a4-wrapper">
@@ -198,6 +201,65 @@
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-warning" id="btnSaveReceiptNum"><i class="bi bi-check me-1"></i> บันทึก</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Address -->
+<div class="modal fade" id="editAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-geo-alt me-2"></i>แก้ไขที่อยู่ใบเสร็จ</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="editAddressForm">
+            <div class="modal-body">
+                <input type="hidden" id="editAddrReceiptId">
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="form-label fw-bold">เลขที่</label>
+                        <input type="text" id="editAddrNo" class="form-control" placeholder="เลขที่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">หมู่ที่</label>
+                        <input type="text" id="editAddrMoo" class="form-control" placeholder="หมู่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">ซอย</label>
+                        <input type="text" id="editAddrSoi" class="form-control" placeholder="ซอย">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ถนน</label>
+                    <input type="text" id="editAddrRoad" class="form-control" placeholder="ถนน">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">ตำบล</label>
+                        <input type="text" id="editAddrSub" class="form-control" placeholder="ตำบล">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">อำเภอ</label>
+                        <input type="text" id="editAddrDist" class="form-control" placeholder="อำเภอ">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">จังหวัด</label>
+                        <input type="text" id="editAddrProv" class="form-control" placeholder="จังหวัด">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">รหัสไปรษณีย์</label>
+                        <input type="text" id="editAddrZip" class="form-control" placeholder="รหัสไปรษณีย์">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-info" id="btnSaveAddr"><i class="bi bi-check me-1"></i> บันทึก</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
             </div>
             </form>
@@ -517,6 +579,46 @@ $(function () {
             App.error(result.message || 'เกิดข้อผิดพลาด');
         }
     });
+
+    // Edit address form submit
+    $('#editAddressForm').on('submit', async function(e) {
+        e.preventDefault();
+        const id = $('#editAddrReceiptId').val();
+        const no   = $('#editAddrNo').val().trim();
+        const moo  = $('#editAddrMoo').val().trim();
+        const soi  = $('#editAddrSoi').val().trim();
+        const road = $('#editAddrRoad').val().trim();
+        const sub  = $('#editAddrSub').val().trim();
+        const dist = $('#editAddrDist').val().trim();
+        const prov = $('#editAddrProv').val().trim();
+        const zip  = $('#editAddrZip').val().trim();
+
+        // Build detail like buildPayerAddress
+        let detail = no && no !== '-' ? no : '';
+        if (moo && moo !== '-') detail += '   หมู่ ' + moo;
+        if (soi && soi !== '-') detail += '   ซอย ' + soi;
+        if (road && road !== '-') detail += '   ถนน ' + road;
+        detail = detail.trim();
+
+        const addrJson = JSON.stringify({ detail, subdistrict: sub, district: dist, province: prov, zipcode: zip });
+
+        const btn = $('#btnSaveAddr');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        const result = await API.post(API.apiUrl('receipt', 'update-my-address'), { id, payer_address: addrJson });
+        btn.prop('disabled', false).html('<i class="bi bi-check me-1"></i> บันทึก');
+
+        if (result.success) {
+            App.success(result.message || 'แก้ไขที่อยู่สำเร็จ');
+            $('#editAddressModal').modal('hide');
+            loadReceipts();
+            if (currentReceiptData && currentReceiptData.id == id) {
+                viewReceipt(id);
+            }
+        } else {
+            App.error(result.message || 'เกิดข้อผิดพลาด');
+        }
+    });
 });
 
 // Check if current member is a finance manager
@@ -652,6 +754,39 @@ function openEditReceiptNumber() {
     $('#editPayerAddress').val(flatPayerAddress(currentReceiptData.payer_address || ''));
     $('#editReceiptInfo').text(`เล่มที่: ${currentReceiptData.book_number} | วันที่ออก: ${App.formatDate(currentReceiptData.issued_date)}`);
     $('#editReceiptNumModal').modal('show');
+}
+
+function openEditAddress() {
+    if (!currentReceiptData) return;
+    $('#editAddrReceiptId').val(currentReceiptData.id);
+    // Parse existing address into fields
+    let addr = {};
+    try { addr = JSON.parse(currentReceiptData.payer_address); } catch(e) {}
+    if (!addr || typeof addr !== 'object') addr = {};
+
+    // Try to parse detail back into no/moo/soi/road
+    let detail = addr.detail || '';
+    let no = '', moo = '', soi = '', road = '';
+    // Extract road
+    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+    // Extract soi
+    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+    // Extract moo
+    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+    no = detail.trim();
+
+    $('#editAddrNo').val(no);
+    $('#editAddrMoo').val(moo);
+    $('#editAddrSoi').val(soi);
+    $('#editAddrRoad').val(road);
+    $('#editAddrSub').val(addr.subdistrict || '');
+    $('#editAddrDist').val(addr.district || '');
+    $('#editAddrProv').val(addr.province || '');
+    $('#editAddrZip').val(addr.zipcode || '');
+    $('#editAddressModal').modal('show');
 }
 
 // Convert image URL to base64
