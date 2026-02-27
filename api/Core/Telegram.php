@@ -89,7 +89,7 @@ class Telegram
         }
         $message .= "📅 วันที่: {$date}\n";
         $message .= "━━━━━━━━━━━━━━━\n";
-        $message .= "🔗 <a href=\"" . (defined('BASE_URL') ? BASE_URL : '') . "admin/?page=members\">จัดการสมาชิก</a>\n";
+        $message .= "🔗 <a href=\"" . (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '') . "/admin/?page=members\">จัดการสมาชิก</a>\n";
         $message .= "📌 {$siteName}";
 
         return self::send($message);
@@ -117,7 +117,7 @@ class Telegram
         $message .= "💰 จำนวน: {$amount} บาท\n";
         $message .= "🕐 เวลา: {$date}\n";
         $message .= "━━━━━━━━━━━━━━━\n";
-        $message .= "🔗 <a href=\"" . (defined('BASE_URL') ? BASE_URL : '') . "admin/?page=fees\">ตรวจสอบค่าธรรมเนียม</a>\n";
+        $message .= "🔗 <a href=\"" . (defined('BASE_URL') ? rtrim(BASE_URL, '/') : '') . "/admin/?page=fees\">ตรวจสอบค่าธรรมเนียม</a>\n";
         $message .= "📌 {$siteName}";
 
         return self::send($message);
@@ -133,19 +133,45 @@ class Telegram
         if ($enabled !== '1') return false;
 
         $siteName  = $settings->get('site_name_short', SITE_NAME_SHORT);
+        $baseUrl   = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
         $name      = $userData['full_name'] ?? ($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '');
+        $email     = $userData['email'] ?? '-';
+        $phone     = $userData['phone'] ?? '-';
+        $actId     = $activityData['id'] ?? '';
         $actTitle  = $activityData['title'] ?? '-';
         $hasFee    = !empty($activityData['has_fee']) ? 'มีค่าใช้จ่าย' : 'ไม่มีค่าใช้จ่าย';
+        $fee       = !empty($activityData['fee_amount']) ? number_format((float)$activityData['fee_amount'], 2) . ' บาท' : '';
+        $actDate   = '';
+        if (!empty($activityData['start_date'])) {
+            $start = strtotime($activityData['start_date']);
+            $actDate = date('d/m/', $start) . (date('Y', $start) + 543);
+            if (!empty($activityData['end_date']) && $activityData['end_date'] !== $activityData['start_date']) {
+                $end = strtotime($activityData['end_date']);
+                $actDate .= ' - ' . date('d/m/', $end) . (date('Y', $end) + 543);
+            }
+        }
         $date      = date('d/m/') . (date('Y') + 543) . ' ' . date('H:i') . ' น.';
 
         $message  = "📝 <b>สมาชิกลงทะเบียนกิจกรรม</b>\n";
         $message .= "━━━━━━━━━━━━━━━\n";
         $message .= "👤 <b>{$name}</b>\n";
-        $message .= "🎯 กิจกรรม: {$actTitle}\n";
-        $message .= "💰 {$hasFee}\n";
-        $message .= "🕐 เวลา: {$date}\n";
+        if ($email && $email !== '-') {
+            $message .= "📧 {$email}\n";
+        }
+        if ($phone && $phone !== '-') {
+            $message .= "📱 {$phone}\n";
+        }
         $message .= "━━━━━━━━━━━━━━━\n";
-        $message .= "🔗 <a href=\"" . (defined('BASE_URL') ? BASE_URL : '') . "admin/?page=activities\">จัดการกิจกรรม</a>\n";
+        $message .= "🎯 กิจกรรม: <b>{$actTitle}</b>\n";
+        if ($actDate) {
+            $message .= "📅 วันที่จัด: {$actDate}\n";
+        }
+        $message .= "💰 {$hasFee}";
+        if ($fee) $message .= " ({$fee})";
+        $message .= "\n";
+        $message .= "🕐 ลงทะเบียนเมื่อ: {$date}\n";
+        $message .= "━━━━━━━━━━━━━━━\n";
+        $message .= "🔗 <a href=\"{$baseUrl}/admin/?page=activities\">ดูรายละเอียด/อนุมัติ</a>\n";
         $message .= "📌 {$siteName}";
 
         return self::send($message);
