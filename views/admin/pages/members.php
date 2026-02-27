@@ -851,7 +851,11 @@ async function approveMember(userId, action) {
                                 '<i class="bi bi-check2-circle me-1"></i> ยืนยันว่าจ่ายเงินแล้ว (' + amountText + ')' +
                             '</button>' +
                         '</div>' +
-                        '<small class="d-block text-center text-muted mt-1">กดเพื่อยืนยันว่าสมาชิกชำระค่าธรรมเนียมแล้ว ระบบจะอนุมัติค่าธรรมเนียมและออกใบเสร็จอัตโนมัติ</small>' +
+                        '<div class="custom-control custom-checkbox mt-2 text-center">' +
+                            '<input type="checkbox" class="custom-control-input" id="chkIssueReceipt">' +
+                            '<label class="custom-control-label" for="chkIssueReceipt">ออกใบเสร็จรับเงินด้วย</label>' +
+                        '</div>' +
+                        '<small class="d-block text-center text-muted mt-1">กดเพื่อยืนยันว่าสมาชิกชำระค่าธรรมเนียมแล้ว</small>' +
                     '</div>' +
                 '</div>';
             }
@@ -927,7 +931,8 @@ async function confirmFeePayment(userId) {
 
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังดำเนินการ...');
 
-    const result = await API.confirmFeePayment(userId);
+    const issueReceipt = $('#chkIssueReceipt').is(':checked');
+    const result = await API.confirmFeePayment(userId, issueReceipt);
     if (result.success) {
         App.success(result.message);
         // Refresh the approval modal to show updated fee status

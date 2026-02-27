@@ -445,9 +445,10 @@ class MemberController extends Controller
             'note'         => 'ยืนยันโดยผู้ดูแลระบบ (จากหน้าอนุมัติสมาชิก)',
         ], ['id' => $feeId]);
 
-        // Auto-generate receipt
+        // Auto-generate receipt (only if requested)
+        $issueReceipt = !empty($input['issue_receipt']);
         $fee = $fees->find($feeId);
-        if ($fee) {
+        if ($fee && $issueReceipt) {
             $receipts = $this->model('ReceiptModel');
             $existing = $receipts->findByReference('membership_fee', $feeId);
             if (!$existing) {

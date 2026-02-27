@@ -275,8 +275,8 @@ const API = {
         return this.get(this.apiUrl('member', 'check-fee-status') + '&user_id=' + userId);
     },
 
-    async confirmFeePayment(userId) {
-        return this.post(this.apiUrl('member', 'confirm-fee-payment'), { user_id: userId });
+    async confirmFeePayment(userId, issueReceipt = false) {
+        return this.post(this.apiUrl('member', 'confirm-fee-payment'), { user_id: userId, issue_receipt: issueReceipt ? 1 : 0 });
     },
 
     async getNextMemberNumber() {
