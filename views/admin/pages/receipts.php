@@ -269,7 +269,7 @@
 .receipt-render .receipt-org-addr { font-size: 16px; text-align: center; margin-bottom: 10px; }
 .receipt-render .receipt-body-section { font-size: 18px; flex-grow: 1; }
 .receipt-render .receipt-body-section > div { display: flex; align-items: baseline; }
-.receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 80px; margin: 0; padding: 0 2px; }
+.receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 80px; margin: 0; padding: 0 2px 0 1.5em; }
 .receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 8px 20px; margin: 10px 0; font-size: 20px; }
 .receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 2px; font-size: 16px; }
 </style>

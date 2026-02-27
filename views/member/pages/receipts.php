@@ -310,7 +310,7 @@
     display: inline-block;
     min-width: 80px;
     margin: 0;
-    padding: 0 2px;
+    padding: 0 2px 0 1.5em;
 }
 @media print {
     .receipt-a4-wrapper { overflow: visible; padding: 0; background: #fff; }
