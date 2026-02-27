@@ -214,7 +214,9 @@ class MemberController extends Controller
                 // Check if member type requires fee payment
                 $memberType = $target['member_type'] ?? 'ordinary';
                 $settings = $this->model('SettingsModel');
-                $feeMode = $settings->get("membership_fee_mode_{$memberType}", 'none');
+                $mt = $this->model('MemberTypeModel');
+                $feeConf = $mt->getFeeConfig($memberType);
+                $feeMode = $feeConf['mode'];
 
                 if ($feeMode !== 'none') {
                     // Check if fee has been paid & approved
@@ -330,13 +332,12 @@ class MemberController extends Controller
 
         $memberType = $target['member_type'] ?? 'ordinary';
         $settings = $this->model('SettingsModel');
-        $feeMode = $settings->get("membership_fee_mode_{$memberType}", 'none');
+        $mt = $this->model('MemberTypeModel');
+        $feeConf = $mt->getFeeConfig($memberType);
+        $feeMode = $feeConf['mode'];
 
-        // Get fee amount from settings
-        $feeAmount = 0;
-        if ($feeMode !== 'none') {
-            $feeAmount = (float)$settings->get("membership_fee_{$memberType}", '0');
-        }
+        // Get fee amount from member_types table
+        $feeAmount = $feeConf['amount'];
 
         $result = [
             'member_type' => $memberType,
