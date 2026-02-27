@@ -183,7 +183,7 @@
 
 <!-- Modal: Registrations -->
 <div class="modal fade" id="regsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">รายชื่อผู้ลงทะเบียน</h5>
@@ -191,6 +191,16 @@
             </div>
             <div class="modal-body" id="regsModalBody">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div id="regsAccessCodeSection">
+                    <span class="text-muted small me-2"><i class="bi bi-key me-1"></i>รหัสเข้าดู:</span>
+                    <code id="regsAccessCode" class="me-2" style="font-size:1.1em;">-</code>
+                    <button class="btn btn-outline-primary btn-sm me-1" onclick="generateAccessCode()" title="สร้าง/รีเซ็ตรหัส"><i class="bi bi-arrow-repeat me-1"></i>สร้างรหัส</button>
+                    <button class="btn btn-outline-success btn-sm me-1" onclick="copyAccessLink()" title="คัดลอกลิงก์" id="btnCopyLink" style="display:none"><i class="bi bi-link-45deg me-1"></i>คัดลอกลิงก์</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeAccessCode()" title="ลบรหัส" id="btnRemoveCode" style="display:none"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
             </div>
         </div>
     </div>
@@ -443,10 +453,21 @@ $('#btnSaveActivity').on('click', async function () {
 });
 
 // View registrations
+let currentRegActivityId = null;
+let currentRegActivityData = null;
+
 async function viewRegistrations(activityId) {
+    currentRegActivityId = activityId;
     $('#regsModal').modal('show');
     const body = $('#regsModalBody');
     body.html('<div class="text-center py-4"><span class="spinner-border"></span></div>');
+
+    // Load activity detail for access code
+    const actResult = await API.getActivityDetail(activityId);
+    if (actResult.success && actResult.data) {
+        currentRegActivityData = actResult.data;
+        updateAccessCodeUI(actResult.data.access_code);
+    }
 
     const result = await API.getActivityRegistrations(activityId);
     if (!result.success || !result.data || result.data.length === 0) {
@@ -454,8 +475,12 @@ async function viewRegistrations(activityId) {
         return;
     }
 
-    let html = `<div class="table-responsive"><table class="table table-sm table-hover">
-        <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>อีเมล</th><th>การชำระเงิน</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>`;
+    let html = `<div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted">ทั้งหมด ${result.data.length} คน</span>
+        <button class="btn btn-success btn-sm" onclick="exportRegistrationsExcel()"><i class="bi bi-file-earmark-excel me-1"></i>Export Excel</button>
+    </div>`;
+    html += `<div class="table-responsive"><table class="table table-sm table-hover" id="regsTable">
+        <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>โรงเรียน/หน่วยงาน</th><th>อีเมล</th><th>การชำระเงิน</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>`;
 
     result.data.forEach((r, i) => {
         const payBadge = r.payment_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>'
@@ -468,6 +493,7 @@ async function viewRegistrations(activityId) {
         html += `<tr>
             <td>${i + 1}</td>
             <td>${r.full_name || ''}</td>
+            <td>${r.school_organization || '-'}</td>
             <td>${r.email || '-'}</td>
             <td>${payBadge} ${slip}</td>
             <td>${stBadge}</td>
@@ -484,6 +510,77 @@ async function viewRegistrations(activityId) {
 
     html += '</tbody></table></div>';
     body.html(html);
+}
+
+function updateAccessCodeUI(code) {
+    if (code) {
+        $('#regsAccessCode').text(code);
+        $('#btnCopyLink, #btnRemoveCode').show();
+    } else {
+        $('#regsAccessCode').text('ยังไม่มี');
+        $('#btnCopyLink, #btnRemoveCode').hide();
+    }
+}
+
+async function generateAccessCode() {
+    if (!currentRegActivityId) return;
+    const result = await API.resetAccessCode(currentRegActivityId);
+    if (result.success && result.data) {
+        updateAccessCodeUI(result.data.access_code);
+        if (currentRegActivityData) currentRegActivityData.access_code = result.data.access_code;
+        App.success('สร้างรหัสเข้าดูสำเร็จ: ' + result.data.access_code);
+    } else {
+        App.error(result.message);
+    }
+}
+
+async function removeAccessCode() {
+    if (!currentRegActivityId) return;
+    if (!confirm('ต้องการลบรหัสเข้าดู? ลิงก์สาธารณะจะใช้ไม่ได้')) return;
+    const result = await API.removeAccessCode(currentRegActivityId);
+    if (result.success) {
+        updateAccessCodeUI(null);
+        if (currentRegActivityData) currentRegActivityData.access_code = null;
+        App.success('ลบรหัสเข้าดูสำเร็จ');
+    } else {
+        App.error(result.message);
+    }
+}
+
+function copyAccessLink() {
+    if (!currentRegActivityId || !currentRegActivityData || !currentRegActivityData.access_code) return;
+    const url = window.location.origin + BASE_PATH + 'web/?page=activity-participants&id=' + currentRegActivityId + '&code=' + currentRegActivityData.access_code;
+    navigator.clipboard.writeText(url).then(() => {
+        App.success('คัดลอกลิงก์สำเร็จ');
+    }).catch(() => {
+        prompt('คัดลอกลิงก์นี้:', url);
+    });
+}
+
+function exportRegistrationsExcel() {
+    const table = document.getElementById('regsTable');
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tr');
+    let csv = '\uFEFF'; // BOM for Excel UTF-8
+    const actTitle = currentRegActivityData ? currentRegActivityData.title : 'กิจกรรม';
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = [];
+        cells.forEach((cell, idx) => {
+            if (idx === cells.length - 1) return; // Skip last column (จัดการ)
+            rowData.push('"' + cell.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        csv += rowData.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'รายชื่อผู้ลงทะเบียน-' + actTitle + '.csv';
+    link.click();
+    URL.revokeObjectURL(link.href);
 }
 
 async function approveReg(regId, status, paymentStatus, activityId) {

@@ -15,6 +15,7 @@ $allowed = [
     'news-detail',
     'activities',
     'activity-detail',
+    'activity-participants',
     'dynamic',
     'privacy-policy'
 ];

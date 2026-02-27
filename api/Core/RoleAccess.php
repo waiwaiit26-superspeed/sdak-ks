@@ -57,9 +57,12 @@ class RoleAccess
         'activity' => [
             'list'                => ['*'],
             'detail'              => ['*'],
+            'public-registrations'=> ['*'],
             'create'              => ['admin'],
             'update'              => ['admin'],
             'delete'              => ['admin'],
+            'reset-access-code'   => ['admin'],
+            'remove-access-code'  => ['admin'],
             'register'            => ['member', 'admin'],
             'cancel-registration' => ['member', 'admin'],
             'upload-slip'         => ['member', 'admin'],

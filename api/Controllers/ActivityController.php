@@ -154,7 +154,7 @@ class ActivityController extends Controller
 
         $allowed = ['title','description','location','start_date','end_date',
                      'max_participants','has_fee','fee_amount','fee_description','cover_image','status',
-                     'visibility','visibility_text','allowed_member_types'];
+                     'visibility','visibility_text','allowed_member_types','access_code'];
         $data = [];
         foreach ($allowed as $f) {
             if (isset($input[$f])) $data[$f] = $input[$f];
@@ -551,5 +551,102 @@ class ActivityController extends Controller
         if (!$manager || !$manager['is_active']) {
             Response::error('คุณไม่มีสิทธิ์เข้าถึงส่วนนี้', 403);
         }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  PUBLIC REGISTRATIONS  (access code protected)                      */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * GET  ?controller=activity&action=public-registrations
+     * Public endpoint — requires access_code, no auth needed
+     */
+    public function publicRegistrations(): void
+    {
+        $actId = (int)$this->query('id');
+        $code  = trim($this->query('code') ?? '');
+        if (!$actId) Response::error('กรุณาระบุ id กิจกรรม');
+        if (!$code)  Response::error('กรุณาระบุรหัสเข้าดู');
+
+        $activity = $this->model('ActivityModel');
+        $act = $activity->find($actId);
+        if (!$act) Response::error('ไม่พบกิจกรรม', 404);
+
+        if (empty($act['access_code'])) {
+            Response::error('กิจกรรมนี้ยังไม่เปิดให้ดูรายชื่อ');
+        }
+        if ($act['access_code'] !== $code) {
+            Response::error('รหัสเข้าดูไม่ถูกต้อง', 403);
+        }
+
+        $reg  = $this->model('ActivityRegistrationModel');
+        $list = $reg->getByActivity($actId);
+
+        Response::success([
+            'activity' => [
+                'id'               => $act['id'],
+                'title'            => $act['title'],
+                'location'         => $act['location'],
+                'start_date'       => $act['start_date'],
+                'end_date'         => $act['end_date'],
+                'max_participants' => $act['max_participants'],
+                'has_fee'          => $act['has_fee'],
+                'fee_amount'       => $act['fee_amount'],
+                'status'           => $act['status'],
+                'cover_image'      => $act['cover_image'],
+            ],
+            'registrations' => $list,
+        ]);
+    }
+
+    /**
+     * POST  ?controller=activity&action=reset-access-code
+     * Admin resets or generates a new access code for an activity
+     */
+    public function resetAccessCode(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+        $id = (int)($input['id'] ?? 0);
+        if (!$id) Response::error('กรุณาระบุ id กิจกรรม');
+
+        $activity = $this->model('ActivityModel');
+        if (!$activity->has(['id' => $id])) Response::error('ไม่พบกิจกรรม', 404);
+
+        // Generate 8-char alphanumeric code
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $code = '';
+        for ($i = 0; $i < 8; $i++) {
+            $code .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+
+        $activity->update(['access_code' => $code], ['id' => $id]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'update', 'activity',
+            "รีเซ็ตรหัสเข้าดูกิจกรรม #{$id}",
+            $id, 'activity'
+        );
+
+        Response::success(['access_code' => $code], 'สร้างรหัสเข้าดูสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=activity&action=remove-access-code
+     * Admin removes access code (disables public view)
+     */
+    public function removeAccessCode(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+        $id = (int)($input['id'] ?? 0);
+        if (!$id) Response::error('กรุณาระบุ id กิจกรรม');
+
+        $activity = $this->model('ActivityModel');
+        if (!$activity->has(['id' => $id])) Response::error('ไม่พบกิจกรรม', 404);
+
+        $activity->update(['access_code' => null], ['id' => $id]);
+
+        Response::success(null, 'ลบรหัสเข้าดูสำเร็จ');
     }
 }

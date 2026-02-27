@@ -376,6 +376,15 @@ const API = {
         if (status) params.status = status;
         return this.get(this.apiUrl('activity', 'registrations'), params);
     },
+    async getPublicRegistrations(activityId, code) {
+        return this.get(this.apiUrl('activity', 'public-registrations'), { id: activityId, code: code });
+    },
+    async resetAccessCode(activityId) {
+        return this.post(this.apiUrl('activity', 'reset-access-code'), { id: activityId });
+    },
+    async removeAccessCode(activityId) {
+        return this.post(this.apiUrl('activity', 'remove-access-code'), { id: activityId });
+    },
 
     // ── DASHBOARD (admin) ────────────────────────────────
     async getDashboard() {
