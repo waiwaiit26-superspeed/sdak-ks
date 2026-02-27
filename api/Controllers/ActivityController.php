@@ -350,8 +350,10 @@ class ActivityController extends Controller
         if (!$act || !$act['has_fee'] || $act['fee_amount'] <= 0) return;
 
         $users = $this->model('UserModel');
-        $user = $users->find((int)$registration['user_id'], ['full_name']);
+        $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address']);
         if (!$user) return;
+
+        $payerAddress = FeeController::buildPayerAddress($user);
 
         $settings = $this->model('SettingsModel');
         $description = $act['fee_description']
@@ -364,6 +366,7 @@ class ActivityController extends Controller
             'reference_id'  => (int)$registration['id'],
             'title'         => 'ค่าลงทะเบียนกิจกรรม',
             'payer_name'    => $user['full_name'],
+            'payer_address' => $payerAddress,
             'description'   => $description,
             'amount'        => (float)$act['fee_amount'],
             'received_by'   => $settings->get('signature_name', ''),

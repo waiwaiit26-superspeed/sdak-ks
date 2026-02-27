@@ -414,14 +414,15 @@ class MemberController extends Controller
         if (!$target) Response::error('ไม่พบผู้ใช้', 404);
 
         $memberType = $target['member_type'] ?? 'ordinary';
-        $settings   = $this->model('SettingsModel');
-        $feeMode    = $settings->get("membership_fee_mode_{$memberType}", 'none');
+        $mt         = $this->model('MemberTypeModel');
+        $feeConf    = $mt->getFeeConfig($memberType);
+        $feeMode    = $feeConf['mode']   ?? 'none';
 
         if ($feeMode === 'none') {
             Response::error('ประเภทสมาชิกนี้ไม่ต้องชำระค่าธรรมเนียม');
         }
 
-        $feeAmount   = (float)$settings->get("membership_fee_{$memberType}", '0');
+        $feeAmount   = $feeConf['amount'] ?? 0;
         $feeType     = $feeMode === 'onetime' ? 'onetime' : 'annual';
         $buddhistYear = (int)date('Y') + 543;
 
@@ -450,13 +451,15 @@ class MemberController extends Controller
             if (!$existing) {
                 $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
                 $description = "ค่าธรรมเนียมสมาชิก ({$feeLabel})";
+                $payerAddress = FeeController::buildPayerAddress($target);
+                $settings = $this->model('SettingsModel');
                 $receipts->createReceipt([
                     'user_id'       => $userId,
                     'receipt_type'  => 'membership_fee',
                     'reference_id'  => $feeId,
                     'title'         => 'ค่าธรรมเนียมสมาชิก',
                     'payer_name'    => $target['full_name'],
-                    'payer_address' => null,
+                    'payer_address' => $payerAddress,
                     'description'   => $description,
                     'amount'        => $feeAmount,
                     'received_by'   => $settings->get('signature_name', ''),
@@ -474,13 +477,8 @@ class MemberController extends Controller
                 $catModel = $this->model('FinanceCategoryModel');
                 $feeCategory = $catModel->findBy(['name' => 'ค่าธรรมเนียมสมาชิก', 'type' => 'income']);
                 if ($feeCategory) {
-                    $memberTypeLabels = [
-                        'ordinary'  => 'สามัญ',
-                        'associate' => 'วิสามัญ',
-                        'affiliate' => 'สมทบ',
-                        'honorary'  => 'กิตติมศักดิ์',
-                    ];
-                    $memberTypeText = isset($memberTypeLabels[$memberType]) ? ' (' . $memberTypeLabels[$memberType] . ')' : '';
+                    $labelMap = $mt->getLabelMap();
+                    $memberTypeText = isset($labelMap[$memberType]) ? ' (' . $labelMap[$memberType] . ')' : '';
                     $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
 
                     $txnModel->create([

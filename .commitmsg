@@ -1,0 +1,10 @@
+Add member types CRUD in admin settings + receipt payer_address everywhere
+
+- Admin settings: full CRUD for member types (table, create/edit modal with live icon preview)
+- Receipt modals: add payer_address input (admin + member create/edit)
+- Auto-fill address when selecting member in receipt create form
+- FeeController::buildPayerAddress changed to public static for reuse
+- ActivityController::generateActivityReceipt now includes payer_address
+- MemberController::confirmFeePayment uses MemberTypeModel + buildPayerAddress
+- MemberController: removed hardcoded labels, uses getLabelMap()
+- ReceiptController::searchMembers returns work_address, school_organization

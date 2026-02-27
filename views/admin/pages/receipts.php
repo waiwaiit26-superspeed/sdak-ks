@@ -130,6 +130,11 @@
                         <small class="text-muted" id="payerNameHint">ดึงจากชื่อสมาชิกอัตโนมัติ</small>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
+                    <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
+                    <small class="text-muted">ที่อยู่จะแสดงในใบเสร็จ (ไม่ระบุก็ได้)</small>
+                </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">หมวดหมู่ <span class="text-danger">*</span></label>
@@ -199,6 +204,10 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">ชื่อผู้ชำระ</label>
                     <input type="text" id="editPayerName" class="form-control" placeholder="ชื่อผู้ชำระเงิน">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
+                    <input type="text" id="editPayerAddress" class="form-control" placeholder="ที่อยู่ (ไม่ระบุก็ได้)">
                 </div>
                 <div class="mb-2">
                     <small class="text-muted" id="editReceiptInfo"></small>
@@ -354,11 +363,16 @@ $(function () {
             $('#createUserId').val(userId);
             $('#createPayerName').val(member ? member.full_name : data.text).prop('readonly', true);
             $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
+            // Auto-fill payer address
+            if (member) {
+                $('#createPayerAddress').val(buildPayerAddress(member));
+            }
         } else {
             // Custom text entered (non-member)
             const customName = String(data.id).replace(' (บุคคลภายนอก)', '');
             $('#createUserId').val('');
             $('#createPayerName').val(customName).prop('readonly', false);
+            $('#createPayerAddress').val('');
             $('#payerNameHint').text('บุคคลภายนอก — แก้ไขชื่อได้');
         }
     });
@@ -366,6 +380,7 @@ $(function () {
     $('#createPayerSelect').on('select2:clear', function() {
         $('#createUserId').val('');
         $('#createPayerName').val('').prop('readonly', true);
+        $('#createPayerAddress').val('');
         $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     });
 
@@ -396,6 +411,9 @@ $(function () {
             description: $('#createDescription').val().trim() || undefined,
             receipt_number: $('#createReceiptNumber').val().trim() || undefined,
         };
+
+        const payerAddress = $('#createPayerAddress').val().trim();
+        if (payerAddress) data.payer_address = payerAddress;
 
         if (userId) {
             data.user_id = userId;
@@ -441,6 +459,8 @@ $(function () {
 
         const updateData = { id: id, receipt_number: receiptNumber };
         if (payerName) updateData.payer_name = payerName;
+        const editAddress = $('#editPayerAddress').val().trim();
+        updateData.payer_address = editAddress || null;
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
@@ -522,6 +542,7 @@ function resetCreateForm() {
     $('#createPayerSelect').val(null).trigger('change');
     $('#createUserId').val('');
     $('#createPayerName').val('').prop('readonly', true);
+    $('#createPayerAddress').val('');
     $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
     $('#createReceiptNumber').val('');
@@ -563,6 +584,7 @@ function openEditReceiptNumber() {
     $('#editReceiptId').val(modalReceiptData.id);
     $('#editReceiptNumber').val(modalReceiptData.receipt_number);
     $('#editPayerName').val(modalReceiptData.payer_name || '');
+    $('#editPayerAddress').val(modalReceiptData.payer_address || '');
     $('#editReceiptInfo').text(`เล่มที่: ${modalReceiptData.book_number} | วันที่ออก: ${App.formatDate(modalReceiptData.issued_date)}`);
     $('#editReceiptNumModal').modal('show');
 }
@@ -582,6 +604,26 @@ function toBase64(url) {
         img.onerror = reject;
         img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
     });
+}
+
+// Build payer address from member data (mirrors PHP FeeController::buildPayerAddress)
+function buildPayerAddress(member) {
+    if (!member) return '';
+    let wa = member.work_address;
+    if (typeof wa === 'string' && wa) {
+        try { wa = JSON.parse(wa); } catch(e) { return wa; }
+    }
+    if (wa && typeof wa === 'object') {
+        const parts = [];
+        const detail = (wa.address || wa.detail || '').trim();
+        if (detail) parts.push(detail);
+        if (wa.subdistrict) parts.push('ต.' + wa.subdistrict);
+        if (wa.district) parts.push('อ.' + wa.district);
+        if (wa.province) parts.push('จ.' + wa.province);
+        if (wa.zipcode) parts.push(wa.zipcode);
+        if (parts.length) return parts.join(' ');
+    }
+    return member.school_organization || '';
 }
 
 async function loadReceipts(page = 1) {

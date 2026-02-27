@@ -111,7 +111,7 @@ class ReceiptController extends Controller
         $where['LIMIT'] = 50;
         $where['ORDER'] = ['full_name' => 'ASC'];
 
-        $data = $users->all(['id', 'full_name', 'email'], $where);
+        $data = $users->all(['id', 'full_name', 'email', 'school_organization', 'work_address'], $where);
         Response::success($data);
     }
 

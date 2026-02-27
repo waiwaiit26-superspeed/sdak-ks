@@ -398,7 +398,7 @@ class FeeController extends Controller
     /**
      * Build payer address string from member's work_address or school_organization
      */
-    private function buildPayerAddress(array $member): ?string
+    public static function buildPayerAddress(array $member): ?string
     {
         // Try work_address JSON first
         $workAddr = $member['work_address'] ?? null;
