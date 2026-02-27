@@ -214,7 +214,8 @@ $(function () {
                 } else if (st === 'approved') {
                     regBtn = `<button class="btn btn-success" disabled><i class="bi bi-check-circle me-1"></i> ลงทะเบียนแล้ว</button>`;
                 } else {
-                    regBtn = `<button class="btn btn-secondary" disabled><i class="bi bi-x-circle me-1"></i> การลงทะเบียนถูกปฏิเสธ</button>`;
+                    regBtn = `<button class="btn btn-secondary" disabled><i class="bi bi-x-circle me-1"></i> การลงทะเบียนถูกปฏิเสธ</button>
+                              <button class="btn btn-outline-danger btn-sm ms-2" id="btnCancelReg">ยกเลิกการลงทะเบียน</button>`;
                 }
             } else {
                 const isFull = a.max_participants > 0 && a.approved_count >= a.max_participants;
