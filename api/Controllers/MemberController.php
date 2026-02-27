@@ -304,8 +304,9 @@ class MemberController extends Controller
         $settings = $this->model('SettingsModel');
         $prefix = $settings->get('member_number_prefix', '');
         $digits = (int)$settings->get('member_number_digits', '4');
+        $startNumber = (int)$settings->get('member_start_number', '1');
         $users = $this->model('UserModel');
-        $nextNumber = $users->getNextMemberNumber($digits);
+        $nextNumber = $users->getNextMemberNumber($digits, $startNumber);
         Response::success([
             'next_number' => $nextNumber,
             'formatted'   => UserModel::formatMemberNumber($nextNumber, $prefix, $digits),
@@ -389,7 +390,8 @@ class MemberController extends Controller
         // Get next member number (numeric only) + prefix for display
         $prefix = $settings->get('member_number_prefix', '');
         $digits = (int)$settings->get('member_number_digits', '4');
-        $result['next_member_number'] = $users->getNextMemberNumber($digits);
+        $startNumber = (int)$settings->get('member_start_number', '1');
+        $result['next_member_number'] = $users->getNextMemberNumber($digits, $startNumber);
         $result['member_number_prefix'] = $prefix;
         $result['member_number_digits'] = $digits;
         $rawMn = $target['member_number'] ?? '';

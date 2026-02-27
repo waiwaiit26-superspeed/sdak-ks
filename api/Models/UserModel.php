@@ -72,8 +72,9 @@ class UserModel extends Model
 
     /**
      * Get next available member number (numeric part only)
+     * Respects member_start_number setting
      */
-    public function getNextMemberNumber(int $digits = 4): string
+    public function getNextMemberNumber(int $digits = 4, int $startNumber = 1): string
     {
         $all = $this->db->select($this->table, 'member_number', [
             'member_number[!]' => null,
@@ -86,7 +87,14 @@ class UserModel extends Model
             if ($num > $maxNum) $maxNum = $num;
         }
 
-        return str_pad($maxNum + 1, $digits, '0', STR_PAD_LEFT);
+        // If no members yet, use start number; otherwise max + 1
+        if ($maxNum === 0) {
+            $next = max($startNumber, 1);
+        } else {
+            $next = $maxNum + 1;
+        }
+
+        return str_pad($next, $digits, '0', STR_PAD_LEFT);
     }
 
     /**

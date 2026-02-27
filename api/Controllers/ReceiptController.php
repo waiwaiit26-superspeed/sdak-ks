@@ -156,7 +156,8 @@ class ReceiptController extends Controller
         $issuedDate = $this->query('issued_date') ?: date('Y-m-d');
         $receipts = $this->model('ReceiptModel');
         $bookNum = $receipts::buildBookNumber($prefix, $issuedDate);
-        $nextNum = $receipts->getNextNumber($bookNum);
+        $startNumber = (int)$settings->get('receipt_start_number', '1');
+        $nextNum = $receipts->getNextNumber($bookNum, $startNumber);
 
         Response::success([
             'book_number'    => $bookNum,

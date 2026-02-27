@@ -29,7 +29,8 @@ class ReceiptModel extends Model
 
         // Use custom receipt_number if provided, otherwise auto-generate
         if (empty($data['receipt_number'])) {
-            $data['receipt_number'] = $this->getNextNumber($bookNum);
+            $startNumber = (int)$settings->get('receipt_start_number', '1');
+            $data['receipt_number'] = $this->getNextNumber($bookNum, $startNumber);
         }
 
         // Convert amount to Thai text
@@ -42,13 +43,21 @@ class ReceiptModel extends Model
 
     /**
      * Get next receipt number for a given book_number
+     * Respects receipt_start_number setting: if no receipts exist yet,
+     * use start number instead of 1
      */
-    public function getNextNumber(string $bookNumber): int
+    public function getNextNumber(string $bookNumber, int $startNumber = 1): int
     {
         $max = $this->db->max($this->table, 'receipt_number', [
             'book_number' => $bookNumber,
         ]);
-        return ((int)$max) + 1;
+        $maxInt = (int)$max;
+        // If no receipts yet, use start number; otherwise max + 1
+        // If max already exceeds start, just continue from max + 1
+        if ($maxInt === 0) {
+            return max($startNumber, 1);
+        }
+        return $maxInt + 1;
     }
 
     /**

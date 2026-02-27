@@ -199,12 +199,17 @@
                             <div class="card-header"><h3 class="card-title"><i class="bi bi-receipt me-2"></i>ระบบใบเสร็จ</h3></div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label class="form-label">คำนำหน้าเล่มที่ (Prefix)</label>
                                         <input type="text" class="form-control" name="receipt_book_number" id="receiptBookPrefix" placeholder="เช่น <?php echo siteConfig('site_name_short'); ?>">
                                         <small class="text-muted">ระบบจะเติมปี พ.ศ. (2 หลักท้าย) ต่อท้ายให้อัตโนมัติ</small>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">เลขที่ใบเสร็จเริ่มต้น</label>
+                                        <input type="number" class="form-control" name="receipt_start_number" id="receiptStartNumber" min="1" placeholder="1">
+                                        <small class="text-muted">หากไม่ระบุ จะเริ่มที่ 1 ทุกปี / หากระบุ เช่น 10 จะเริ่มนับ 10 เป็นต้นไป (ถ้ามีเลขเกินแล้วจะรันต่อไปเรื่อยๆ)</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
                                         <label class="form-label">ตัวอย่างเลขใบเสร็จ</label>
                                         <div id="receiptPreview" class="d-flex flex-wrap align-items-center" style="gap:.5rem; min-height:38px;">
                                             <span class="badge badge-info px-3 py-2" style="font-size:.95em;white-space:normal;word-break:break-word;" id="rcpPreview1"></span>
@@ -313,6 +318,11 @@
                                                 <option value="5">5 หลัก (00001)</option>
                                                 <option value="6">6 หลัก (000001)</option>
                                             </select>
+                                        </div>
+                                        <div class="form-group mb-2">
+                                            <label class="form-label small text-muted mb-1">เลขสมาชิกเริ่มต้น</label>
+                                            <input type="number" class="form-control form-control-sm" name="member_start_number" id="mnStartNumber" min="1" placeholder="1">
+                                            <small class="text-muted">หากไม่ระบุ จะเริ่มที่ 1 / หากระบุ เช่น 100 สมาชิกใหม่จะเริ่มนับจาก 100 (ถ้ามีเลขเกินแล้วจะรันต่อไปเรื่อยๆ)</small>
                                         </div>
                                         <div class="form-group mb-0">
                                             <label class="form-label small text-muted mb-1">ตัวอย่างเลขสมาชิก</label>
@@ -635,12 +645,13 @@ async function loadSettings() {
 function updateMnPreview() {
     const prefix = $('#mnPrefix').val() || '';
     const digits = parseInt($('#mnDigits').val()) || 4;
+    const startNum = parseInt($('#mnStartNumber').val()) || 1;
     const pad = (n) => String(n).padStart(digits, '0');
-    $('#mnPreview1').text(prefix + pad(1));
-    $('#mnPreview2').text(prefix + pad(42));
-    $('#mnPreview3').text(prefix + pad(100));
+    $('#mnPreview1').text(prefix + pad(startNum));
+    $('#mnPreview2').text(prefix + pad(startNum + 1));
+    $('#mnPreview3').text(prefix + pad(startNum + 2));
 }
-$('#mnPrefix, #mnDigits').on('input change', updateMnPreview);
+$('#mnPrefix, #mnDigits, #mnStartNumber').on('input change', updateMnPreview);
 
 function randomizeResetCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -653,12 +664,13 @@ function randomizeResetCode() {
 // Receipt number preview
 function updateReceiptPreview() {
     const prefix = ($('#receiptBookPrefix').val() || '').trim();
+    const startNum = parseInt($('#receiptStartNumber').val()) || 1;
     const buddhistYear2 = String((new Date()).getFullYear() + 543).slice(-2);
     const bookNum = prefix ? prefix + ' ' + buddhistYear2 : buddhistYear2;
-    $('#rcpPreview1').text('เล่มที่ ' + bookNum + ' / เลขที่ 1');
-    $('#rcpPreview2').text('เล่มที่ ' + bookNum + ' / เลขที่ 2');
+    $('#rcpPreview1').text('เล่มที่ ' + bookNum + ' / เลขที่ ' + startNum);
+    $('#rcpPreview2').text('เล่มที่ ' + bookNum + ' / เลขที่ ' + (startNum + 1));
 }
-$('#receiptBookPrefix').on('input', updateReceiptPreview);
+$('#receiptBookPrefix, #receiptStartNumber').on('input', updateReceiptPreview);
 
 // ─── Signature Mode Toggle ───
 $('#signatureMode').on('change', function () {
