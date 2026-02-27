@@ -197,10 +197,6 @@ include ROOT_PATH . 'templates/admin/sidebar.php';
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
 
 <script>
-const API_BASE = '<?php echo $basePath; ?>api/';
-const API = window.API || new ApiClient(API_BASE);
-const BASE_PATH = '<?php echo $basePath; ?>';
-
 let _allMemberTypes = [];
 
 // ═══════════════════════════════════════════════════════════════
