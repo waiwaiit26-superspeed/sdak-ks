@@ -1554,9 +1554,9 @@ function renderPayerAddressFinance(raw, fontSize) {
         const a = JSON.parse(raw);
         if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
             let html = '';
-            html += `<div style="margin-bottom:4px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;${App.escHtml(a.detail || '')}&nbsp;</span>`;
+            html += `<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;${App.escHtml(a.detail || '')}&nbsp;</span>`;
             html += ` <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:130px;">&nbsp;${App.escHtml(a.subdistrict || '')}&nbsp;</span></div>`;
-            html += `<div style="margin-bottom:6px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;${App.escHtml(a.district || '')}&nbsp;</span>`;
+            html += `<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;${App.escHtml(a.district || '')}&nbsp;</span>`;
             html += ` <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;${App.escHtml(a.province || '')}&nbsp;</span></div>`;
             return html;
         }
@@ -1599,24 +1599,24 @@ async function viewTxnReceipt(referenceNo) {
     const thM = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const dateStr = `วันที่ ${d.getDate()} เดือน ${thM[d.getMonth()]} พ.ศ. ${d.getFullYear() + 543}`;
 
-    body.html(`<div id="modalReceiptCanvas" style="font-family:'Sarabun',sans-serif;color:#1a3c5e;line-height:1.8;padding:40px;border:2px solid #1a3c5e;border-radius:12px;">
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:10px;">
+    body.html(`<div id="modalReceiptCanvas" style="font-family:'Sarabun',sans-serif;color:#1a3c5e;line-height:1.5;padding:30px;border:2px solid #1a3c5e;border-radius:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
             <div>เล่มที่ ${App.escHtml(r.book_number)}</div>
             <div>เลขที่ ${r.receipt_number}</div>
         </div>
-        <div style="text-align:center;margin-bottom:15px;">
+        <div style="text-align:center;margin-bottom:10px;">
             <div style="font-size:24px;font-weight:700;">ใบเสร็จรับเงิน</div>
             <div style="font-size:18px;font-weight:600;">${App.escHtml(r.organization_name)}</div>
             <div style="font-size:15px;">${App.escHtml(r.organization_address)}</div>
         </div>
-        <div style="text-align:left;font-size:13px;margin-bottom:12px;padding-left:50%;">${dateStr}</div>
-        <div style="margin-bottom:6px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:350px;">&nbsp;${App.escHtml(r.payer_name)}&nbsp;</span></div>
+        <div style="text-align:left;font-size:13px;margin-bottom:8px;padding-left:50%;">${dateStr}</div>
+        <div style="margin-bottom:4px;"><strong>ได้รับเงินจาก</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:350px;">&nbsp;${App.escHtml(r.payer_name)}&nbsp;</span></div>
         ${renderPayerAddressFinance(r.payer_address, '13px')}
-        <div style="margin-bottom:6px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:410px;">&nbsp;${App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
+        <div style="margin-bottom:4px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:410px;">&nbsp;${App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
         <div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;">
             <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:30px;">
+        <div style="display:flex;justify-content:flex-end;margin-top:15px;">
             <div style="text-align:center;">
                 ${r.signature_mode === 'electronic' && sigSrc ? `<div style="margin-bottom:-25px;"><img src="${sigSrc}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:30px;"></div>'}
                 <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>

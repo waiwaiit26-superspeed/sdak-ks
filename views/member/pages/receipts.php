@@ -232,7 +232,7 @@
     background: #fff;
     font-family: 'Sarabun', sans-serif;
     color: #1a3c5e;
-    line-height: 1.8;
+    line-height: 1.5;
     position: relative;
     margin: 0 auto;
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
@@ -250,7 +250,7 @@
 #receiptCanvas .receipt-border {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
-    padding: 40px 60px;
+    padding: 30px 50px;
     position: absolute;
     top: 30px; left: 30px; right: 30px; bottom: 30px;
     display: flex;
@@ -259,7 +259,7 @@
 }
 #receiptCanvas .receipt-header {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 #receiptCanvas .receipt-title {
     font-size: 28px;
@@ -276,12 +276,12 @@
 #receiptCanvas .receipt-meta {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     font-size: 16px;
 }
 #receiptCanvas .receipt-body {
     font-size: 18px;
-    padding: 10px 0;
+    padding: 5px 0;
     flex-grow: 1;
 }
 #receiptCanvas .receipt-body .row-label {
@@ -289,15 +289,15 @@
     min-width: 140px;
 }
 #receiptCanvas .receipt-amount-box {
-    margin-top: 15px;
-    padding: 12px 20px;
+    margin-top: 10px;
+    padding: 8px 20px;
     border: 1px solid #1a3c5e;
     border-radius: 8px;
     font-size: 20px;
     text-align: center;
 }
 #receiptCanvas .receipt-footer {
-    margin-top: 30px;
+    margin-top: 15px;
     display: flex;
     justify-content: flex-end;
     font-size: 16px;
@@ -716,11 +716,11 @@ function renderPayerAddressHtml(raw, fontSize) {
         const a = JSON.parse(raw);
         if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
             let html = '';
-            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
+            html += `<div style="margin-bottom:2px;font-size:${fontSize};">`;
             html += `<strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:300px">&nbsp;${App.escapeHtml(a.detail || '')}&nbsp;</span>`;
             html += ` <strong>ตำบล</strong> <span class="dotted-line" style="min-width:180px">&nbsp;${App.escapeHtml(a.subdistrict || '')}&nbsp;</span>`;
             html += `</div>`;
-            html += `<div style="margin-bottom:8px;font-size:${fontSize};">`;
+            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
             html += `<strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;${App.escapeHtml(a.district || '')}&nbsp;</span>`;
             html += ` <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;${App.escapeHtml(a.province || '')}&nbsp;</span>`;
             html += `</div>`;
@@ -821,17 +821,17 @@ function renderReceipt(r) {
                 <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
             </div>
 
-            <div style="text-align:left; margin-bottom:15px; font-size:16px; padding-left:50%;">
+            <div style="text-align:left; margin-bottom:8px; font-size:16px; padding-left:50%;">
                 ${dateStr}
             </div>
 
             <div class="receipt-body">
-                <div style="margin-bottom:8px;">
+                <div style="margin-bottom:4px;">
                     <span class="row-label"><strong>ได้รับเงินจาก</strong></span>
                     <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span>
                 </div>
                 ${renderPayerAddressHtml(r.payer_address, '16px')}
-                <div style="margin-bottom:8px;">
+                <div style="margin-bottom:4px;">
                     <span class="row-label"><strong>เป็น</strong></span>
                     <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml(r.description)}&nbsp;</span>
                 </div>

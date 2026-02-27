@@ -237,7 +237,7 @@
     height: 794px;
     font-family: 'Sarabun', sans-serif;
     color: #1a3c5e;
-    line-height: 1.8;
+    line-height: 1.5;
     padding: 30px;
     background: #fff;
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
@@ -257,7 +257,7 @@
 .receipt-render .receipt-inner {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
-    padding: 40px 60px;
+    padding: 30px 50px;
     position: absolute;
     top: 30px; left: 30px; right: 30px; bottom: 30px;
     display: flex;
@@ -269,8 +269,8 @@
 .receipt-render .receipt-org-addr { font-size: 16px; text-align: center; margin-bottom: 10px; }
 .receipt-render .receipt-body-section { font-size: 18px; flex-grow: 1; }
 .receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 280px; margin: 0 5px; }
-.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 12px 20px; margin: 15px 0; font-size: 20px; }
-.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 30px; font-size: 16px; }
+.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 8px 20px; margin: 10px 0; font-size: 20px; }
+.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 16px; }
 </style>
 
 <script>
@@ -656,11 +656,11 @@ function renderPayerAddressHtml(raw, fontSize) {
         const a = JSON.parse(raw);
         if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
             let html = '';
-            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
+            html += `<div style="margin-bottom:2px;font-size:${fontSize};">`;
             html += `<strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:300px">&nbsp;${App.escapeHtml(a.detail || '')}&nbsp;</span>`;
             html += ` <strong>ตำบล</strong> <span class="dotted-line" style="min-width:180px">&nbsp;${App.escapeHtml(a.subdistrict || '')}&nbsp;</span>`;
             html += `</div>`;
-            html += `<div style="margin-bottom:8px;font-size:${fontSize};">`;
+            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
             html += `<strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;${App.escapeHtml(a.district || '')}&nbsp;</span>`;
             html += ` <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;${App.escapeHtml(a.province || '')}&nbsp;</span>`;
             html += `</div>`;
@@ -775,21 +775,21 @@ async function viewReceipt(id) {
     <div id="modalReceiptCanvas" class="receipt-render" style="visibility:hidden;">
         ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
         <div class="receipt-inner">
-        <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:6px;">
             <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>
             <div>เลขที่ ${r.receipt_number}</div>
         </div>
-        <div style="text-align:center;margin-bottom:15px;">
+        <div style="text-align:center;margin-bottom:10px;">
             ${window._receiptLogoUrl ? `<div style="margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:70px;"></div>` : ''}
             <div class="receipt-title">ใบเสร็จรับเงิน</div>
             <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
             <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
         </div>
-        <div style="text-align:left;font-size:16px;margin-bottom:12px;padding-left:50%;">${dateStr}</div>
+        <div style="text-align:left;font-size:16px;margin-bottom:8px;padding-left:50%;">${dateStr}</div>
         <div class="receipt-body-section">
-            <div style="margin-bottom:8px;font-size:18px;"><strong>ได้รับเงินจาก</strong> <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span></div>
+            <div style="margin-bottom:4px;font-size:18px;"><strong>ได้รับเงินจาก</strong> <span class="dotted-line" style="min-width:500px">&nbsp;${App.escapeHtml(r.payer_name)}&nbsp;</span></div>
             ${renderPayerAddressHtml(r.payer_address, '18px')}
-            <div style="margin-bottom:8px;font-size:18px;"><strong>เป็น</strong> <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
+            <div style="margin-bottom:4px;font-size:18px;"><strong>เป็น</strong> <span class="dotted-line" style="min-width:560px">&nbsp;${App.escapeHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}&nbsp;</span></div>
             <div class="receipt-amount-box">
                 <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
             </div>
