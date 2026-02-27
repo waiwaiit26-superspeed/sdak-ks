@@ -244,7 +244,7 @@ class ReceiptController extends Controller
 
     /**
      * POST  ?controller=receipt&action=update
-     * Update receipt (edit receipt_number, etc.)
+     * Update receipt (edit receipt_number, issued_date, etc.)
      * Past-year receipts: admin only
      */
     public function update(): void
@@ -281,6 +281,27 @@ class ReceiptController extends Controller
         if (isset($input['receipt_number'])) {
             $updateData['receipt_number'] = $input['receipt_number'];
         }
+
+        // Handle issued_date change → recalculate book_number
+        if (!empty($input['issued_date'])) {
+            $newIssuedDate = $input['issued_date'];
+            $updateData['issued_date'] = $newIssuedDate;
+            $settings = $this->model('SettingsModel');
+            $prefix = trim($settings->get('receipt_book_number', SITE_NAME_SHORT));
+            $newBookNum = $receipts::buildBookNumber($prefix, $newIssuedDate);
+            $updateData['book_number'] = $newBookNum;
+        }
+
+        // Check for duplicate receipt_number + book_number
+        if (isset($updateData['receipt_number']) || isset($updateData['book_number'])) {
+            $checkBookNum = $updateData['book_number'] ?? $receipt['book_number'];
+            $checkReceiptNum = $updateData['receipt_number'] ?? $receipt['receipt_number'];
+            $duplicate = $receipts->findDuplicate($checkBookNum, $checkReceiptNum, $id);
+            if ($duplicate) {
+                Response::error('เลขที่ใบเสร็จ ' . $checkReceiptNum . ' ในเล่ม ' . $checkBookNum . ' ซ้ำกับใบเสร็จที่มีอยู่แล้ว');
+            }
+        }
+
         if (isset($input['payer_name'])) {
             $updateData['payer_name'] = $input['payer_name'];
         }
@@ -307,6 +328,40 @@ class ReceiptController extends Controller
         );
 
         Response::success(null, 'แก้ไขใบเสร็จสำเร็จ');
+    }
+
+    /**
+     * GET  ?controller=receipt&action=check-duplicate
+     * Check if receipt_number + year already exists
+     */
+    public function checkDuplicate(): void
+    {
+        $receiptNumber = $this->query('receipt_number');
+        $issuedDate = $this->query('issued_date');
+        $excludeId = (int)($this->query('exclude_id') ?: 0);
+
+        if (!$receiptNumber || !$issuedDate) {
+            Response::error('กรุณาระบุเลขที่ใบเสร็จและวันที่');
+        }
+
+        $settings = $this->model('SettingsModel');
+        $prefix = trim($settings->get('receipt_book_number', SITE_NAME_SHORT));
+
+        $receipts = $this->model('ReceiptModel');
+        $bookNum = $receipts::buildBookNumber($prefix, $issuedDate);
+
+        $duplicate = $receipts->findDuplicate($bookNum, $receiptNumber, $excludeId);
+
+        if ($duplicate) {
+            Response::success([
+                'duplicate'    => true,
+                'existing_id'  => $duplicate['id'],
+                'payer_name'   => $duplicate['payer_name'] ?? '',
+                'book_number'  => $duplicate['book_number'],
+            ]);
+        } else {
+            Response::success(['duplicate' => false]);
+        }
     }
 
     /**

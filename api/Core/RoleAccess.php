@@ -121,6 +121,7 @@ class RoleAccess
             'create'            => ['member', 'admin'],
             'update'            => ['member', 'admin'],
             'next-number'       => ['member', 'admin'],
+            'check-duplicate'   => ['member', 'admin'],
             'search-members'    => ['member', 'admin'],
             'my-receipts'       => ['member', 'admin'],
             'update-my-address' => ['member', 'admin'],

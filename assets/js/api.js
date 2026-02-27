@@ -521,6 +521,9 @@ const API = {
     async getNextReceiptNumber(issuedDate = '') {
         return this.get(this.apiUrl('receipt', 'next-number'), { issued_date: issuedDate });
     },
+    async checkReceiptDuplicate(receiptNumber, issuedDate, excludeId = 0) {
+        return this.get(this.apiUrl('receipt', 'check-duplicate'), { receipt_number: receiptNumber, issued_date: issuedDate, exclude_id: excludeId });
+    },
     async searchReceiptMembers(q = '') {
         return this.get(this.apiUrl('receipt', 'search-members'), { q });
     },

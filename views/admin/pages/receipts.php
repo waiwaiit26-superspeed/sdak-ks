@@ -193,22 +193,67 @@
             <form id="editReceiptNumForm">
             <div class="modal-body">
                 <input type="hidden" id="editReceiptId">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">เลขที่ใบเสร็จ</label>
-                    <div class="input-group">
-                        <input type="text" id="editReceiptNumber" class="form-control" required>
-                        <button type="button" class="btn btn-outline-info" onclick="autoGenerateNumberForEdit()" title="รันเลขอัตโนมัติ">
-                            <i class="bi bi-arrow-repeat"></i>
-                        </button>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">เลขที่ใบเสร็จ</label>
+                        <div class="input-group">
+                            <input type="number" id="editReceiptNumber" class="form-control" min="1" required>
+                            <button type="button" class="btn btn-outline-info" onclick="autoGenerateNumberForEdit()" title="รันเลขอัตโนมัติ">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
                     </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">วันที่ออก (ปี)</label>
+                        <input type="date" id="editIssuedDate" class="form-control" required>
+                    </div>
+                </div>
+                <div id="editDuplicateWarning" class="alert alert-danger py-2 mb-3" style="display:none;">
+                    <i class="bi bi-exclamation-triangle me-1"></i> <span id="editDuplicateMsg"></span>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">ชื่อผู้ชำระ</label>
                     <input type="text" id="editPayerName" class="form-control" placeholder="ชื่อผู้ชำระเงิน">
                 </div>
+                <hr>
+                <h6 class="mb-3"><i class="bi bi-geo-alt me-1"></i>ที่อยู่ผู้ชำระเงิน</h6>
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="form-label small text-muted">เลขที่</label>
+                        <input type="text" id="editAddrNo" class="form-control form-control-sm" placeholder="เลขที่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small text-muted">หมู่ที่</label>
+                        <input type="text" id="editAddrMoo" class="form-control form-control-sm" placeholder="หมู่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small text-muted">ซอย</label>
+                        <input type="text" id="editAddrSoi" class="form-control form-control-sm" placeholder="ซอย">
+                    </div>
+                </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
-                    <input type="text" id="editPayerAddress" class="form-control" placeholder="ที่อยู่ (ไม่ระบุก็ได้)">
+                    <label class="form-label small text-muted">ถนน</label>
+                    <input type="text" id="editAddrRoad" class="form-control form-control-sm" placeholder="ถนน">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label small text-muted">ตำบล</label>
+                        <input type="text" id="editAddrSub" class="form-control form-control-sm" placeholder="ตำบล">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">อำเภอ</label>
+                        <input type="text" id="editAddrDist" class="form-control form-control-sm" placeholder="อำเภอ">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label small text-muted">จังหวัด</label>
+                        <input type="text" id="editAddrProv" class="form-control form-control-sm" placeholder="จังหวัด">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">รหัสไปรษณีย์</label>
+                        <input type="text" id="editAddrZip" class="form-control form-control-sm" placeholder="รหัสไปรษณีย์">
+                    </div>
                 </div>
                 <div class="mb-2">
                     <small class="text-muted" id="editReceiptInfo"></small>
@@ -456,19 +501,47 @@ $(function () {
         }
     });
 
-    // Edit receipt number form submit
+    // Edit receipt form submit
     $('#editReceiptNumForm').on('submit', async function(e) {
         e.preventDefault();
 
         const id = $('#editReceiptId').val();
         const receiptNumber = $('#editReceiptNumber').val().trim();
+        const issuedDate = $('#editIssuedDate').val();
         const payerName = $('#editPayerName').val().trim();
         if (!receiptNumber) { App.error('กรุณาระบุเลขที่ใบเสร็จ'); return; }
+        if (!issuedDate) { App.error('กรุณาระบุวันที่ออก'); return; }
 
-        const updateData = { id: id, receipt_number: receiptNumber };
+        // Check duplicate before saving
+        if ($('#editDuplicateWarning').is(':visible')) {
+            App.error('เลขที่ใบเสร็จซ้ำกับที่มีอยู่แล้ว กรุณาเปลี่ยนเลขที่หรือวันที่');
+            return;
+        }
+
+        const updateData = { id: id, receipt_number: receiptNumber, issued_date: issuedDate };
         if (payerName) updateData.payer_name = payerName;
-        const editAddress = $('#editPayerAddress').val().trim();
-        updateData.payer_address = editAddress || null;
+
+        // Build structured address JSON
+        const no   = $('#editAddrNo').val().trim();
+        const moo  = $('#editAddrMoo').val().trim();
+        const soi  = $('#editAddrSoi').val().trim();
+        const road = $('#editAddrRoad').val().trim();
+        const sub  = $('#editAddrSub').val().trim();
+        const dist = $('#editAddrDist').val().trim();
+        const prov = $('#editAddrProv').val().trim();
+        const zip  = $('#editAddrZip').val().trim();
+
+        let detail = no && no !== '-' ? no : '';
+        if (moo && moo !== '-') detail += '   หมู่ ' + moo;
+        if (soi && soi !== '-') detail += '   ซอย ' + soi;
+        if (road && road !== '-') detail += '   ถนน ' + road;
+        detail = detail.trim();
+
+        if (detail || sub || dist || prov) {
+            updateData.payer_address = JSON.stringify({ detail, subdistrict: sub, district: dist, province: prov, zipcode: zip });
+        } else {
+            updateData.payer_address = null;
+        }
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
@@ -477,7 +550,7 @@ $(function () {
         btn.prop('disabled', false).html('<i class="bi bi-check me-1"></i> บันทึก');
 
         if (result.success) {
-            App.success(result.message || 'แก้ไขเลขที่ใบเสร็จสำเร็จ');
+            App.success(result.message || 'แก้ไขใบเสร็จสำเร็จ');
             $('#editReceiptNumModal').modal('hide');
             loadReceipts(currentPage);
             // Refresh preview if open
@@ -487,6 +560,13 @@ $(function () {
         } else {
             App.error(result.message || 'เกิดข้อผิดพลาด');
         }
+    });
+
+    // Duplicate check when receipt number or date changes in edit form
+    let editDupTimer = null;
+    $('#editReceiptNumber, #editIssuedDate').on('input change', function() {
+        clearTimeout(editDupTimer);
+        editDupTimer = setTimeout(checkEditDuplicate, 400);
     });
 });
 
@@ -580,25 +660,93 @@ async function autoGenerateNumber() {
 // Auto-generate receipt number for edit
 async function autoGenerateNumberForEdit() {
     if (!modalReceiptData) return;
-    const result = await API.getNextReceiptNumber(modalReceiptData.issued_date);
+    const issuedDate = $('#editIssuedDate').val() || modalReceiptData.issued_date;
+    const result = await API.getNextReceiptNumber(issuedDate);
     if (result.success && result.data) {
         $('#editReceiptNumber').val(result.data.receipt_number);
         App.success(`เลขที่ถัดไป: ${result.data.receipt_number}`);
+        checkEditDuplicate();
     } else {
         App.error(result.message || 'ไม่สามารถดึงเลขที่ได้');
     }
 }
 
-// Open edit receipt number modal
+// Check for duplicate receipt number + book_number (year)
+async function checkEditDuplicate() {
+    const receiptNumber = $('#editReceiptNumber').val().trim();
+    const issuedDate = $('#editIssuedDate').val();
+    const id = $('#editReceiptId').val();
+    if (!receiptNumber || !issuedDate) {
+        $('#editDuplicateWarning').hide();
+        return;
+    }
+    try {
+        const result = await API.checkReceiptDuplicate(receiptNumber, issuedDate, id);
+        if (result.success && result.data && result.data.duplicate) {
+            $('#editDuplicateMsg').text(`เลขที่ใบเสร็จ ${receiptNumber} ในปีนี้ซ้ำกับใบเสร็จ #${result.data.existing_id} (${result.data.payer_name || '-'})`);
+            $('#editDuplicateWarning').show();
+        } else {
+            $('#editDuplicateWarning').hide();
+        }
+    } catch(e) {
+        $('#editDuplicateWarning').hide();
+    }
+}
+
+// Open edit receipt modal
 function openEditReceiptNumber() {
     if (!modalReceiptData) return;
     $('#editReceiptId').val(modalReceiptData.id);
     $('#editReceiptNumber').val(modalReceiptData.receipt_number);
+    $('#editIssuedDate').val(modalReceiptData.issued_date || '');
     $('#editPayerName').val(modalReceiptData.payer_name || '');
-    $('#editPayerAddress').val(flatPayerAddress(modalReceiptData.payer_address || ''));
-    $('#editReceiptInfo').text(`เล่มที่: ${modalReceiptData.book_number} | วันที่ออก: ${App.formatDate(modalReceiptData.issued_date)}`);
+
+    // Parse payer_address into structured fields
+    let addr = {};
+    try { addr = JSON.parse(modalReceiptData.payer_address); } catch(e) {}
+    if (!addr || typeof addr !== 'object') addr = {};
+
+    let detail = addr.detail || '';
+    let no = '', moo = '', soi = '', road = '';
+    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+    no = detail.trim();
+
+    $('#editAddrNo').val(no);
+    $('#editAddrMoo').val(moo);
+    $('#editAddrSoi').val(soi);
+    $('#editAddrRoad').val(road);
+    $('#editAddrSub').val(addr.subdistrict || '');
+    $('#editAddrDist').val(addr.district || '');
+    $('#editAddrProv').val(addr.province || '');
+    $('#editAddrZip').val(addr.zipcode || '');
+
+    // Update book number info display
+    updateEditReceiptInfo();
+    $('#editDuplicateWarning').hide();
     $('#editReceiptNumModal').modal('show');
 }
+
+// Update receipt info text when date changes
+function updateEditReceiptInfo() {
+    const issuedDate = $('#editIssuedDate').val();
+    if (issuedDate) {
+        const ceYear = new Date(issuedDate).getFullYear();
+        const buddhistYear2 = String(ceYear + 543).slice(-2);
+        const prefix = modalReceiptData ? (modalReceiptData.book_number || '').replace(/\s*\d{2}$/, '').trim() : '';
+        const bookNum = prefix ? prefix + ' ' + buddhistYear2 : buddhistYear2;
+        $('#editReceiptInfo').html(`<i class="bi bi-book me-1"></i>เล่มที่: <strong>${bookNum}</strong> | วันที่ออก: <strong>${App.formatDate(issuedDate)}</strong>`);
+    }
+}
+
+// Listen for date change on edit form
+$('#editIssuedDate').on('change', function() {
+    updateEditReceiptInfo();
+});
 
 // Convert image URL to base64
 function toBase64(url) {
@@ -753,7 +901,7 @@ async function loadReceipts(page = 1) {
                 <button class="btn btn-outline-primary btn-sm" onclick="viewReceipt(${r.id})" title="ดูใบเสร็จ">
                     <i class="bi bi-eye"></i>
                 </button>
-                ${canEdit ? `<button class="btn btn-outline-warning btn-sm" onclick="quickEditReceipt(${r.id}, '${App.escapeHtml(r.receipt_number)}', '${App.escapeHtml(r.book_number)}', '${r.issued_date}', '${App.escapeHtml(r.payer_name || r.full_name || '')}')" title="แก้ไข">
+                ${canEdit ? `<button class="btn btn-outline-warning btn-sm" onclick="quickEditReceipt(${r.id})" title="แก้ไข" data-receipt='${JSON.stringify({id:r.id, receipt_number:r.receipt_number, book_number:r.book_number, issued_date:r.issued_date, payer_name:r.payer_name||r.full_name||'', payer_address:r.payer_address||''}).replace(/'/g, "&#39;")}'>
                     <i class="bi bi-pencil"></i>
                 </button>` : ''}
             </td>
@@ -764,8 +912,15 @@ async function loadReceipts(page = 1) {
 }
 
 // Quick edit receipt from table row
-function quickEditReceipt(id, currentNum, bookNum, issuedDate, payerName) {
-    modalReceiptData = { id, receipt_number: currentNum, book_number: bookNum, issued_date: issuedDate, payer_name: payerName };
+function quickEditReceipt(id) {
+    const btn = $(`button[onclick="quickEditReceipt(${id})"]`);
+    try {
+        modalReceiptData = JSON.parse(btn.attr('data-receipt'));
+    } catch(e) {
+        // Fallback: load from API
+        viewReceipt(id);
+        return;
+    }
     openEditReceiptNumber();
 }
 

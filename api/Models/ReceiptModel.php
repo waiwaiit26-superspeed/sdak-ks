@@ -61,6 +61,22 @@ class ReceiptModel extends Model
     }
 
     /**
+     * Find duplicate receipt: same book_number + receipt_number, excluding a given id
+     */
+    public function findDuplicate(string $bookNumber, $receiptNumber, int $excludeId = 0): ?array
+    {
+        $where = [
+            'book_number'    => $bookNumber,
+            'receipt_number' => $receiptNumber,
+        ];
+        if ($excludeId > 0) {
+            $where['id[!]'] = $excludeId;
+        }
+        $row = $this->db->get($this->table, ['id', 'payer_name', 'book_number', 'receipt_number'], $where);
+        return $row ?: null;
+    }
+
+    /**
      * Build book_number string: prefix + " " + 2-digit Buddhist year
      * e.g. "SITE_NAME_SHORT" + "2026-02-14" → "SITE_NAME_SHORT 69" (พ.ศ.2569)
      */
@@ -153,6 +169,7 @@ class ReceiptModel extends Model
         $data = $this->selectJoin($join, [
             'receipts.id', 'receipts.receipt_number', 'receipts.book_number',
             'receipts.receipt_type', 'receipts.title', 'receipts.payer_name',
+            'receipts.payer_address',
             'receipts.amount', 'receipts.issued_date', 'receipts.created_at',
             'users.full_name', 'users.member_type',
         ], $where);
