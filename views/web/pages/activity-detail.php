@@ -418,13 +418,12 @@ $(function () {
                 <td>${i + 1}</td>
                 <td>${App.escapeHtml(r.full_name || '-')}</td>
                 <td>${App.escapeHtml(r.school_organization || '-')}</td>
-                <td>${App.escapeHtml(r.email || '-')}</td>
                 <td>${payBadge}</td>
                 <td>${stBadge}</td>
             </tr>`;
         });
 
-        if (!rows) rows = '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีผู้ลงทะเบียน</td></tr>';
+        if (!rows) rows = '<tr><td colspan="5" class="text-center text-muted py-3">ยังไม่มีผู้ลงทะเบียน</td></tr>';
 
         return `
             <div class="card mb-3">
@@ -442,7 +441,6 @@ $(function () {
                                     <th>#</th>
                                     <th>ชื่อ-สกุล</th>
                                     <th>โรงเรียน/หน่วยงาน</th>
-                                    <th>อีเมล</th>
                                     <th>การชำระเงิน</th>
                                     <th>สถานะ</th>
                                 </tr>
