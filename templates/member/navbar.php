@@ -10,9 +10,9 @@ $basePath = $basePath ?? './';
 <nav class="main-header navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1a5276 0%, #2980b9 100%);">
     <div class="container">
         <a class="navbar-brand" href="<?php echo $basePath; ?>">
-            <i class="bi bi-mortarboard-fill me-1"></i>
-            <span class="d-none d-sm-inline"><?php echo siteConfig('site_name_short'); ?></span>
-            <span class="d-sm-none"><?php echo siteConfig('site_name_en'); ?></span>
+            <span id="navbar-brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+            <span class="d-none d-sm-inline" id="navbar-brand-text"><?php echo siteConfig('site_name_short'); ?></span>
+            <span class="d-sm-none" id="navbar-brand-text-sm"><?php echo siteConfig('site_name_en'); ?></span>
         </a>
 
         <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#mainNav">
