@@ -135,14 +135,15 @@
                         <input type="date" id="createIssuedDate" class="form-control">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold">เลขที่ใบเสร็จ</label>
+                        <label class="form-label fw-bold">เล่มที่ / เลขที่ใบเสร็จ</label>
                         <div class="input-group">
-                            <input type="text" id="createReceiptNumber" class="form-control" placeholder="อัตโนมัติ">
+                            <span class="input-group-text" id="createBookNumberDisplay" style="font-size:13px;white-space:nowrap;">-</span>
+                            <input type="text" id="createReceiptNumber" class="form-control" placeholder="อัตโนมัติ" readonly>
                             <button type="button" class="btn btn-outline-info" onclick="autoGenerateNumber()" title="รันเลขอัตโนมัติ">
                                 <i class="bi bi-arrow-repeat"></i>
                             </button>
                         </div>
-                        <small class="text-muted">เว้นว่างเพื่อรันเลขอัตโนมัติ</small>
+                        <small class="text-muted">เลขที่รันอัตโนมัติตามปี (เริ่ม 1 ทุกปีใหม่)</small>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -395,6 +396,11 @@ $(function () {
     // Set default issued date
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
 
+    // When date changes, re-generate receipt number for new year
+    $('#createIssuedDate').on('change', function() {
+        autoGenerateNumber();
+    });
+
     // When category changes, auto-fill title
     $('#createCategory').on('change', function() {
         const selectedText = $(this).find('option:selected').text();
@@ -628,21 +634,24 @@ function resetCreateForm() {
     $('#createPayerAddress').val('').removeData('addrJson');
     $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
+    $('#createBookNumberDisplay').text('-');
 }
 
 function openCreateModal() {
     resetCreateForm();
     $('#createReceiptModal').modal('show');
+    autoGenerateNumber();
 }
 
 async function autoGenerateNumber() {
     const issuedDate = $('#createIssuedDate').val() || '';
     const result = await API.getNextReceiptNumber(issuedDate);
     if (result.success && result.data) {
+        $('#createBookNumberDisplay').text(result.data.book_number || '-');
         $('#createReceiptNumber').val(result.data.receipt_number);
-        App.success(`เลขที่ถัดไป: ${result.data.receipt_number} (เล่ม ${result.data.book_number})`);
     } else {
-        App.error(result.message || 'ไม่สามารถดึงเลขที่ได้');
+        $('#createBookNumberDisplay').text('-');
+        $('#createReceiptNumber').val('');
     }
 }
 

@@ -10,7 +10,7 @@ $basePath = $basePath ?? './';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? (siteConfig('site_name_short') . ' | ' . siteConfig('site_name_en')); ?></title>
     <?php $__fav = siteConfig('logo_favicon') ?: siteConfig('logo_web'); ?>
-    <link id="dynamic-favicon" rel="icon" type="image/png" href="<?php echo $__fav ? htmlspecialchars($basePath . $__fav) : ''; ?>">
+    <link id="dynamic-favicon" rel="icon" type="image/png" href="<?php echo $__fav ? htmlspecialchars($basePath . $__fav) . '?v=' . date('Ymd') : ''; ?>">
     <meta name="description" content="<?php echo htmlspecialchars(siteConfig('site_name') . ' (' . siteConfig('site_name_short') . ') ' . siteConfig('site_name_en')); ?>">
 
     <!-- Google Fonts -->
