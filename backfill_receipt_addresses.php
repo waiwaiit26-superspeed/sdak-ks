@@ -63,9 +63,9 @@ foreach ($receipts as $r) {
                 $road   = trim($addr['road'] ?? '');
 
                 if (!$detail && $no && $no !== '-') $detail = $no;
-                if ($moo && $moo !== '-') $detail .= ' หมู่ ' . $moo;
-                if ($soi && $soi !== '-') $detail .= ' ซอย ' . $soi;
-                if ($road && $road !== '-') $detail .= ' ถนน ' . $road;
+                if ($moo && $moo !== '-') $detail .= '   หมู่ ' . $moo;
+                if ($soi && $soi !== '-') $detail .= '   ซอย ' . $soi;
+                if ($road && $road !== '-') $detail .= '   ถนน ' . $road;
                 $detail = trim($detail);
 
                 $subdistrict = trim($addr['subdistrict'] ?? '');
