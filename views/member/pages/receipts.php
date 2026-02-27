@@ -573,7 +573,7 @@ function initPayerSelect2() {
     $('#createPayerSelect').on('select2:clear', function() {
         $('#createUserId').val('');
         $('#createPayerName').val('').prop('readonly', true);
-        $('#createPayerAddress').val('');
+        $('#createPayerAddress').val('').removeData('addrJson');
         $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     });
 }
@@ -608,7 +608,7 @@ function resetCreateForm() {
     $('#createPayerSelect').val(null).trigger('change');
     $('#createUserId').val('');
     $('#createPayerName').val('').prop('readonly', true);
-    $('#createPayerAddress').val('');
+    $('#createPayerAddress').val('').removeData('addrJson');
     $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
 }
@@ -645,7 +645,7 @@ function openEditReceiptNumber() {
     $('#editReceiptId').val(currentReceiptData.id);
     $('#editReceiptNumber').val(currentReceiptData.receipt_number);
     $('#editPayerName').val(currentReceiptData.payer_name || '');
-    $('#editPayerAddress').val(currentReceiptData.payer_address || '');
+    $('#editPayerAddress').val(flatPayerAddress(currentReceiptData.payer_address || ''));
     $('#editReceiptInfo').text(`เล่มที่: ${currentReceiptData.book_number} | วันที่ออก: ${App.formatDate(currentReceiptData.issued_date)}`);
     $('#editReceiptNumModal').modal('show');
 }

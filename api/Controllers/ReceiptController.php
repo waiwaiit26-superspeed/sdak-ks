@@ -198,13 +198,19 @@ class ReceiptController extends Controller
         // Use full_name from user if available, otherwise payer_name input
         $payerName = $user ? $user['full_name'] : trim($input['payer_name']);
 
+        // Auto-fill payer_address from member data if not provided
+        $payerAddress = $input['payer_address'] ?? null;
+        if (!$payerAddress && $user) {
+            $payerAddress = FeeController::buildPayerAddress($user);
+        }
+
         $receiptData = [
             'user_id'       => $userId ?? 0,
             'receipt_type'  => $input['receipt_type'] ?? 'other',
             'reference_id'  => $input['reference_id'] ?? null,
             'title'         => trim($input['title']),
             'payer_name'    => $payerName,
-            'payer_address' => $input['payer_address'] ?? null,
+            'payer_address' => $payerAddress,
             'description'   => $input['description'] ?? trim($input['title']),
             'amount'        => (float)$input['amount'],
             'amount_text'   => $input['amount_text'] ?? '',

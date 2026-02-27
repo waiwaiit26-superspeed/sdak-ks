@@ -585,7 +585,7 @@ function openEditReceiptNumber() {
     $('#editReceiptId').val(modalReceiptData.id);
     $('#editReceiptNumber').val(modalReceiptData.receipt_number);
     $('#editPayerName').val(modalReceiptData.payer_name || '');
-    $('#editPayerAddress').val(modalReceiptData.payer_address || '');
+    $('#editPayerAddress').val(flatPayerAddress(modalReceiptData.payer_address || ''));
     $('#editReceiptInfo').text(`เล่มที่: ${modalReceiptData.book_number} | วันที่ออก: ${App.formatDate(modalReceiptData.issued_date)}`);
     $('#editReceiptNumModal').modal('show');
 }
