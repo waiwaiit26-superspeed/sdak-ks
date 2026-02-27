@@ -1549,19 +1549,30 @@ async function generateFinancePDF(transactions, summary, label, exported_at, exp
 // === RECEIPT ADDRESS HELPER ===
 function renderPayerAddressFinance(raw, fontSize) {
     fontSize = fontSize || '13px';
-    if (!raw) return '';
-    try {
-        const a = JSON.parse(raw);
-        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
-            let html = '';
-            html += `<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;${App.escHtml(a.detail || '')}&nbsp;</span>`;
-            html += ` <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:130px;">&nbsp;${App.escHtml(a.subdistrict || '')}&nbsp;</span></div>`;
-            html += `<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;${App.escHtml(a.district || '')}&nbsp;</span>`;
-            html += ` <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;${App.escHtml(a.province || '')}&nbsp;</span></div>`;
-            return html;
+    let detail = '-', sub = '-', dist = '-', prov = '-';
+    if (raw) {
+        try {
+            const a = JSON.parse(raw);
+            if (a && typeof a === 'object') {
+                detail = a.detail || '-';
+                sub = a.subdistrict || '-';
+                dist = a.district || '-';
+                prov = a.province || '-';
+            } else {
+                return `<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(raw)}&nbsp;</span></div>`
+                    + `<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;-&nbsp;</span></div>`;
+            }
+        } catch(e) {
+            return `<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(raw)}&nbsp;</span></div>`
+                + `<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;-&nbsp;</span></div>`;
         }
-    } catch(e) {}
-    return `<div style="margin-bottom:6px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:390px;">&nbsp;${App.escHtml(raw)}&nbsp;</span></div>`;
+    }
+    let html = '';
+    html += `<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;${App.escHtml(detail)}&nbsp;</span>`;
+    html += ` <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:130px;">&nbsp;${App.escHtml(sub)}&nbsp;</span></div>`;
+    html += `<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;${App.escHtml(dist)}&nbsp;</span>`;
+    html += ` <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:160px;">&nbsp;${App.escHtml(prov)}&nbsp;</span></div>`;
+    return html;
 }
 
 // === RECEIPT PREVIEW ===
@@ -1616,12 +1627,12 @@ async function viewTxnReceipt(referenceNo) {
         <div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;">
             <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
         </div>
-        <div style="display:flex;justify-content:flex-end;margin-top:15px;">
+        <div style="display:flex;justify-content:flex-end;margin-top:8px;">
             <div style="text-align:center;">
-                ${r.signature_mode === 'electronic' && sigSrc ? `<div style="margin-bottom:-25px;"><img src="${sigSrc}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:30px;"></div>'}
+                ${r.signature_mode === 'electronic' && sigSrc ? `<div style="margin-bottom:-25px;"><img src="${sigSrc}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:20px;"></div>'}
                 <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>
-                ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:5px;">(${App.escHtml(r.signature_name)})</div>` : ''}
-                ${r.signature_show_position === '1' ? `<div style="margin-top:3px;">${App.escHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
+                ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:2px;">(${App.escHtml(r.signature_name)})</div>` : ''}
+                ${r.signature_show_position === '1' ? `<div style="margin-top:1px;">${App.escHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
             </div>
         </div>
     </div>`);

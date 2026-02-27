@@ -297,7 +297,7 @@
     text-align: center;
 }
 #receiptCanvas .receipt-footer {
-    margin-top: 15px;
+    margin-top: 8px;
     display: flex;
     justify-content: flex-end;
     font-size: 16px;
@@ -711,24 +711,34 @@ function flatPayerAddress(val) {
 // Render structured address for receipt preview (multi-line like SAAK paper receipt)
 function renderPayerAddressHtml(raw, fontSize) {
     fontSize = fontSize || '18px';
-    if (!raw) return '';
-    try {
-        const a = JSON.parse(raw);
-        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
-            let html = '';
-            html += `<div style="margin-bottom:2px;font-size:${fontSize};">`;
-            html += `<strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:300px">&nbsp;${App.escapeHtml(a.detail || '')}&nbsp;</span>`;
-            html += ` <strong>ตำบล</strong> <span class="dotted-line" style="min-width:180px">&nbsp;${App.escapeHtml(a.subdistrict || '')}&nbsp;</span>`;
-            html += `</div>`;
-            html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
-            html += `<strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;${App.escapeHtml(a.district || '')}&nbsp;</span>`;
-            html += ` <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;${App.escapeHtml(a.province || '')}&nbsp;</span>`;
-            html += `</div>`;
-            return html;
+    let detail = '-', sub = '-', dist = '-', prov = '-';
+    if (raw) {
+        try {
+            const a = JSON.parse(raw);
+            if (a && typeof a === 'object') {
+                detail = a.detail || '-';
+                sub = a.subdistrict || '-';
+                dist = a.district || '-';
+                prov = a.province || '-';
+            } else {
+                return `<div style="margin-bottom:2px;font-size:${fontSize};"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(raw)}&nbsp;</span></div>`
+                    + `<div style="margin-bottom:4px;font-size:${fontSize};"><strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;-&nbsp;</span></div>`;
+            }
+        } catch(e) {
+            return `<div style="margin-bottom:2px;font-size:${fontSize};"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(raw)}&nbsp;</span></div>`
+                + `<div style="margin-bottom:4px;font-size:${fontSize};"><strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;-&nbsp;</span></div>`;
         }
-    } catch(e) {}
-    // Plain text fallback
-    return `<div style="margin-bottom:8px;font-size:${fontSize};"><strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:540px">&nbsp;${App.escapeHtml(raw)}&nbsp;</span></div>`;
+    }
+    let html = '';
+    html += `<div style="margin-bottom:2px;font-size:${fontSize};">`;
+    html += `<strong>ที่อยู่</strong> <span class="dotted-line" style="min-width:300px">&nbsp;${App.escapeHtml(detail)}&nbsp;</span>`;
+    html += ` <strong>ตำบล</strong> <span class="dotted-line" style="min-width:180px">&nbsp;${App.escapeHtml(sub)}&nbsp;</span>`;
+    html += `</div>`;
+    html += `<div style="margin-bottom:4px;font-size:${fontSize};">`;
+    html += `<strong>อำเภอ</strong> <span class="dotted-line" style="min-width:250px">&nbsp;${App.escapeHtml(dist)}&nbsp;</span>`;
+    html += ` <strong>จังหวัด</strong> <span class="dotted-line" style="min-width:220px">&nbsp;${App.escapeHtml(prov)}&nbsp;</span>`;
+    html += `</div>`;
+    return html;
 }
 
 async function loadReceipts() {
@@ -844,10 +854,10 @@ function renderReceipt(r) {
 
             <div class="receipt-footer">
             <div style="text-align:center;">
-                ${r.signature_mode === 'electronic' && r.signature_image ? `<div style="margin-bottom:-25px;"><img src="${r._signatureBase64 || (r.signature_image.startsWith('data:') || r.signature_image.startsWith('http') ? r.signature_image : (BASE_PATH + r.signature_image))}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:40px;"></div>'}
+                ${r.signature_mode === 'electronic' && r.signature_image ? `<div style="margin-bottom:-25px;"><img src="${r._signatureBase64 || (r.signature_image.startsWith('data:') || r.signature_image.startsWith('http') ? r.signature_image : (BASE_PATH + r.signature_image))}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:20px;"></div>'}
                 <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>
-                ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:5px;">(${App.escapeHtml(r.signature_name)})</div>` : ''}
-                ${r.signature_show_position === '1' ? `<div style="margin-top:3px;">${App.escapeHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
+                ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:2px;">(${App.escapeHtml(r.signature_name)})</div>` : ''}
+                ${r.signature_show_position === '1' ? `<div style="margin-top:1px;">${App.escapeHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
             </div>
             </div>
         </div>

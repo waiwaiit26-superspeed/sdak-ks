@@ -919,19 +919,30 @@ async function mGeneratePDF(transactions, summary, label, exported_at, exported_
 
 // === RECEIPT ADDRESS HELPER ===
 function mRenderPayerAddress(raw) {
-    if (!raw) return '';
-    try {
-        var a = JSON.parse(raw);
-        if (a && typeof a === 'object' && (a.detail || a.subdistrict || a.district || a.province)) {
-            var html = '';
-            html += '<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:300px;">&nbsp;' + App.escHtml(a.detail || '') + '&nbsp;</span>';
-            html += ' <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;' + App.escHtml(a.subdistrict || '') + '&nbsp;</span></div>';
-            html += '<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:250px;">&nbsp;' + App.escHtml(a.district || '') + '&nbsp;</span>';
-            html += ' <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;' + App.escHtml(a.province || '') + '&nbsp;</span></div>';;
-            return html;
+    var detail = '-', sub = '-', dist = '-', prov = '-';
+    if (raw) {
+        try {
+            var a = JSON.parse(raw);
+            if (a && typeof a === 'object') {
+                detail = a.detail || '-';
+                sub = a.subdistrict || '-';
+                dist = a.district || '-';
+                prov = a.province || '-';
+            } else {
+                return '<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(raw) + '&nbsp;</span></div>'
+                    + '<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:250px;">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;-&nbsp;</span></div>';
+            }
+        } catch(e) {
+            return '<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(raw) + '&nbsp;</span></div>'
+                + '<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:250px;">&nbsp;-&nbsp;</span> <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;-&nbsp;</span></div>';
         }
-    } catch(e) {}
-    return '<div style="margin-bottom:8px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:540px;">&nbsp;' + App.escHtml(raw) + '&nbsp;</span></div>';
+    }
+    var html = '';
+    html += '<div style="margin-bottom:2px;"><strong>ที่อยู่</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:300px;">&nbsp;' + App.escHtml(detail) + '&nbsp;</span>';
+    html += ' <strong>ตำบล</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:180px;">&nbsp;' + App.escHtml(sub) + '&nbsp;</span></div>';
+    html += '<div style="margin-bottom:4px;"><strong>อำเภอ</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:250px;">&nbsp;' + App.escHtml(dist) + '&nbsp;</span>';
+    html += ' <strong>จังหวัด</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:220px;">&nbsp;' + App.escHtml(prov) + '&nbsp;</span></div>';
+    return html;
 }
 
 // === RECEIPT PREVIEW ===
@@ -983,11 +994,11 @@ async function mViewTxnReceipt(referenceNo) {
         '<div style="margin-bottom:4px;"><strong>เป็น</strong> <span style="border-bottom:1px dotted #555;display:inline-block;min-width:560px;">&nbsp;' + App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,'')) + '&nbsp;</span></div>' +
         '<div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px 20px;margin:10px 0;font-size:20px;"><strong>จำนวน ' + App.formatCurrency(r.amount) + '</strong> (' + App.escHtml(r.amount_text) + ') ไว้ถูกต้องแล้ว</div>' +
         '</div>' +
-        '<div style="display:flex;justify-content:flex-end;margin-top:15px;font-size:16px;"><div style="text-align:center;">' +
-            (r.signature_mode === 'electronic' && sigSrc ? '<div style="margin-bottom:-25px;"><img src="' + sigSrc + '" alt="ลายเซ็น" style="max-height:60px;"></div>' : '<div style="margin-bottom:30px;"></div>') +
+        '<div style="display:flex;justify-content:flex-end;margin-top:8px;font-size:16px;"><div style="text-align:center;">' +
+            (r.signature_mode === 'electronic' && sigSrc ? '<div style="margin-bottom:-25px;"><img src="' + sigSrc + '" alt="ลายเซ็น" style="max-height:60px;"></div>' : '<div style="margin-bottom:20px;"></div>') +
             '<div>(ลงชื่อ) ................................... ผู้รับเงิน</div>' +
-            (r.signature_show_name === '1' && r.signature_name ? '<div style="margin-top:5px;">(' + App.escHtml(r.signature_name) + ')</div>' : '') +
-            (r.signature_show_position === '1' ? '<div style="margin-top:3px;">' + App.escHtml(r.signature_position || 'เหรัญญิก') + '</div>' : '') +
+            (r.signature_show_name === '1' && r.signature_name ? '<div style="margin-top:2px;">(' + App.escHtml(r.signature_name) + ')</div>' : '') +
+            (r.signature_show_position === '1' ? '<div style="margin-top:1px;">' + App.escHtml(r.signature_position || 'เหรัญญิก') + '</div>' : '') +
         '</div></div>' +
         '</div>' +
     '</div>');
