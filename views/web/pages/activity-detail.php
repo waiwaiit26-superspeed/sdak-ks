@@ -285,6 +285,7 @@ $(function () {
                             <div class="activity-content">${a.description || '<p class="text-muted">ไม่มีรายละเอียด</p>'}</div>
                         </div>
                     </div>
+                    ${buildParticipantsCard(a)}
                 </div>
                 <div class="col-md-4">
                     <div class="card mb-3">
@@ -395,6 +396,70 @@ $(function () {
         } else {
             App.error(result.message);
         }
+    }
+
+    function buildParticipantsCard(a) {
+        // Only show if show_registrations is enabled and user is logged in
+        if (!parseInt(a.show_registrations) || !API.isLoggedIn() || !a.registrations) return '';
+
+        const regs = a.registrations || [];
+        let rows = '';
+        regs.forEach((r, i) => {
+            const payBadge = r.payment_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>'
+                : r.payment_status === 'pending' ? '<span class="badge bg-warning text-dark">รอชำระ</span>'
+                : r.payment_status === 'rejected' ? '<span class="badge bg-danger">ปฏิเสธ</span>'
+                : '<span class="badge bg-secondary">ไม่ต้องชำระ</span>';
+            const stBadge = r.status === 'approved' ? '<span class="badge bg-success">อนุมัติ</span>'
+                : r.status === 'pending' ? '<span class="badge bg-warning text-dark">รออนุมัติ</span>'
+                : r.status === 'rejected' ? '<span class="badge bg-danger">ไม่อนุมัติ</span>'
+                : '<span class="badge bg-secondary">' + App.escapeHtml(r.status) + '</span>';
+
+            rows += `<tr class="participant-row">
+                <td>${i + 1}</td>
+                <td>${App.escapeHtml(r.full_name || '-')}</td>
+                <td>${App.escapeHtml(r.school_organization || '-')}</td>
+                <td>${App.escapeHtml(r.email || '-')}</td>
+                <td>${payBadge}</td>
+                <td>${stBadge}</td>
+            </tr>`;
+        });
+
+        if (!rows) rows = '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีผู้ลงทะเบียน</td></tr>';
+
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>รายชื่อผู้ลงทะเบียนเข้าร่วม <small class="text-muted">(${regs.length} คน)</small></h5>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" class="form-control form-control-sm" id="searchParticipant" placeholder="ค้นหาชื่อ, โรงเรียน/หน่วยงาน..." oninput="filterParticipants()">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0" id="participantsDetailTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>ชื่อ-สกุล</th>
+                                    <th>โรงเรียน/หน่วยงาน</th>
+                                    <th>อีเมล</th>
+                                    <th>การชำระเงิน</th>
+                                    <th>สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    function filterParticipants() {
+        const q = ($('#searchParticipant').val() || '').toLowerCase();
+        $('#participantsDetailTable .participant-row').each(function() {
+            const text = $(this).text().toLowerCase();
+            $(this).toggle(text.includes(q));
+        });
     }
 
     loadDetail();

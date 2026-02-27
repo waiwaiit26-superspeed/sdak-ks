@@ -164,6 +164,12 @@
                                 <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeCover('activity')" title="ลบรูปปก"><i class="bi bi-x"></i></button>
                             </div>
                         </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-center">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="actShowRegs" name="show_registrations" value="1">
+                                <label class="custom-control-label" for="actShowRegs">แสดงรายชื่อผู้ลงทะเบียนให้สมาชิกเห็น</label>
+                            </div>
+                        </div>
                         <div class="col-12 mb-3">
                             <label class="form-label">รายละเอียด</label>
                             <textarea class="form-control" name="description" id="actDesc" rows="8"></textarea>
@@ -335,6 +341,7 @@ function openActivityForm(data = null) {
     $('#actCoverUrl').val('');
     // Reset member type checkboxes
     $('.member-type-cb').prop('checked', false);
+    $('#actShowRegs').prop('checked', false);
 
     if (data) {
         $('#actFormTitle').text('แก้ไขกิจกรรม');
@@ -350,6 +357,7 @@ function openActivityForm(data = null) {
         $('#actStatus').val(data.status);
         $('#actVisibility').val(data.visibility || 'public');
         $('#actVisibilityText').val(data.visibility_text || '');
+        $('#actShowRegs').prop('checked', !!parseInt(data.show_registrations));
         toggleVisibilityText();
         // Populate allowed member types
         if (data.allowed_member_types) {
@@ -430,7 +438,8 @@ $('#btnSaveActivity').on('click', async function () {
         status: $('#actStatus').val(),
         visibility: $('#actVisibility').val(),
         visibility_text: $('#actVisibilityText').val() || null,
-        allowed_member_types: $('.member-type-cb:checked').map(function() { return $(this).val(); }).get().join(',') || null
+        allowed_member_types: $('.member-type-cb:checked').map(function() { return $(this).val(); }).get().join(',') || null,
+        show_registrations: $('#actShowRegs').is(':checked') ? 1 : 0
     };
 
     const actId = $('#actId').val();

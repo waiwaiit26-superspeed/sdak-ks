@@ -94,6 +94,11 @@ class ActivityController extends Controller
             $item['my_registration'] = $myReg ?: null;
         }
 
+        // Include registrations list if show_registrations is enabled and user is a member
+        if (!empty($item['show_registrations']) && $isMember) {
+            $item['registrations'] = $reg->getByActivity($id);
+        }
+
         Response::success($item);
     }
 
@@ -132,6 +137,7 @@ class ActivityController extends Controller
             'visibility'       => $visibility,
             'visibility_text'  => $visibility === 'custom' ? ($input['visibility_text'] ?? null) : null,
             'allowed_member_types' => !empty($input['allowed_member_types']) ? $input['allowed_member_types'] : null,
+            'show_registrations' => !empty($input['show_registrations']) ? 1 : 0,
         ];
 
         $id = $activity->create($data);
@@ -154,7 +160,7 @@ class ActivityController extends Controller
 
         $allowed = ['title','description','location','start_date','end_date',
                      'max_participants','has_fee','fee_amount','fee_description','cover_image','status',
-                     'visibility','visibility_text','allowed_member_types','access_code'];
+                     'visibility','visibility_text','allowed_member_types','access_code','show_registrations'];
         $data = [];
         foreach ($allowed as $f) {
             if (isset($input[$f])) $data[$f] = $input[$f];
@@ -181,6 +187,11 @@ class ActivityController extends Controller
         // Normalize allowed_member_types
         if (array_key_exists('allowed_member_types', $data)) {
             $data['allowed_member_types'] = !empty($data['allowed_member_types']) ? $data['allowed_member_types'] : null;
+        }
+
+        // Normalize show_registrations to 0/1
+        if (array_key_exists('show_registrations', $data)) {
+            $data['show_registrations'] = !empty($data['show_registrations']) ? 1 : 0;
         }
 
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
