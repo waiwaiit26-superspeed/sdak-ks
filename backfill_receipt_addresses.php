@@ -11,10 +11,10 @@ require_once __DIR__ . '/config/database.php';
 
 $db = getDB();
 
-// Find receipts with user_id but no payer_address
+// Find receipts with user_id (re-process all to include moo/road in detail)
 // Use raw SQL because Medoo can't do OR on same column with NULL check easily
 $pdo = $db->pdo;
-$stmt = $pdo->query("SELECT id, user_id, payer_name, payer_address FROM receipts WHERE user_id > 0 AND (payer_address IS NULL OR payer_address = '') ORDER BY id ASC");
+$stmt = $pdo->query("SELECT id, user_id, payer_name, payer_address FROM receipts WHERE user_id > 0 ORDER BY id ASC");
 $receipts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Also show total receipt count for diagnostics
@@ -55,7 +55,19 @@ foreach ($receipts as $r) {
         if ($raw) {
             $addr = is_string($raw) ? json_decode($raw, true) : $raw;
             if (is_array($addr)) {
-                $detail      = trim($addr['address'] ?? $addr['detail'] ?? '');
+                // Build detail from individual parts (no, moo, soi, road) or combined address/detail
+                $detail = trim($addr['address'] ?? $addr['detail'] ?? '');
+                $no     = trim($addr['no'] ?? '');
+                $moo    = trim($addr['moo'] ?? '');
+                $soi    = trim($addr['soi'] ?? '');
+                $road   = trim($addr['road'] ?? '');
+
+                if (!$detail && $no) $detail = $no;
+                if ($moo && $moo !== '-') $detail .= ' หมู่ ' . $moo;
+                if ($soi && $soi !== '-') $detail .= ' ซอย ' . $soi;
+                if ($road && $road !== '-') $detail .= ' ถนน ' . $road;
+                $detail = trim($detail);
+
                 $subdistrict = trim($addr['subdistrict'] ?? '');
                 $district    = trim($addr['district'] ?? '');
                 $province    = trim($addr['province'] ?? '');

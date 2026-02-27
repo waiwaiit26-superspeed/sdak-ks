@@ -618,7 +618,19 @@ function buildPayerAddress(member) {
             try { wa = JSON.parse(wa); } catch(e) { if (field === 'work_address') return wa; continue; }
         }
         if (wa && typeof wa === 'object') {
-            const detail      = (wa.address || wa.detail || '').trim();
+            // Build detail from individual parts (no, moo, soi, road) or combined address/detail
+            let detail = (wa.address || wa.detail || '').trim();
+            const no   = (wa.no || '').trim();
+            const moo  = (wa.moo || '').trim();
+            const soi  = (wa.soi || '').trim();
+            const road = (wa.road || '').trim();
+
+            if (!detail && no) detail = no;
+            if (moo && moo !== '-') detail += ' หมู่ ' + moo;
+            if (soi && soi !== '-') detail += ' ซอย ' + soi;
+            if (road && road !== '-') detail += ' ถนน ' + road;
+            detail = detail.trim();
+
             const subdistrict = (wa.subdistrict || '').trim();
             const district    = (wa.district || '').trim();
             const province    = (wa.province || '').trim();
