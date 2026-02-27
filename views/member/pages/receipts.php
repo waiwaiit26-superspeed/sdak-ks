@@ -41,13 +41,14 @@
                                 <tr>
                                     <th>เลขที่</th>
                                     <th>หัวข้อ</th>
+                                    <th>ประเภท</th>
                                     <th>จำนวนเงิน</th>
                                     <th>วันที่ออก</th>
                                     <th>จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="receiptsTable">
-                                <tr><td colspan="5" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+                                <tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -55,41 +56,32 @@
             </div>
         </div>
 
-        <!-- Receipt Detail / Preview -->
-        <div id="receiptDetailSection" style="display:none">
-            <div class="mb-3 d-flex gap-2 flex-wrap">
-                <button class="btn btn-outline-secondary" onclick="showList()">
-                    <i class="bi bi-arrow-left me-1"></i> กลับ
-                </button>
-                <button class="btn btn-primary" onclick="downloadPDF()">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> ดาวน์โหลด PDF
-                </button>
-                <button class="btn btn-success" onclick="downloadPNG()">
-                    <i class="bi bi-image me-1"></i> ดาวน์โหลด PNG
-                </button>
-                <button class="btn btn-warning" onclick="openEditReceiptNumber()" id="btnEditReceiptNumMember" style="display:none">
-                    <i class="bi bi-pencil-square me-1"></i> แก้ไขใบเสร็จ
-                </button>
-                <button class="btn btn-info" onclick="openEditAddress()" id="btnEditAddress">
-                    <i class="bi bi-geo-alt me-1"></i> แก้ไขที่อยู่
-                </button>
-            </div>
 
-            <div class="receipt-a4-wrapper">
-                <div id="receiptLoading" style="display:none;text-align:center;padding:60px 20px;">
-                    <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status"></div>
-                    <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptLoadPercent">0</span>%</div>
-                </div>
-                <div class="receipt-scale-container" style="visibility:hidden;">
-                    <div id="receiptCanvas">
-                        <!-- Receipt will be rendered here -->
-                    </div>
-                </div>
-            </div>
-        </div>
 
         </div>
     </div>
+
+<!-- Modal: Receipt Preview -->
+<div class="modal fade" id="receiptPreviewModal" tabindex="-1">
+    <div class="modal-dialog" style="max-width:95vw;width:1200px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow:hidden;">
+                <div class="text-center py-4"><span class="spinner-border"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="openEditReceiptNumber()" id="btnEditReceiptNum" style="display:none"><i class="bi bi-pencil-square me-1"></i> แก้ไขใบเสร็จ</button>
+                <button type="button" class="btn btn-info" onclick="openEditAddress()" id="btnEditAddress"><i class="bi bi-geo-alt me-1"></i> แก้ไขที่อยู่</button>
+                <button type="button" class="btn btn-primary" onclick="downloadModalPDF()"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</button>
+                <button type="button" class="btn btn-success" onclick="downloadModalPNG()"><i class="bi bi-image me-1"></i> PNG</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal: Create Receipt (for finance managers) -->
 <div class="modal fade" id="createReceiptModal" tabindex="-1">
@@ -277,30 +269,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-/* === A4 Landscape Responsive Scaled Receipt === */
-.receipt-a4-wrapper {
-    padding: 20px;
-    background: #e9ecef;
-    overflow: hidden;
-}
-.receipt-scale-container {
+.receipt-render {
     width: 1123px;
     height: 794px;
-    transform-origin: top left;
-}
-#receiptCanvas {
-    width: 1123px;  /* A4 landscape: 297mm */
-    height: 794px;  /* A4 landscape: 210mm */
-    background: #fff;
     font-family: 'Sarabun', sans-serif;
     color: #1a3c5e;
     line-height: 1.5;
-    position: relative;
-    margin: 0 auto;
+    padding: 30px;
+    background: #fff;
     box-shadow: 0 4px 24px rgba(0,0,0,.15);
     overflow: hidden;
+    position: relative;
+    transform-origin: top left;
 }
-#receiptCanvas .receipt-watermark {
+.receipt-render .receipt-watermark {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -309,7 +291,7 @@
     pointer-events: none;
     z-index: 0;
 }
-#receiptCanvas .receipt-border {
+.receipt-render .receipt-inner {
     border: 2px solid #1a3c5e;
     border-radius: 12px;
     padding: 30px 50px;
@@ -319,66 +301,14 @@
     flex-direction: column;
     z-index: 1;
 }
-#receiptCanvas .receipt-header {
-    text-align: center;
-    margin-bottom: 10px;
-}
-#receiptCanvas .receipt-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1a3c5e;
-}
-#receiptCanvas .receipt-org {
-    font-size: 20px;
-    font-weight: 600;
-}
-#receiptCanvas .receipt-org-addr {
-    font-size: 16px;
-}
-#receiptCanvas .receipt-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 16px;
-}
-#receiptCanvas .receipt-body {
-    font-size: 18px;
-    padding: 5px 0;
-    flex-grow: 1;
-}
-#receiptCanvas .receipt-body > div {
-    display: flex;
-    align-items: baseline;
-}
-#receiptCanvas .receipt-body .row-label {
-    display: inline-block;
-}
-#receiptCanvas .receipt-amount-box {
-    margin-top: 10px;
-    padding: 8px 20px;
-    border: 1px solid #1a3c5e;
-    border-radius: 8px;
-    font-size: 20px;
-    text-align: center;
-}
-#receiptCanvas .receipt-footer {
-    margin-top: 2px;
-    display: flex;
-    justify-content: flex-end;
-    font-size: 16px;
-}
-#receiptCanvas .dotted-line {
-    border-bottom: 1px dotted #555;
-    display: inline-block;
-    min-width: 80px;
-    margin: 0;
-    padding: 0 2px 0 1.5em;
-}
-@media print {
-    .receipt-a4-wrapper { overflow: visible; padding: 0; background: #fff; }
-    .receipt-scale-container { transform: none !important; }
-    #receiptCanvas { box-shadow: none; }
-}
+.receipt-render .receipt-title { font-size: 28px; font-weight: 700; text-align: center; }
+.receipt-render .receipt-org { font-size: 20px; font-weight: 600; text-align: center; }
+.receipt-render .receipt-org-addr { font-size: 16px; text-align: center; margin-bottom: 10px; }
+.receipt-render .receipt-body-section { font-size: 18px; flex-grow: 1; }
+.receipt-render .receipt-body-section > div { display: flex; align-items: baseline; }
+.receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 80px; margin: 0; padding: 0 2px 0 1.5em; }
+.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 8px 20px; margin: 10px 0; font-size: 20px; }
+.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 2px; font-size: 16px; }
 </style>
 
 <script>
@@ -386,51 +316,39 @@ let currentReceiptData = null;
 let isFinanceManager = false;
 let membersCache = [];
 
-function scaleReceipt() {
-    const wrapper = document.querySelector('.receipt-a4-wrapper');
-    const container = document.querySelector('.receipt-scale-container');
-    if (!wrapper || !container) return;
-    const wrapperW = wrapper.clientWidth - 40; /* minus padding */
-    if (wrapperW <= 0) return; /* element not visible yet */
-    const scale = Math.min(wrapperW / 1123, 1);
-    container.style.transform = `scale(${scale})`;
-    wrapper.style.height = (794 * scale + 40) + 'px';
-}
+function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
+    const modalBody = document.getElementById(bodyId);
+    const receipt = document.getElementById(canvasId);
+    const loading = document.getElementById(loadingId);
+    const percentEl = document.getElementById(percentId);
+    if (!modalBody || !receipt) return;
 
-function showReceiptWithLoading() {
-    const loading = document.getElementById('receiptLoading');
-    const container = document.querySelector('.receipt-scale-container');
-    const percentEl = document.getElementById('receiptLoadPercent');
-    if (!loading || !container) return;
-
-    loading.style.display = 'block';
-    container.style.visibility = 'hidden';
-    percentEl.textContent = '0';
-
-    const images = container.querySelectorAll('img');
+    const images = receipt.querySelectorAll('img');
     const total = images.length || 1;
     let loaded = 0;
+
+    function done() {
+        setTimeout(function() {
+            const bodyW = modalBody.clientWidth - 30;
+            if (bodyW <= 0) return;
+            const scale = Math.min(bodyW / 1123, 1);
+            receipt.style.transform = `scale(${scale})`;
+            modalBody.style.height = (794 * scale + 20) + 'px';
+            receipt.style.visibility = 'visible';
+            if (loading) loading.style.display = 'none';
+        }, 100);
+    }
 
     function updateProgress() {
         loaded++;
         const pct = Math.round((loaded / total) * 100);
-        percentEl.textContent = pct;
-        if (loaded >= total) {
-            requestAnimationFrame(() => {
-                scaleReceipt();
-                container.style.visibility = 'visible';
-                loading.style.display = 'none';
-            });
-        }
+        if (percentEl) percentEl.textContent = pct;
+        if (loaded >= total) done();
     }
 
     if (images.length === 0) {
-        percentEl.textContent = '100';
-        requestAnimationFrame(() => {
-            scaleReceipt();
-            container.style.visibility = 'visible';
-            loading.style.display = 'none';
-        });
+        if (percentEl) percentEl.textContent = '100';
+        done();
         return;
     }
 
@@ -443,21 +361,14 @@ function showReceiptWithLoading() {
         }
     });
 
-    /* Safety timeout - show after 5s max */
     setTimeout(() => {
-        if (container.style.visibility === 'hidden') {
-            percentEl.textContent = '100';
-            scaleReceipt();
-            container.style.visibility = 'visible';
-            loading.style.display = 'none';
-        }
+        if (receipt.style.visibility === 'hidden') done();
     }, 5000);
 }
 
 $(function () {
     App.requireLogin();
     loadReceipts();
-    $(window).on('resize', scaleReceipt);
     checkFinancePermission();
 
     // Load receipt logo as base64 to avoid CORS
@@ -894,23 +805,28 @@ function renderPayerAddressHtml(raw, fontSize) {
 
 async function loadReceipts() {
     const tbody = $('#receiptsTable');
+    tbody.html('<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>');
     const result = await API.getMyReceipts();
 
     if (!result.success || !result.data || result.data.length === 0) {
-        tbody.html('<tr><td colspan="5" class="text-center py-4 text-muted">ยังไม่มีใบเสร็จ</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center py-4 text-muted">ยังไม่มีใบเสร็จ</td></tr>');
         return;
     }
+
+    const typeLabels = { 'membership_fee': 'ค่าธรรมเนียม', 'activity_fee': 'ค่ากิจกรรม', 'other': 'อื่นๆ' };
+    const typeBadges = { 'membership_fee': 'bg-primary', 'activity_fee': 'bg-info', 'other': 'bg-secondary' };
 
     let html = '';
     result.data.forEach(r => {
         html += `<tr>
             <td>${r.book_number} / ${r.receipt_number}</td>
             <td>${r.title}</td>
+            <td><span class="badge ${typeBadges[r.receipt_type] || 'bg-secondary'}">${typeLabels[r.receipt_type] || r.receipt_type}</span></td>
             <td>${App.formatCurrency(r.amount)}</td>
             <td>${App.formatDate(r.issued_date)}</td>
             <td>
-                <button class="btn btn-outline-primary btn-sm" onclick="viewReceipt(${r.id})">
-                    <i class="bi bi-eye me-1"></i> ดู
+                <button class="btn btn-outline-primary btn-sm" onclick="viewReceipt(${r.id})" title="ดูใบเสร็จ">
+                    <i class="bi bi-eye"></i>
                 </button>
             </td>
         </tr>`;
@@ -919,151 +835,99 @@ async function loadReceipts() {
 }
 
 async function viewReceipt(id) {
+    const body = $('#receiptPreviewBody');
+    body.html('<div class="text-center py-4"><span class="spinner-border"></span></div>');
+    $('#receiptPreviewModal').modal('show');
+
     const result = await API.getReceiptDetail(id);
     if (!result.success || !result.data) {
-        App.error(result.message || 'ไม่พบใบเสร็จ');
+        body.html('<p class="text-center text-danger">ไม่พบใบเสร็จ</p>');
         return;
     }
 
     currentReceiptData = result.data;
+    const r = currentReceiptData;
 
-    // Show edit button for finance managers (year restriction handled by backend)
+    // Show edit button for finance managers
     if (isFinanceManager) {
-        const issuedYear = new Date(currentReceiptData.issued_date).getFullYear() + 543;
+        const issuedYear = new Date(r.issued_date).getFullYear() + 543;
         const currentYear = new Date().getFullYear() + 543;
-        if (issuedYear >= currentYear) {
-            $('#btnEditReceiptNumMember').show();
-        } else {
-            $('#btnEditReceiptNumMember').hide(); // Past year, member can't edit
-        }
+        $('#btnEditReceiptNum').toggle(issuedYear >= currentYear);
     } else {
-        $('#btnEditReceiptNumMember').hide();
+        $('#btnEditReceiptNum').hide();
     }
 
     // Convert signature image to base64 to avoid CORS
-    if (currentReceiptData.signature_mode === 'electronic' && currentReceiptData.signature_image && !currentReceiptData.signature_image.startsWith('data:')) {
-        const sigUrl = currentReceiptData.signature_image.startsWith('http') ? currentReceiptData.signature_image : (BASE_PATH + currentReceiptData.signature_image);
-        currentReceiptData._signatureBase64 = await toBase64(sigUrl).catch(() => sigUrl);
+    let signatureImgSrc = '';
+    if (r.signature_mode === 'electronic' && r.signature_image) {
+        if (r.signature_image.startsWith('data:')) {
+            signatureImgSrc = r.signature_image;
+        } else {
+            const sigUrl = r.signature_image.startsWith('http') ? r.signature_image : (BASE_PATH + r.signature_image);
+            signatureImgSrc = await toBase64(sigUrl).catch(() => sigUrl);
+        }
     }
 
-    renderReceipt(currentReceiptData);
-
-    $('#receiptListSection').hide();
-    $('#receiptDetailSection').show();
-
-    /* Now element is visible, scale with loading */
-    showReceiptWithLoading();
-}
-
-function showList() {
-    $('#receiptDetailSection').hide();
-    $('#receiptListSection').show();
-}
-
-function renderReceipt(r) {
     const issuedDate = new Date(r.issued_date);
     const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                         'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const dateStr = `วันที่ ${issuedDate.getDate()} เดือน ${thaiMonths[issuedDate.getMonth()]} พ.ศ. ${issuedDate.getFullYear() + 543}`;
 
-    const canvas = document.getElementById('receiptCanvas');
-    canvas.innerHTML = `
+    body.html(`<div id="receiptModalLoading" style="text-align:center;padding:60px 20px;">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptModalPercent">0</span>%</div>
+    </div>
+    <div id="modalReceiptCanvas" class="receipt-render" style="visibility:hidden;">
         ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
-        <div class="receipt-border">
-            <div class="receipt-meta">
-                <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>
-                <div>เลขที่ ${r.receipt_number}</div>
-            </div>
-
-            <div class="receipt-header">
-                ${window._receiptLogoUrl ? `<div style="text-align:center;margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:70px;"></div>` : ''}
-                <div class="receipt-title">ใบเสร็จรับเงิน</div>
-                <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
-                <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
-            </div>
-
-            <div style="text-align:left; margin-bottom:8px; font-size:16px; padding-left:50%;">
-                ${dateStr}
-            </div>
-
-            <div class="receipt-body">
-                <div style="margin-bottom:8px;">
-                    <span class="row-label"><strong>ได้รับเงินจาก</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.payer_name)}</span>
-                </div>
-                ${renderPayerAddressHtml(r.payer_address, '16px')}
-                <div style="margin-bottom:8px;">
-                    <span class="row-label"><strong>เป็น</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.description)}</span>
-                </div>
-                ${r.receipt_type === 'membership_fee' && r.member_type_label ? `<div style="margin-bottom:8px;"><span class="row-label"><strong>ประเภทสมาชิก</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.member_type_label)}</span></div>` : ''}
-            </div>
-
+        <div class="receipt-inner">
+        <div style="display:flex;justify-content:space-between;font-size:16px;margin-bottom:6px;">
+            <div>เล่มที่ ${App.escapeHtml(r.book_number)}</div>
+            <div>เลขที่ ${r.receipt_number}</div>
+        </div>
+        <div style="text-align:center;margin-bottom:10px;">
+            ${window._receiptLogoUrl ? `<div style="margin-bottom:8px;"><img src="${window._receiptLogoUrl}" alt="Logo" style="max-height:70px;"></div>` : ''}
+            <div class="receipt-title">ใบเสร็จรับเงิน</div>
+            <div class="receipt-org">${App.escapeHtml(r.organization_name)}</div>
+            <div class="receipt-org-addr">${App.escapeHtml(r.organization_address)}</div>
+        </div>
+        <div style="text-align:left;font-size:16px;margin-bottom:8px;padding-left:50%;">${dateStr}</div>
+        <div class="receipt-body-section">
+            <div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">ได้รับเงินจาก</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(r.payer_name)}</span></div>
+            ${renderPayerAddressHtml(r.payer_address, '18px')}
+            <div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">เป็น</strong><span class="dotted-line" style="flex:1">${App.escapeHtml((r.description||'').replace(/\\s*จำนวน\\s*[\\d,.]+\\s*บาท/g,''))}</span></div>
+            ${r.receipt_type === 'membership_fee' && r.member_type_label ? `<div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">ประเภทสมาชิก</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(r.member_type_label)}</span></div>` : ''}
             <div class="receipt-amount-box">
-                <strong>จำนวน ${App.formatCurrency(r.amount)}</strong>
-                (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
-            </div>
-
-            <div class="receipt-footer">
-            <div style="text-align:center;">
-                ${r.signature_mode === 'electronic' && r.signature_image ? `<div style="margin-bottom:-25px;"><img src="${r._signatureBase64 || (r.signature_image.startsWith('data:') || r.signature_image.startsWith('http') ? r.signature_image : (BASE_PATH + r.signature_image))}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:20px;"></div>'}
-                <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>
-                ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:2px;">(${App.escapeHtml(r.signature_name)})</div>` : ''}
-                ${r.signature_show_position === '1' ? `<div style="margin-top:1px;">${App.escapeHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
-            </div>
+                <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
             </div>
         </div>
-    `;
+        <div class="receipt-sign">
+        <div style="text-align:center;">
+            ${r.signature_mode === 'electronic' && r.signature_image ? `<div style="margin-bottom:-25px;"><img src="${signatureImgSrc}" alt="ลายเซ็น" style="max-height:60px;"></div>` : '<div style="margin-bottom:20px;"></div>'}
+            <div>(ลงชื่อ) ................................... ผู้รับเงิน</div>
+            ${r.signature_show_name === '1' && r.signature_name ? `<div style="margin-top:2px;">(${App.escapeHtml(r.signature_name)})</div>` : ''}
+            ${r.signature_show_position === '1' ? `<div style="margin-top:1px;">${App.escapeHtml(r.signature_position || 'เหรัญญิก')}</div>` : ''}
+        </div>
+        </div>
+        </div>
+    </div>`);
+
+    scaleModalReceipt('receiptPreviewBody', 'modalReceiptCanvas', 'receiptModalLoading', 'receiptModalPercent');
 }
 
-async function downloadPNG() {
+async function downloadModalPDF() {
     if (!currentReceiptData) return;
-    const btn = event.target.closest('button');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...';
-
-    const container = document.querySelector('.receipt-scale-container');
-    const origTransform = container.style.transform;
-    container.style.transform = 'none';
-
+    const el = document.getElementById('modalReceiptCanvas');
+    const origTransform = el.style.transform;
+    el.style.transform = 'none';
     try {
-        const canvas = await html2canvas(document.getElementById('receiptCanvas'), {
+        const canvas = await html2canvas(el, {
             scale: 2,
-            backgroundColor: '#ffffff',
+            backgroundColor: '#fff',
             useCORS: true,
+            allowTaint: false,
         });
-        const link = document.createElement('a');
-        link.download = `receipt_${currentReceiptData.receipt_number}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    } catch (err) {
-        console.error(err);
-        App.error('เกิดข้อผิดพลาดในการสร้างรูป');
-    }
-
-    container.style.transform = origTransform;
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-image me-1"></i> ดาวน์โหลด PNG';
-}
-
-async function downloadPDF() {
-    if (!currentReceiptData) return;
-    const btn = event.target.closest('button');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังสร้าง...';
-
-    const container = document.querySelector('.receipt-scale-container');
-    const origTransform = container.style.transform;
-    container.style.transform = 'none';
-
-    try {
-        const canvas = await html2canvas(document.getElementById('receiptCanvas'), {
-            scale: 2,
-            backgroundColor: '#ffffff',
-            useCORS: true,
-        });
-
         const { jsPDF } = window.jspdf;
         const imgData = canvas.toDataURL('image/png');
-        // A4 landscape: 297 x 210 mm
         const pdf = new jsPDF('l', 'mm', 'a4');
         const pageW = 297, pageH = 210;
         const margin = 5;
@@ -1071,14 +935,28 @@ async function downloadPDF() {
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, Math.min(imgHeight, pageH - margin * 2));
         pdf.save(`receipt_${currentReceiptData.receipt_number}.pdf`);
-    } catch (err) {
-        console.error(err);
-        App.error('เกิดข้อผิดพลาดในการสร้าง PDF');
-    }
+    } catch (err) { console.error('PDF Error:', err); App.error('เกิดข้อผิดพลาดในการสร้าง PDF: ' + err.message); }
+    el.style.transform = origTransform;
+}
 
-    container.style.transform = origTransform;
-    btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> ดาวน์โหลด PDF';
+async function downloadModalPNG() {
+    if (!currentReceiptData) return;
+    const el = document.getElementById('modalReceiptCanvas');
+    const origTransform = el.style.transform;
+    el.style.transform = 'none';
+    try {
+        const canvas = await html2canvas(el, {
+            scale: 2,
+            backgroundColor: '#fff',
+            useCORS: true,
+            allowTaint: false,
+        });
+        const link = document.createElement('a');
+        link.download = `receipt_${currentReceiptData.receipt_number}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (err) { console.error('PNG Error:', err); App.error('เกิดข้อผิดพลาดในการสร้างรูป: ' + err.message); }
+    el.style.transform = origTransform;
 }
 </script>
 
