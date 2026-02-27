@@ -549,7 +549,7 @@ async function removeAccessCode() {
 
 function copyAccessLink() {
     if (!currentRegActivityId || !currentRegActivityData || !currentRegActivityData.access_code) return;
-    const url = window.location.origin + BASE_PATH + 'web/?page=activity-participants&id=' + currentRegActivityId + '&code=' + currentRegActivityData.access_code;
+    const url = window.location.origin + '/web/?page=activity-participants&id=' + currentRegActivityId + '&code=' + currentRegActivityData.access_code;
     navigator.clipboard.writeText(url).then(() => {
         App.success('คัดลอกลิงก์สำเร็จ');
     }).catch(() => {
