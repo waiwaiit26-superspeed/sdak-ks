@@ -1624,6 +1624,7 @@ async function viewTxnReceipt(referenceNo) {
         <div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">ได้รับเงินจาก</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:1;padding:0 2px 0 1.5em;">${App.escHtml(r.payer_name)}</span></div>
         ${renderPayerAddressFinance(r.payer_address, '13px')}
         <div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">เป็น</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:1;padding:0 2px 0 1.5em;">${App.escHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}</span></div>
+        ${r.receipt_type === 'membership_fee' && r.member_type_label ? `<div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">ประเภทสมาชิก</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:1;padding:0 2px 0 1.5em;">${App.escHtml(r.member_type_label)}</span></div>` : ''}
         <div style="text-align:center;border:1px solid #1a3c5e;border-radius:8px;padding:8px;margin:15px 0;">
             <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
         </div>

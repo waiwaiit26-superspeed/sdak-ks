@@ -847,6 +847,7 @@ function renderReceipt(r) {
                 <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>เป็น</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.description)}</span>
                 </div>
+                ${r.receipt_type === 'membership_fee' && r.member_type_label ? `<div style="margin-bottom:8px;"><span class="row-label"><strong>ประเภทสมาชิก</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.member_type_label)}</span></div>` : ''}
             </div>
 
             <div class="receipt-amount-box">

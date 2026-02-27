@@ -43,6 +43,13 @@ class ReceiptController extends Controller
             Response::error('ไม่มีสิทธิ์ดูใบเสร็จนี้', 403);
         }
 
+        // Resolve member_type_label from member_types table
+        if (!empty($receipt['member_type'])) {
+            $memberTypes = $this->model('MemberTypeModel');
+            $mt = $memberTypes->findByKey($receipt['member_type']);
+            $receipt['member_type_label'] = $mt ? $mt['label'] : $receipt['member_type'];
+        }
+
         // Add receipt settings for rendering
         $settings = $this->model('SettingsModel');
         $receipt['organization_name'] = $settings->get('receipt_organization_name', 'สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์');

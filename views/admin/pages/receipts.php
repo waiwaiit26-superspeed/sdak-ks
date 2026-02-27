@@ -802,6 +802,7 @@ async function viewReceipt(id) {
             <div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">ได้รับเงินจาก</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(r.payer_name)}</span></div>
             ${renderPayerAddressHtml(r.payer_address, '18px')}
             <div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">เป็น</strong><span class="dotted-line" style="flex:1">${App.escapeHtml((r.description||'').replace(/\s*จำนวน\s*[\d,.]+\s*บาท/g,''))}</span></div>
+            ${r.receipt_type === 'membership_fee' && r.member_type_label ? `<div style="margin-bottom:8px;font-size:18px;"><strong style="white-space:nowrap">ประเภทสมาชิก</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(r.member_type_label)}</span></div>` : ''}
             <div class="receipt-amount-box">
                 <strong>จำนวน ${App.formatCurrency(r.amount)}</strong> (${App.escapeHtml(r.amount_text)}) ไว้ถูกต้องแล้ว
             </div>
