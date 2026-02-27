@@ -28,7 +28,7 @@ $db = getDB();
 $pdo = $db->pdo;
 
 // Get current prefix from settings
-$prefixRow = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'receipt_book_number'")->fetch(PDO::FETCH_ASSOC);
+$prefixRow = $pdo->query("SELECT setting_value FROM site_settings WHERE setting_key = 'receipt_book_number'")->fetch(PDO::FETCH_ASSOC);
 $prefix = $prefixRow ? trim($prefixRow['setting_value']) : (defined('SITE_NAME_SHORT') ? SITE_NAME_SHORT : '');
 
 echo "Prefix: '{$prefix}'\n";
