@@ -688,7 +688,7 @@ function buildPayerAddress(member) {
             const soi  = (wa.soi || '').trim();
             const road = (wa.road || '').trim();
 
-            if (!detail && no) detail = no;
+            if (!detail && no && no !== '-') detail = no;
             if (moo && moo !== '-') detail += ' หมู่ ' + moo;
             if (soi && soi !== '-') detail += ' ซอย ' + soi;
             if (road && road !== '-') detail += ' ถนน ' + road;
