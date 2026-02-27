@@ -34,7 +34,29 @@ class FeeController extends Controller
     {
         $fees = $this->model('MembershipFeeModel');
         $settings = $this->model('SettingsModel');
-        $memberType = $this->currentUser['member_type'];
+        $memberType = $this->currentUser['member_type'] ?? '';
+
+        // If no member_type set (e.g. admin), treat as no fee required
+        if (empty($memberType)) {
+            $buddhistYear = (int)date('Y') + 543;
+            Response::success([
+                'id' => null,
+                'year' => $buddhistYear,
+                'amount' => 0,
+                'fee_type' => 'none',
+                'fee_mode' => 'none',
+                'status' => 'not_required',
+                'payment_slip' => null,
+                'paid_at' => null,
+                'note' => null,
+                'bank_info' => [
+                    'bank_name' => $settings->get('bank_name', ''),
+                    'account_name' => $settings->get('bank_account_name', ''),
+                    'account_number' => $settings->get('bank_account_number', ''),
+                ],
+            ]);
+            return;
+        }
 
         // Get fee config from member_types table
         $mt = $this->model('MemberTypeModel');
