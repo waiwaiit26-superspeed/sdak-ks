@@ -725,22 +725,22 @@ function renderPayerAddressHtml(raw, fontSize) {
                 dist = a.district || '-';
                 prov = a.province || '-';
             } else {
-                return `<div style="display:flex;align-items:baseline;margin-bottom:2px;font-size:${fontSize};"><strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(raw)}</span><strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:1">-</span></div>`
-                    + `<div style="display:flex;align-items:baseline;margin-bottom:4px;font-size:${fontSize};"><strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:1">-</span><strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:1">-</span></div>`;
+                return `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};"><strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:3">${App.escapeHtml(raw)}</span><strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:2">-</span></div>`
+                    + `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};"><strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:3">-</span><strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:2">-</span></div>`;
             }
         } catch(e) {
-            return `<div style="display:flex;align-items:baseline;margin-bottom:2px;font-size:${fontSize};"><strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(raw)}</span><strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:1">-</span></div>`
-                + `<div style="display:flex;align-items:baseline;margin-bottom:4px;font-size:${fontSize};"><strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:1">-</span><strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:1">-</span></div>`;
+            return `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};"><strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:3">${App.escapeHtml(raw)}</span><strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:2">-</span></div>`
+                + `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};"><strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:3">-</span><strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:2">-</span></div>`;
         }
     }
     let html = '';
-    html += `<div style="display:flex;align-items:baseline;margin-bottom:2px;font-size:${fontSize};">`;
-    html += `<strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(detail)}</span>`;
-    html += `<strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(sub)}</span>`;
+    html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};">`;
+    html += `<strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:3">${App.escapeHtml(detail)}</span>`;
+    html += `<strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:2">${App.escapeHtml(sub)}</span>`;
     html += `</div>`;
-    html += `<div style="display:flex;align-items:baseline;margin-bottom:4px;font-size:${fontSize};">`;
-    html += `<strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(dist)}</span>`;
-    html += `<strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(prov)}</span>`;
+    html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};">`;
+    html += `<strong style="white-space:nowrap">อำเภอ</strong><span class="dotted-line" style="flex:3">${App.escapeHtml(dist)}</span>`;
+    html += `<strong style="white-space:nowrap">จังหวัด</strong><span class="dotted-line" style="flex:2">${App.escapeHtml(prov)}</span>`;
     html += `</div>`;
     return html;
 }
@@ -840,11 +840,11 @@ function renderReceipt(r) {
             </div>
 
             <div class="receipt-body">
-                <div style="margin-bottom:4px;">
+                <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>ได้รับเงินจาก</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.payer_name)}</span>
                 </div>
                 ${renderPayerAddressHtml(r.payer_address, '16px')}
-                <div style="margin-bottom:4px;">
+                <div style="margin-bottom:8px;">
                     <span class="row-label"><strong>เป็น</strong></span><span class="dotted-line" style="flex:1">${App.escapeHtml(r.description)}</span>
                 </div>
             </div>
