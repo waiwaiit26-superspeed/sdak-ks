@@ -433,7 +433,7 @@ $(function () {
                         <h5 class="card-title mb-0"><i class="bi bi-people me-2"></i>รายชื่อผู้ลงทะเบียนเข้าร่วม <small class="text-muted">(${regs.length} คน)</small></h5>
                     </div>
                     <div class="mb-3">
-                        <input type="text" class="form-control form-control-sm" id="searchParticipant" placeholder="ค้นหาชื่อ, โรงเรียน/หน่วยงาน..." oninput="filterParticipants()">
+                        <input type="text" class="form-control form-control-sm" id="searchParticipant" placeholder="ค้นหาชื่อ, โรงเรียน/หน่วยงาน...">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover table-sm mb-0" id="participantsDetailTable">
@@ -460,6 +460,8 @@ $(function () {
             $(this).toggle(text.includes(q));
         });
     }
+
+    $(document).on('input', '#searchParticipant', filterParticipants);
 
     loadDetail();
 });
