@@ -857,11 +857,26 @@ $(function () {
         $('#setupPrefix').val('');
         validateNameStep();
 
-        const types = [
-            { key: 'ordinary',  label: 'สมาชิกสามัญ',    desc: 'รองผู้อำนวยการ/อดีตรองผู้อำนวยการ', icon: 'bi-star-fill',    iconBg: '#fbbf24', iconColor: '#92400e' },
-            { key: 'associate', label: 'สมาชิกวิสามัญ',  desc: 'ผู้สนับสนุนสมาคม',                    icon: 'bi-people-fill',  iconBg: '#60a5fa', iconColor: '#1e3a5f' },
-            { key: 'affiliate', label: 'สมาชิกสมทบ',     desc: 'สมาชิกทั่วไป',                        icon: 'bi-person-fill',  iconBg: '#a78bfa', iconColor: '#3b0764' },
+        // Build types from DB data (member_types) with fallback
+        const memberTypes = data.member_types || {};
+        const defaultTypes = [
+            { key: 'ordinary',  label: 'สมาชิกสามัญ',    desc: '', icon: 'bi-star-fill',    iconBg: '#fbbf24', iconColor: '#92400e' },
+            { key: 'associate', label: 'สมาชิกวิสามัญ',  desc: '', icon: 'bi-people-fill',  iconBg: '#60a5fa', iconColor: '#1e3a5f' },
+            { key: 'affiliate', label: 'สมาชิกสมทบ',     desc: '', icon: 'bi-person-fill',  iconBg: '#a78bfa', iconColor: '#3b0764' },
         ];
+        let types;
+        if (Object.keys(memberTypes).length > 0) {
+            types = Object.entries(memberTypes).map(([key, t]) => ({
+                key,
+                label:     t.label || key,
+                desc:      t.description || '',
+                icon:      (t.icon || 'fas fa-user').replace(/^fas?\s+fa-/, 'bi-'),
+                iconBg:    t.icon_bg  || '#6b7280',
+                iconColor: t.icon_color || '#fff',
+            }));
+        } else {
+            types = defaultTypes;
+        }
 
         let html = '';
         types.forEach(function(t) {

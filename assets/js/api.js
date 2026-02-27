@@ -455,6 +455,19 @@ const API = {
         return this.post(this.apiUrl('settings', 'update'), { settings: data });
     },
 
+    // ── MEMBER TYPES (ประเภทสมาชิก) ──────────────────────
+    async getMemberTypes() {
+        return this.get(this.apiUrl('settings', 'member-types'));
+    },
+
+    async updateMemberType(data) {
+        return this.post(this.apiUrl('settings', 'update-member-type'), data);
+    },
+
+    async createMemberType(data) {
+        return this.post(this.apiUrl('settings', 'create-member-type'), data);
+    },
+
     // ── FEES (ค่าธรรมเนียมสมาชิก) ────────────────────────
     async getFees(params = {}) {
         return this.get(this.apiUrl('fee', 'list'), params);

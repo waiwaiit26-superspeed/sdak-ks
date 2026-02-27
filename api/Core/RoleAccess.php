@@ -97,9 +97,12 @@ class RoleAccess
             'recent' => ['admin'],
         ],
         'settings' => [
-            'list'           => ['*'],
-            'update'         => ['admin'],
-            'test-telegram'  => ['admin'],
+            'list'               => ['*'],
+            'update'             => ['admin'],
+            'test-telegram'      => ['admin'],
+            'member-types'       => ['*'],
+            'update-member-type' => ['admin'],
+            'create-member-type' => ['admin'],
         ],
         'fee' => [
             'list'          => ['admin'],

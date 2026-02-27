@@ -35,8 +35,12 @@ class FeeController extends Controller
         $fees = $this->model('MembershipFeeModel');
         $settings = $this->model('SettingsModel');
         $memberType = $this->currentUser['member_type'];
-        $feeMode = $settings->get("membership_fee_mode_{$memberType}", 'none');
-        $feeAmount = (float)$settings->get("membership_fee_{$memberType}", '0');
+
+        // Get fee config from member_types table
+        $mt = $this->model('MemberTypeModel');
+        $feeConfig = $mt->getFeeConfig($memberType);
+        $feeMode = $feeConfig['mode'];
+        $feeAmount = $feeConfig['amount'];
         $buddhistYear = (int)date('Y') + 543;
 
         // Bank info for payment
@@ -163,10 +167,11 @@ class FeeController extends Controller
     {
         $this->requirePost();
 
-        $settings = $this->model('SettingsModel');
+        $mt = $this->model('MemberTypeModel');
         $memberType = $this->currentUser['member_type'];
-        $feeMode = $settings->get("membership_fee_mode_{$memberType}", 'none');
-        $feeAmount = (float)$settings->get("membership_fee_{$memberType}", '0');
+        $feeConfig = $mt->getFeeConfig($memberType);
+        $feeMode = $feeConfig['mode'];
+        $feeAmount = $feeConfig['amount'];
 
         if ($feeMode === 'none' || $feeAmount <= 0) {
             Response::error('ประเภทสมาชิกของคุณไม่ต้องชำระค่าธรรมเนียม');
@@ -257,19 +262,15 @@ class FeeController extends Controller
         $input = $this->input();
         $year = (int)($input['year'] ?? (date('Y') + 543));
 
-        $settings = $this->model('SettingsModel');
-        $feeAmounts = [
-            'ordinary' => (float)$settings->get('membership_fee_ordinary', '0'),
-            'associate' => (float)$settings->get('membership_fee_associate', '0'),
-            'affiliate' => (float)$settings->get('membership_fee_affiliate', '0'),
-            'honorary' => (float)$settings->get('membership_fee_honorary', '0'),
-        ];
-        $feeModes = [
-            'ordinary' => $settings->get('membership_fee_mode_ordinary', 'none'),
-            'associate' => $settings->get('membership_fee_mode_associate', 'none'),
-            'affiliate' => $settings->get('membership_fee_mode_affiliate', 'none'),
-            'honorary' => $settings->get('membership_fee_mode_honorary', 'none'),
-        ];
+        // Get fee configs from member_types table
+        $mt = $this->model('MemberTypeModel');
+        $allConfigs = $mt->getAllFeeConfigs();
+        $feeAmounts = [];
+        $feeModes = [];
+        foreach ($allConfigs as $key => $cfg) {
+            $feeAmounts[$key] = $cfg['amount'];
+            $feeModes[$key]   = $cfg['mode'];
+        }
 
         $fees = $this->model('MembershipFeeModel');
         $generated = $fees->generateYearlyFees($year, $feeAmounts, $feeModes);
@@ -302,7 +303,7 @@ class FeeController extends Controller
         if (!$fee) Response::error('ไม่พบรายการค่าธรรมเนียม', 404);
 
         $users = $this->model('UserModel');
-        $member = $users->find((int)$fee['user_id'], ['full_name', 'member_type']);
+        $member = $users->find((int)$fee['user_id'], ['full_name', 'member_type', 'school_organization', 'work_address']);
 
         switch ($action) {
             case 'approve':
@@ -363,19 +364,19 @@ class FeeController extends Controller
         if ($existing) return;
 
         $settings = $this->model('SettingsModel');
-        $memberTypeLabels = [
-            'ordinary'  => 'สามัญ',
-            'associate' => 'วิสามัญ',
-            'affiliate' => 'สมทบ',
-            'honorary'  => 'กิตติมศักดิ์',
-        ];
+
+        // Get member type label from DB
+        $mt = $this->model('MemberTypeModel');
         $memberTypeKey = $member['member_type'] ?? '';
-        $memberTypeText = isset($memberTypeLabels[$memberTypeKey]) ? $memberTypeLabels[$memberTypeKey] : '';
-        $memberTypeSuffix = $memberTypeText ? $memberTypeText : '';
+        $typeData = $mt->findByKey($memberTypeKey);
+        $memberTypeSuffix = $typeData ? ($typeData['label_short'] ?: $typeData['label']) : '';
 
         $feeType = ($fee['fee_type'] ?? 'annual') === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
         $title = 'ค่าธรรมเนียมสมาชิก' . ($memberTypeSuffix ? $memberTypeSuffix : '');
         $description = $title . " ({$feeType})";
+
+        // Build payer address from work_address or school_organization
+        $payerAddress = $this->buildPayerAddress($member);
 
         $receipts->createReceipt([
             'user_id'       => (int)$fee['user_id'],
@@ -383,7 +384,7 @@ class FeeController extends Controller
             'reference_id'  => (int)$fee['id'],
             'title'         => $title,
             'payer_name'    => $member['full_name'],
-            'payer_address' => null,
+            'payer_address' => $payerAddress,
             'description'   => $description,
             'amount'        => (float)$fee['amount'],
             'received_by'   => $settings->get('signature_name', ''),
@@ -394,6 +395,32 @@ class FeeController extends Controller
     /**
      * Auto-create a finance transaction when a membership fee is approved
      */
+    /**
+     * Build payer address string from member's work_address or school_organization
+     */
+    private function buildPayerAddress(array $member): ?string
+    {
+        // Try work_address JSON first
+        $workAddr = $member['work_address'] ?? null;
+        if ($workAddr) {
+            $addr = is_string($workAddr) ? json_decode($workAddr, true) : $workAddr;
+            if (is_array($addr)) {
+                $parts = array_filter([
+                    $addr['address'] ?? $addr['detail'] ?? '',
+                    !empty($addr['subdistrict']) ? 'ตำบล' . $addr['subdistrict'] : '',
+                    !empty($addr['district']) ? 'อำเภอ' . $addr['district'] : '',
+                    !empty($addr['province']) ? 'จังหวัด' . $addr['province'] : '',
+                    $addr['zipcode'] ?? $addr['postal_code'] ?? '',
+                ]);
+                $result = implode(' ', $parts);
+                if (trim($result)) return trim($result);
+            }
+        }
+        // Fallback to school/organization name
+        $org = $member['school_organization'] ?? '';
+        return $org ?: null;
+    }
+
     private function generateFeeTransaction(array $fee, array $member, ?string $receivedDate = null): void
     {
         $txnModel = $this->model('FinanceTransactionModel');
@@ -409,14 +436,11 @@ class FeeController extends Controller
 
         if (!$feeCategory) return; // category not found, skip
 
-        $memberTypeLabels = [
-            'ordinary'  => 'สามัญ',
-            'associate' => 'วิสามัญ',
-            'affiliate' => 'สมทบ',
-            'honorary'  => 'กิตติมศักดิ์',
-        ];
+        // Get member type label from DB
+        $mt = $this->model('MemberTypeModel');
         $memberTypeKey = $member['member_type'] ?? '';
-        $memberTypeText = isset($memberTypeLabels[$memberTypeKey]) ? ' (' . $memberTypeLabels[$memberTypeKey] . ')' : '';
+        $typeData = $mt->findByKey($memberTypeKey);
+        $memberTypeText = $typeData ? ' (' . ($typeData['label_short'] ?: $typeData['label']) . ')' : '';
 
         $feeType = ($fee['fee_type'] ?? 'annual') === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
 

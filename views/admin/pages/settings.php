@@ -329,80 +329,9 @@
                                 <hr>
                                 <h6 class="mb-3">ค่าธรรมเนียมสมาชิก</h6>
 
-                                <!-- สมาชิกสามัญ -->
-                                <div class="card card-outline card-primary mb-3">
-                                    <div class="card-header py-2"><strong>สมาชิกสามัญ</strong></div>
-                                    <div class="card-body py-2">
-                                        <div class="form-group mb-2">
-                                            <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
-                                            <select class="form-control form-control-sm fee-mode-select" name="membership_fee_mode_ordinary" data-target="fee_ordinary_amount">
-                                                <option value="none">ไม่เก็บค่าใช้จ่าย</option>
-                                                <option value="onetime">จ่ายครั้งเดียว</option>
-                                                <option value="annual">จ่ายรายปี</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-0" id="fee_ordinary_amount" style="display:none">
-                                            <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
-                                            <input type="number" class="form-control form-control-sm" name="membership_fee_ordinary" min="0" step="0.01">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- สมาชิกวิสามัญ -->
-                                <div class="card card-outline card-info mb-3">
-                                    <div class="card-header py-2"><strong>สมาชิกวิสามัญ</strong></div>
-                                    <div class="card-body py-2">
-                                        <div class="form-group mb-2">
-                                            <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
-                                            <select class="form-control form-control-sm fee-mode-select" name="membership_fee_mode_associate" data-target="fee_associate_amount">
-                                                <option value="none">ไม่เก็บค่าใช้จ่าย</option>
-                                                <option value="onetime">จ่ายครั้งเดียว</option>
-                                                <option value="annual">จ่ายรายปี</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-0" id="fee_associate_amount" style="display:none">
-                                            <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
-                                            <input type="number" class="form-control form-control-sm" name="membership_fee_associate" min="0" step="0.01">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- สมาชิกสมทบ -->
-                                <div class="card card-outline card-warning mb-3">
-                                    <div class="card-header py-2"><strong>สมาชิกสมทบ</strong></div>
-                                    <div class="card-body py-2">
-                                        <div class="form-group mb-2">
-                                            <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
-                                            <select class="form-control form-control-sm fee-mode-select" name="membership_fee_mode_affiliate" data-target="fee_affiliate_amount">
-                                                <option value="none">ไม่เก็บค่าใช้จ่าย</option>
-                                                <option value="onetime">จ่ายครั้งเดียว</option>
-                                                <option value="annual">จ่ายรายปี</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-0" id="fee_affiliate_amount" style="display:none">
-                                            <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
-                                            <input type="number" class="form-control form-control-sm" name="membership_fee_affiliate" min="0" step="0.01">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- สมาชิกกิตติมศักดิ์ -->
-                                <div class="card card-outline card-secondary mb-3">
-                                    <div class="card-header py-2"><strong>สมาชิกกิตติมศักดิ์</strong></div>
-                                    <div class="card-body py-2">
-                                        <div class="form-group mb-2">
-                                            <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
-                                            <select class="form-control form-control-sm fee-mode-select" name="membership_fee_mode_honorary" data-target="fee_honorary_amount">
-                                                <option value="none">ไม่เก็บค่าใช้จ่าย</option>
-                                                <option value="onetime">จ่ายครั้งเดียว</option>
-                                                <option value="annual">จ่ายรายปี</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group mb-0" id="fee_honorary_amount" style="display:none">
-                                            <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
-                                            <input type="number" class="form-control form-control-sm" name="membership_fee_honorary" min="0" step="0.01">
-                                        </div>
-                                    </div>
+                                <!-- Dynamic member type fee cards (loaded from DB) -->
+                                <div id="memberTypeFeeCards">
+                                    <div class="text-center text-muted py-3"><i class="fas fa-spinner fa-spin"></i> กำลังโหลด...</div>
                                 </div>
                             </div>
                         </div>
@@ -691,6 +620,9 @@ async function loadSettings() {
         }
     });
 
+    // Load member types for fee cards
+    await loadMemberTypeFeeCards();
+
     // Toggle fee amount visibility based on mode
     $('.fee-mode-select').each(function () {
         toggleFeeAmount($(this));
@@ -727,6 +659,69 @@ function toggleFeeAmount($select) {
 $(document).on('change', '.fee-mode-select', function () {
     toggleFeeAmount($(this));
 });
+
+// ─── Dynamic Member Type Fee Cards ───
+let _memberTypesCache = [];
+const cardColors = ['primary','info','warning','secondary','success','danger'];
+
+async function loadMemberTypeFeeCards() {
+    const res = await API.getMemberTypes();
+    if (!res.success) {
+        $('#memberTypeFeeCards').html('<div class="text-danger">โหลดข้อมูลประเภทสมาชิกไม่สำเร็จ</div>');
+        return;
+    }
+    _memberTypesCache = res.data || [];
+    renderMemberTypeFeeCards();
+}
+
+function renderMemberTypeFeeCards() {
+    let html = '';
+    _memberTypesCache.forEach((t, i) => {
+        const color = cardColors[i % cardColors.length];
+        const key = t.type_key;
+        const showAmount = (t.fee_mode !== 'none') ? '' : 'display:none';
+        html += `
+        <div class="card card-outline card-${color} mb-3" data-type-key="${key}">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <strong>${App.escapeHtml(t.label)}</strong>
+                <small class="text-muted">${App.escapeHtml(t.description || '')}</small>
+            </div>
+            <div class="card-body py-2">
+                <div class="form-group mb-2">
+                    <label class="form-label small text-muted mb-1">รูปแบบการเก็บ</label>
+                    <select class="form-control form-control-sm fee-mode-select mt-fee-mode"
+                            data-type-key="${key}" data-target="fee_${key}_amount">
+                        <option value="none"${t.fee_mode==='none'?' selected':''}>ไม่เก็บค่าใช้จ่าย</option>
+                        <option value="onetime"${t.fee_mode==='onetime'?' selected':''}>จ่ายครั้งเดียว</option>
+                        <option value="annual"${t.fee_mode==='annual'?' selected':''}>จ่ายรายปี</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0" id="fee_${key}_amount" style="${showAmount}">
+                    <label class="form-label small text-muted mb-1">จำนวนเงิน (บาท)</label>
+                    <input type="number" class="form-control form-control-sm mt-fee-amount"
+                           data-type-key="${key}" min="0" step="0.01" value="${parseFloat(t.fee_amount)||0}">
+                </div>
+            </div>
+        </div>`;
+    });
+    $('#memberTypeFeeCards').html(html);
+
+    // Re-apply toggle
+    $('.fee-mode-select').each(function(){ toggleFeeAmount($(this)); });
+}
+
+async function saveMemberTypeFees() {
+    const promises = [];
+    _memberTypesCache.forEach(t => {
+        const key = t.type_key;
+        const mode   = $(`.mt-fee-mode[data-type-key="${key}"]`).val() || 'none';
+        const amount = parseFloat($(`.mt-fee-amount[data-type-key="${key}"]`).val()) || 0;
+        if (mode !== t.fee_mode || amount !== parseFloat(t.fee_amount)) {
+            promises.push(API.updateMemberType({ type_key: key, fee_mode: mode, fee_amount: amount }));
+        }
+    });
+    if (promises.length) await Promise.all(promises);
+}
 
 // Member number preview
 function updateMnPreview() {
@@ -1095,6 +1090,8 @@ $('#settingsForm').on('submit', async function(e) {
     $(this).find('input, textarea, select').each(function () {
         const name = $(this).attr('name');
         if (!name) return;
+        // Skip dynamic member-type fee fields (saved separately)
+        if ($(this).hasClass('mt-fee-mode') || $(this).hasClass('mt-fee-amount')) return;
         if ($(this).is(':checkbox')) {
             settings[name] = $(this).is(':checked') ? '1' : '0';
         } else {
@@ -1108,6 +1105,9 @@ $('#settingsForm').on('submit', async function(e) {
     } else {
         console.log('[Settings] signature_image is empty');
     }
+
+    // Save member type fees in parallel
+    await saveMemberTypeFees();
 
     const result = await API.updateSettings(settings);
     if (result.success) {

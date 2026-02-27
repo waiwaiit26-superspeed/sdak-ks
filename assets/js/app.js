@@ -19,6 +19,7 @@ const App = {
         this.loadDynamicNav();
         this.initTooltips();
         this.loadDynamicFavicon();
+        this.loadMemberTypes();
     },
 
     /**
@@ -439,11 +440,40 @@ const App = {
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     },
 
+    // ─── Cached member type data ───
+    _memberTypeLabels: null,       // { ordinary: 'สมาชิกสามัญ', … }
+    _memberTypeLabelsShort: null,  // { ordinary: 'สามัญ', … }
+    _memberTypeData: null,         // full rows array
+
     /**
-     * Get member type label
+     * Load member types from API (called once, then cached)
+     */
+    async loadMemberTypes() {
+        if (this._memberTypeLabels) return;
+        try {
+            const res = await API.getMemberTypes();
+            if (res.success && Array.isArray(res.data)) {
+                this._memberTypeData = res.data;
+                this._memberTypeLabels = {};
+                this._memberTypeLabelsShort = {};
+                res.data.forEach(t => {
+                    this._memberTypeLabels[t.type_key] = t.label;
+                    this._memberTypeLabelsShort[t.type_key] = t.label_short || t.label;
+                });
+            }
+        } catch (e) { /* use fallback */ }
+        // Ensure fallback always exists
+        if (!this._memberTypeLabels) {
+            this._memberTypeLabels = { ordinary:'สมาชิกสามัญ', associate:'สมาชิกวิสามัญ', affiliate:'สมาชิกสมทบ', honorary:'สมาชิกกิตติมศักดิ์' };
+            this._memberTypeLabelsShort = { ordinary:'สามัญ', associate:'วิสามัญ', affiliate:'สมทบ', honorary:'กิตติมศักดิ์' };
+        }
+    },
+
+    /**
+     * Get member type label (full). Synchronous — requires loadMemberTypes() called beforehand.
      */
     getMemberTypeLabel(type) {
-        const labels = {
+        const labels = this._memberTypeLabels || {
             'ordinary': 'สมาชิกสามัญ',
             'associate': 'สมาชิกวิสามัญ',
             'affiliate': 'สมาชิกสมทบ',
@@ -453,10 +483,41 @@ const App = {
     },
 
     /**
+     * Get member type label (short)
+     */
+    getMemberTypeLabelShort(type) {
+        const labels = this._memberTypeLabelsShort || {
+            'ordinary': 'สามัญ',
+            'associate': 'วิสามัญ',
+            'affiliate': 'สมทบ',
+            'honorary': 'กิตติมศักดิ์'
+        };
+        return labels[type] || type;
+    },
+
+    /**
      * Get member type badge
      */
     getMemberTypeBadge(type) {
         return `<span class="badge badge-${type}">${this.getMemberTypeLabel(type)}</span>`;
+    },
+
+    /**
+     * Build <option> HTML for member type selects
+     * @param {boolean} short - use short labels
+     * @param {boolean} withEmpty - prepend empty "-- เลือก --" option
+     */
+    getMemberTypeOptions(short = true, withEmpty = false) {
+        const labels = short ? this._memberTypeLabelsShort : this._memberTypeLabels;
+        const fallback = short
+            ? { ordinary:'สามัญ', associate:'วิสามัญ', affiliate:'สมทบ', honorary:'กิตติมศักดิ์' }
+            : { ordinary:'สมาชิกสามัญ', associate:'สมาชิกวิสามัญ', affiliate:'สมาชิกสมทบ', honorary:'สมาชิกกิตติมศักดิ์' };
+        const map = labels || fallback;
+        let html = withEmpty ? '<option value="">-- เลือก --</option>' : '';
+        Object.entries(map).forEach(([k, v]) => {
+            html += `<option value="${k}">${this.escapeHtml(v)}</option>`;
+        });
+        return html;
     },
 
     /**

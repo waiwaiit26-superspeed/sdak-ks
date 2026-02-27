@@ -32,7 +32,7 @@ $basePath = $basePath ?? './';
             </div>
             <div class="col-lg-2">
                 <h5>ประเภทสมาชิก</h5>
-                <ul class="list-unstyled">
+                <ul class="list-unstyled" id="footer-member-types">
                     <li class="mb-2">สมาชิกสามัญ</li>
                     <li class="mb-2">สมาชิกวิสามัญ</li>
                     <li class="mb-2">สมาชิกสมทบ</li>
@@ -60,5 +60,22 @@ $basePath = $basePath ?? './';
 </div>
 
 <?php include __DIR__ . '/../_shared/pdpa.php'; ?>
+<script>
+// Populate footer member types from DB
+(function(){
+    if (typeof App !== 'undefined' && App.loadMemberTypes) {
+        App.loadMemberTypes().then(function(){
+            if (App._memberTypeLabels) {
+                var html = '';
+                Object.values(App._memberTypeLabels).forEach(function(label){
+                    html += '<li class="mb-2">' + label + '</li>';
+                });
+                var el = document.getElementById('footer-member-types');
+                if (el && html) el.innerHTML = html;
+            }
+        });
+    }
+})();
+</script>
 </body>
 </html>

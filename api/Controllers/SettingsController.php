@@ -148,4 +148,110 @@ class SettingsController extends Controller
             Response::error('ไม่สามารถส่งข้อความได้ กรุณาตรวจสอบ Bot Token และ Chat ID');
         }
     }
+
+    /* ── MEMBER TYPES ── */
+
+    /**
+     * GET  ?controller=settings&action=member-types
+     * Public: ดึงประเภทสมาชิกทั้งหมดที่เปิดใช้งาน
+     */
+    public function memberTypes(): void
+    {
+        $mt = $this->model('MemberTypeModel');
+        $isAdmin = $this->currentUser && $this->currentUser['role'] === 'admin';
+        $data = $isAdmin ? $mt->getAll() : $mt->getActive();
+        Response::success($data);
+    }
+
+    /**
+     * POST  ?controller=settings&action=update-member-type
+     * Admin: อัปเดตประเภทสมาชิก (label, description, fee, icon, etc.)
+     */
+    public function updateMemberType(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+
+        if (empty($input['type_key'])) Response::error('กรุณาระบุ type_key');
+
+        $mt = $this->model('MemberTypeModel');
+        $existing = $mt->findByKey($input['type_key']);
+        if (!$existing) Response::error('ไม่พบประเภทสมาชิก: ' . $input['type_key'], 404);
+
+        $allowed = ['label', 'label_short', 'description', 'fee_mode', 'fee_amount', 'icon', 'icon_bg', 'icon_color', 'sort_order', 'is_active'];
+        $updateData = [];
+        foreach ($allowed as $key) {
+            if (isset($input[$key])) {
+                $updateData[$key] = $input[$key];
+            }
+        }
+
+        if (empty($updateData)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
+        $mt->update($updateData, ['id' => $existing['id']]);
+
+        // Sync to site_settings for backward compatibility
+        if (isset($updateData['fee_mode']) || isset($updateData['fee_amount'])) {
+            $settings = $this->model('SettingsModel');
+            $typeKey = $input['type_key'];
+            if (isset($updateData['fee_mode'])) {
+                $settings->set("membership_fee_mode_{$typeKey}", $updateData['fee_mode']);
+            }
+            if (isset($updateData['fee_amount'])) {
+                $settings->set("membership_fee_{$typeKey}", (string)$updateData['fee_amount']);
+            }
+        }
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'update_member_type', 'settings',
+            "อัปเดตประเภทสมาชิก: {$input['type_key']} - " . implode(', ', array_keys($updateData))
+        );
+
+        Response::success(null, 'อัปเดตประเภทสมาชิกสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=settings&action=create-member-type
+     * Admin: สร้างประเภทสมาชิกใหม่
+     */
+    public function createMemberType(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+
+        if (empty($input['type_key'])) Response::error('กรุณาระบุ type_key');
+        if (empty($input['label'])) Response::error('กรุณาระบุชื่อประเภทสมาชิก');
+
+        // Validate key format
+        if (!preg_match('/^[a-z][a-z0-9_]{1,49}$/', $input['type_key'])) {
+            Response::error('type_key ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และ _ เท่านั้น (2-50 ตัวอักษร)');
+        }
+
+        $mt = $this->model('MemberTypeModel');
+        if ($mt->findByKey($input['type_key'])) {
+            Response::error('ประเภทสมาชิก ' . $input['type_key'] . ' มีอยู่แล้ว');
+        }
+
+        $maxOrder = $this->model('MemberTypeModel')->db->max('member_types', 'sort_order');
+        $id = $mt->create([
+            'type_key'    => $input['type_key'],
+            'label'       => $input['label'],
+            'label_short' => $input['label_short'] ?? null,
+            'description' => $input['description'] ?? null,
+            'fee_mode'    => $input['fee_mode'] ?? 'none',
+            'fee_amount'  => (float)($input['fee_amount'] ?? 0),
+            'icon'        => $input['icon'] ?? 'bi-person-fill',
+            'icon_bg'     => $input['icon_bg'] ?? '#a78bfa',
+            'icon_color'  => $input['icon_color'] ?? '#3b0764',
+            'sort_order'  => ((int)$maxOrder) + 1,
+            'is_active'   => 1,
+        ]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'create_member_type', 'settings',
+            "สร้างประเภทสมาชิกใหม่: {$input['type_key']} ({$input['label']})"
+        );
+
+        Response::success(['id' => $id], 'สร้างประเภทสมาชิกสำเร็จ', 201);
+    }
 }

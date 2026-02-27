@@ -118,12 +118,11 @@ $(function () {
 
         // Member type breakdown
         let html = '<ul class="list-group list-group-flush">';
-        const typeLabels = { ordinary: 'สมาชิกสามัญ', associate: 'สมาชิกวิสามัญ', affiliate: 'สมาชิกสมทบ', honorary: 'สมาชิกกิตติมศักดิ์' };
         const typeColors = { ordinary: 'primary', associate: 'success', affiliate: 'info', honorary: 'warning' };
         for (const [type, count] of Object.entries(d.member_types)) {
             html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><span class="badge bg-${typeColors[type]} me-2">&nbsp;</span>${typeLabels[type]}</span>
-                        <span class="badge bg-${typeColors[type]} rounded-pill">${count}</span>
+                        <span><span class="badge bg-${typeColors[type] || 'secondary'} me-2">&nbsp;</span>${App.getMemberTypeLabel(type)}</span>
+                        <span class="badge bg-${typeColors[type] || 'secondary'} rounded-pill">${count}</span>
                      </li>`;
         }
         html += '</ul>';

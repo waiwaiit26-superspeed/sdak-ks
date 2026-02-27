@@ -144,9 +144,10 @@ class AuthController extends Controller
         unset($user['password'], $user['google_id']);
 
         // ── Auto-create fee record ──
-        $settings = $this->model('SettingsModel');
-        $feeMode  = $settings->get("membership_fee_mode_{$memberType}", 'none');
-        $feeAmount = (float)$settings->get("membership_fee_{$memberType}", '0');
+        $mt = $this->model('MemberTypeModel');
+        $feeConf   = $mt->getFeeConfig($memberType);
+        $feeMode   = $feeConf['mode']   ?? 'none';
+        $feeAmount = $feeConf['amount'] ?? 0;
         $feeId = null;
 
         if ($feeMode !== 'none' && $feeAmount > 0) {
@@ -223,24 +224,40 @@ class AuthController extends Controller
         }
 
         // ── ผู้ใช้ใหม่: ยังไม่สร้าง record → ส่งข้อมูลกลับให้เลือกประเภทสมาชิกก่อน ──
+        $mt       = $this->model('MemberTypeModel');
         $settings = $this->model('SettingsModel');
-        $feeInfo = [
-            'ordinary'  => ['amount' => (float)$settings->get('membership_fee_ordinary', '0'),  'mode' => $settings->get('membership_fee_mode_ordinary', 'none')],
-            'associate' => ['amount' => (float)$settings->get('membership_fee_associate', '0'), 'mode' => $settings->get('membership_fee_mode_associate', 'none')],
-            'affiliate' => ['amount' => (float)$settings->get('membership_fee_affiliate', '0'), 'mode' => $settings->get('membership_fee_mode_affiliate', 'none')],
-            'bank_info' => [
-                'bank_name'      => $settings->get('bank_name', ''),
-                'account_name'   => $settings->get('bank_account_name', ''),
-                'account_number' => $settings->get('bank_account_number', ''),
-            ],
+        $allFee   = $mt->getAllFeeConfigs();   // ['ordinary'=>[amount,mode], …]
+        $types    = $mt->getActive();          // full rows with label, icon, etc.
+
+        $feeInfo = $allFee;
+        $feeInfo['bank_info'] = [
+            'bank_name'      => $settings->get('bank_name', ''),
+            'account_name'   => $settings->get('bank_account_name', ''),
+            'account_number' => $settings->get('bank_account_number', ''),
         ];
 
+        // แปลง member_types เป็น array keyed by type_key สำหรับ setup wizard
+        $memberTypes = [];
+        foreach ($types as $t) {
+            $memberTypes[$t['type_key']] = [
+                'label'       => $t['label'],
+                'label_short' => $t['label_short'] ?? $t['label'],
+                'description' => $t['description'] ?? '',
+                'fee_mode'    => $t['fee_mode'],
+                'fee_amount'  => (float)$t['fee_amount'],
+                'icon'        => $t['icon'] ?? 'fas fa-user',
+                'icon_bg'     => $t['icon_bg'] ?? 'bg-primary',
+                'icon_color'  => $t['icon_color'] ?? 'text-white',
+            ];
+        }
+
         Response::success([
-            'user'        => null,
-            'is_new'      => true,
-            'needs_setup' => true,
-            'fee_info'    => $feeInfo,
-            'google_user' => [
+            'user'         => null,
+            'is_new'       => true,
+            'needs_setup'  => true,
+            'fee_info'     => $feeInfo,
+            'member_types' => $memberTypes,
+            'google_user'  => [
                 'sub'     => $gUser['sub'],
                 'email'   => $gUser['email'],
                 'name'    => $gUser['name'] ?? '',
@@ -382,9 +399,10 @@ class AuthController extends Controller
 
         // ── สร้างรายการค่าธรรมเนียม + อัปโหลดสลิป (ถ้ามี) ──
         $feeId = null;
-        $settings = $this->model('SettingsModel');
-        $feeMode   = $settings->get("membership_fee_mode_{$memberType}", 'none');
-        $feeAmount = (float)$settings->get("membership_fee_{$memberType}", '0');
+        $mt = $this->model('MemberTypeModel');
+        $feeConfig = $mt->getFeeConfig($memberType);
+        $feeMode   = $feeConfig['mode'];
+        $feeAmount = $feeConfig['amount'];
 
         if ($feeMode !== 'none' && $feeAmount > 0) {
             $fees = $this->model('MembershipFeeModel');

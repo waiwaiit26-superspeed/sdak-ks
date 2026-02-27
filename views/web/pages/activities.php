@@ -76,7 +76,7 @@ async function loadActivities(page = 1) {
         }
 
         // Member type restriction
-        const memberTypeLabels = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+        const memberTypeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         let restrictBadge = '';
         let memberTypeInfo = '';
         if (act.visibility === 'members_only') {

@@ -126,23 +126,8 @@
                         </div>
                         <div class="col-md-8 mb-3" id="actMemberTypesWrap">
                             <label class="form-label">ประเภทสมาชิกที่สมัครได้</label>
-                            <div class="d-flex flex-wrap gap-3">
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input member-type-cb" id="mt_ordinary" value="ordinary">
-                                    <label class="custom-control-label" for="mt_ordinary">สามัญ</label>
-                                </div>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input member-type-cb" id="mt_associate" value="associate">
-                                    <label class="custom-control-label" for="mt_associate">วิสามัญ</label>
-                                </div>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input member-type-cb" id="mt_affiliate" value="affiliate">
-                                    <label class="custom-control-label" for="mt_affiliate">สมทบ</label>
-                                </div>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input member-type-cb" id="mt_honorary" value="honorary">
-                                    <label class="custom-control-label" for="mt_honorary">กิตติมศักดิ์</label>
-                                </div>
+                            <div class="d-flex flex-wrap gap-3" id="memberTypeCheckboxes">
+                                <!-- Populated by JS from DB -->
                             </div>
                             <small class="text-muted">ไม่เลือก = เปิดรับทุกประเภท</small>
                         </div>
@@ -259,6 +244,20 @@ let currentPage = 1;
 
 $(function () {
     App.requireAdmin();
+
+    // Populate member type checkboxes dynamically
+    App.loadMemberTypes().then(() => {
+        const labels = App._memberTypeLabelsShort || {};
+        let cbHtml = '';
+        Object.entries(labels).forEach(([k, v]) => {
+            cbHtml += `<div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input member-type-cb" id="mt_${k}" value="${k}">
+                <label class="custom-control-label" for="mt_${k}">${App.escapeHtml(v)}</label>
+            </div>`;
+        });
+        $('#memberTypeCheckboxes').html(cbHtml);
+    });
+
     loadActivities();
 });
 
@@ -289,7 +288,7 @@ async function loadActivities(page = 1) {
         const visBadge = a.visibility === 'members_only' ? '<span class="badge bg-warning text-dark"><i class="bi bi-lock me-1"></i>สมาชิก</span>'
             : a.visibility === 'custom' ? '<span class="badge bg-info"><i class="bi bi-shield me-1"></i>กำหนดเอง</span>'
             : '<span class="badge bg-success"><i class="bi bi-globe me-1"></i>สาธารณะ</span>';
-        const memberTypeLabels = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+        const memberTypeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         const mtBadge = a.allowed_member_types
             ? '<br><small class="text-muted">' + a.allowed_member_types.split(',').map(t => memberTypeLabels[t.trim()] || t.trim()).join(', ') + '</small>'
             : '';

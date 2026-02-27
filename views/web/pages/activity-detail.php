@@ -156,7 +156,7 @@ $(function () {
                                     <li class="mb-2"><i class="bi bi-calendar-check text-primary me-2"></i><strong>สิ้นสุด:</strong> ${endDate}</li>
                                     <li class="mb-2"><i class="bi bi-geo-alt text-primary me-2"></i><strong>สถานที่:</strong> ${a.location || '-'}</li>
                                     <li class="mb-2"><i class="bi bi-person-badge text-primary me-2"></i><strong>รับสมาชิก:</strong> ${(() => {
-                                        const mtl = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+                                        const mtl = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
                                         if (a.allowed_member_types) return a.allowed_member_types.split(',').map(t => mtl[t.trim()] || t.trim()).join(', ');
                                         if (a.visibility === 'members_only') return 'เฉพาะสมาชิก (ทุกประเภท)';
                                         return 'เปิดรับทุกประเภท';
@@ -219,7 +219,7 @@ $(function () {
             } else {
                 const isFull = a.max_participants > 0 && a.approved_count >= a.max_participants;
                 // Check member type eligibility
-                const memberTypeLabels = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+                const memberTypeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
                 let memberTypeRestricted = false;
                 if (a.allowed_member_types) {
                     const allowedTypes = a.allowed_member_types.split(',').map(t => t.trim());
@@ -256,7 +256,7 @@ $(function () {
         }
 
         // Member type info line for sidebar
-        const memberTypeLabelsDetail = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+        const memberTypeLabelsDetail = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         let memberTypeLine = '';
         if (a.visibility === 'members_only' && !a.allowed_member_types) {
             memberTypeLine = 'เฉพาะสมาชิกสมาคม (ทุกประเภท)';

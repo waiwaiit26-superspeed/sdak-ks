@@ -158,6 +158,7 @@
                                                 <option value="ordinary">สมาชิกสามัญ</option>
                                                 <option value="associate">สมาชิกวิสามัญ</option>
                                                 <option value="affiliate">สมาชิกสมทบ</option>
+                                                <option value="honorary">สมาชิกกิตติมศักดิ์</option>
                                             </select>
                                             <small class="text-muted">ประเภทสมาชิกเปลี่ยนได้โดย admin</small>
                                         </div>
@@ -1025,7 +1026,7 @@ $(function () {
             }
         } else if (a.registration_open && a.status === 'open' && !isPast && !isFull) {
             // Check member type eligibility
-            const memberTypeLabels = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+            const memberTypeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
             let memberTypeOk = true;
             if (a.allowed_member_types) {
                 const allowedTypes = a.allowed_member_types.split(',').map(t => t.trim());

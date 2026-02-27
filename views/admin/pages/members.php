@@ -60,10 +60,6 @@
                         </select>
                         <select id="filterType" class="form-control form-control-sm" style="width:auto">
                             <option value="">ประเภท: ทั้งหมด</option>
-                            <option value="ordinary">สามัญ</option>
-                            <option value="associate">วิสามัญ</option>
-                            <option value="affiliate">สมทบ</option>
-                            <option value="honorary">กิตติมศักดิ์</option>
                         </select>
                         <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="ล้างตัวกรอง">
                             <i class="bi bi-x-circle"></i>
@@ -119,10 +115,6 @@
                                 <div class="form-group">
                                     <label>ประเภทสมาชิก <span class="text-danger">*</span></label>
                                     <select class="form-control" id="mf_member_type" name="member_type" required>
-                                        <option value="ordinary">สามัญ</option>
-                                        <option value="associate">วิสามัญ</option>
-                                        <option value="affiliate">สมทบ</option>
-                                        <option value="honorary">กิตติมศักดิ์</option>
                                     </select>
                                     <small class="text-muted">วิสามัญ = เกษียณ/เปลี่ยนตำแหน่ง</small>
                                 </div>
@@ -430,6 +422,23 @@ const FIELD_MAP = [
 
 $(function () {
     App.requireAdmin();
+
+    // Populate member type selects from cached data
+    App.loadMemberTypes().then(() => {
+        const shortLabels = App._memberTypeLabelsShort || {};
+        const fullLabels  = App._memberTypeLabels || {};
+        // Filter dropdown
+        const $filter = $('#filterType');
+        Object.entries(shortLabels).forEach(([k,v]) => {
+            $filter.append(`<option value="${k}">${v}</option>`);
+        });
+        // Edit form dropdown
+        const $edit = $('#mf_member_type');
+        Object.entries(shortLabels).forEach(([k,v]) => {
+            $edit.append(`<option value="${k}">${v}</option>`);
+        });
+    });
+
     initDataTable();
 
     // Init flatpickr for birth date
@@ -807,7 +816,7 @@ async function approveMember(userId, action) {
         const u = profileResult.data;
         const f = feeResult.data;
         const displayName = (u.prefix || '') + (u.first_name && u.last_name ? u.first_name + ' ' + u.last_name : u.full_name);
-        const typeLabels = { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
+        const typeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         const feeLabels = { none: 'ไม่ต้องชำระ', onetime: 'จ่ายครั้งเดียว', annual: 'จ่ายรายปี' };
 
         let feeStatusHtml = '';
