@@ -1145,7 +1145,7 @@ async function testMemberBot() {
         Swal.close();
         
         if (result.success) {
-            const botInfo = result.bot_info;
+            const botInfo = result.data.bot_info;
             Swal.fire({
                 title: '✅ Member Bot ใช้งานได้',
                 html: `
@@ -1251,7 +1251,7 @@ async function getMemberBotWebhookInfo() {
         Swal.close();
         
         if (result.success) {
-            const info = result.webhook_info;
+            const info = result.data.webhook_info;
             const statusColor = info.url ? 'success' : 'warning';
             const statusText = info.url ? 'ตั้งค่าแล้ว' : 'ยังไม่ตั้งค่า';
             
