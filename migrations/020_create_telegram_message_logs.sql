@@ -2,8 +2,8 @@
 -- ตารางเก็บประวัติการส่งข้อความ Telegram จาก admin
 
 CREATE TABLE IF NOT EXISTS `telegram_message_logs` (
-    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    `admin_id` INT UNSIGNED NOT NULL COMMENT 'ID ของ admin ที่ส่ง',
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `admin_id` INT NOT NULL COMMENT 'ID ของ admin ที่ส่ง',
     `message_type` ENUM('text', 'photo', 'document', 'video') NOT NULL DEFAULT 'text',
     `recipient_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'จำนวนผู้รับทั้งหมด',
     `success_count` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'ส่งสำเร็จ',
