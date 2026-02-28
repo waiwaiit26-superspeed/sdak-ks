@@ -58,8 +58,19 @@
             <!-- Telegram Connect Card -->
             <div class="card shadow-sm mt-3" id="telegramConnectCard">
                 <div class="card-body text-center">
-                    <div class="d-flex align-items-center justify-content-center mb-2">
-                        <img src="https://telegram.org/img/t_logo.svg" alt="Telegram" width="32" height="32" class="me-2">
+                    <!-- Bot Info Section -->
+                    <div id="telegramBotInfo" class="mb-3" style="display:none;">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <img id="telegramBotPhoto" src="" alt="Bot" width="48" height="48" class="rounded-circle mr-2" style="object-fit:cover; display:none;">
+                            <div class="text-left">
+                                <div class="font-weight-bold" id="telegramBotName" style="font-size:1rem;"></div>
+                                <div class="text-muted small" id="telegramBotUsername"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Fallback header (no bot info) -->
+                    <div id="telegramFallbackHeader" class="d-flex align-items-center justify-content-center mb-2">
+                        <img src="https://telegram.org/img/t_logo.svg" alt="Telegram" width="32" height="32" class="mr-2">
                         <span class="h6 mb-0">เชื่อมต่อ Telegram</span>
                     </div>
                     <div id="telegramStatusSection">
@@ -1268,6 +1279,25 @@ $(function () {
         const statusBadge = $('#telegramStatusBadge');
         const connectBtn = $('#btnConnectTelegram');
         const hintText = $('#telegramConnectHint');
+        const botInfoSection = $('#telegramBotInfo');
+        const fallbackHeader = $('#telegramFallbackHeader');
+
+        // แสดงข้อมูล Bot
+        if (status.bot && status.bot.name) {
+            fallbackHeader.hide();
+            botInfoSection.show();
+            $('#telegramBotName').text(status.bot.name);
+            $('#telegramBotUsername').text('@' + status.bot.username);
+            if (status.bot.photo_url) {
+                $('#telegramBotPhoto').attr('src', status.bot.photo_url).show();
+            } else {
+                // ใช้ Telegram logo แทนถ้าไม่มีรูป
+                $('#telegramBotPhoto').attr('src', 'https://telegram.org/img/t_logo.svg').show();
+            }
+        } else {
+            botInfoSection.hide();
+            fallbackHeader.show();
+        }
 
         if (status.is_linked) {
             statusBadge.removeClass('bg-secondary').addClass('bg-success').text('เชื่อมต่อแล้ว');

@@ -55,12 +55,30 @@ class TelegramLinkController extends Controller {
 
         $isLinked = !empty($telegramInfo['telegram_chat_id']);
 
+        // ดึงข้อมูล Bot จาก settings
+        $settings = $this->model('SettingsModel');
+        $botToken = $settings->get('member_bot_token', '');
+        $botUsername = $settings->get('member_bot_username', '');
+        $botEnabled = $settings->get('member_bot_enabled', '0');
+
+        // ดึงข้อมูล Bot จาก Telegram API (cache ได้)
+        $botInfo = null;
+        if (!empty($botToken)) {
+            $botInfo = $this->getBotInfo($botToken);
+        }
+
         Response::success([
             'is_linked' => $isLinked,
             'chat_id' => $isLinked ? $telegramInfo['telegram_chat_id'] : null,
             'linked_at' => $telegramInfo['telegram_linked_at'] ?? null,
             'linked_at_thai' => !empty($telegramInfo['telegram_linked_at']) ? 
-                $this->formatThaiDate($telegramInfo['telegram_linked_at']) : null
+                $this->formatThaiDate($telegramInfo['telegram_linked_at']) : null,
+            'bot' => $botInfo ? [
+                'name' => $botInfo['first_name'] ?? '',
+                'username' => $botInfo['username'] ?? $botUsername,
+                'photo_url' => $botInfo['photo_url'] ?? null,
+                'enabled' => $botEnabled === '1',
+            ] : null
         ]);
     }
 
@@ -190,5 +208,67 @@ class TelegramLinkController extends Controller {
         $time = date('H:i', $timestamp);
 
         return "{$day} {$month} {$year} เวลา {$time} น.";
+    }
+
+    /**
+     * ดึงข้อมูล Bot จาก Telegram API (getMe + profile photo)
+     */
+    private function getBotInfo($botToken) {
+        // เรียก getMe
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => "https://api.telegram.org/bot{$botToken}/getMe",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $data = json_decode($response, true);
+        if (!$data || !isset($data['ok']) || !$data['ok']) {
+            return null;
+        }
+
+        $bot = $data['result'];
+        $bot['photo_url'] = null;
+
+        // ดึง profile photo
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => "https://api.telegram.org/bot{$botToken}/getUserProfilePhotos?user_id={$bot['id']}&limit=1",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+        $photoResponse = curl_exec($ch);
+        curl_close($ch);
+
+        $photoData = json_decode($photoResponse, true);
+        if ($photoData && $photoData['ok'] && $photoData['result']['total_count'] > 0) {
+            $photos = $photoData['result']['photos'][0];
+            // เอารูปขนาดเล็กสุด (index 0)
+            $fileId = $photos[0]['file_id'] ?? null;
+            if ($fileId) {
+                // ดึง file path
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => "https://api.telegram.org/bot{$botToken}/getFile?file_id={$fileId}",
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 5,
+                    CURLOPT_SSL_VERIFYPEER => true
+                ]);
+                $fileResponse = curl_exec($ch);
+                curl_close($ch);
+
+                $fileData = json_decode($fileResponse, true);
+                if ($fileData && $fileData['ok']) {
+                    $filePath = $fileData['result']['file_path'];
+                    $bot['photo_url'] = "https://api.telegram.org/file/bot{$botToken}/{$filePath}";
+                }
+            }
+        }
+
+        return $bot;
     }
 }
