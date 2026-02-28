@@ -164,6 +164,14 @@ class RoleAccess
             'process-link'       => ['*'], // สำหรับ Bot เรียก (ตรวจสอบ secret ใน Controller)
             'linked-members'     => ['admin'],
         ],
+        'telegram-message' => [
+            'members'        => ['admin'],
+            'send-text'      => ['admin'],
+            'send-photo'     => ['admin'],
+            'send-document'  => ['admin'],
+            'send-video'     => ['admin'],
+            'logs'           => ['admin'],
+        ],
     ];
 
     /**
@@ -190,6 +198,7 @@ class RoleAccess
         'admin/pages'      => ['admin'],
         'admin/navigation' => ['admin'],
         'admin/logo'       => ['admin'],
+        'admin/telegram-send' => ['admin'],
         'receipts'         => ['member', 'admin'],
         'finance'          => ['member', 'admin'],
     ];

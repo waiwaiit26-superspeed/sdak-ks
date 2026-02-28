@@ -70,6 +70,7 @@ $controllerMap = [
     'receipt'       => 'ReceiptController',
     'finance'       => 'FinanceController',
     'telegram-link' => 'TelegramLinkController',
+    'telegram-message' => 'TelegramMessageController',
 ];
 
 if (!isset($controllerMap[$controller])) {

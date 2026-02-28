@@ -98,6 +98,14 @@ $page = $page ?? '';
                     </a>
                 </li>
 
+                <li class="nav-header">Telegram</li>
+                <li class="nav-item">
+                    <a href="./?page=telegram-send" class="nav-link <?= $page === 'telegram-send' ? 'active' : '' ?>">
+                        <i class="nav-icon bi bi-send"></i>
+                        <p>ส่งข่าว Telegram</p>
+                    </a>
+                </li>
+
                 <li class="nav-header">อื่นๆ</li>
                 <li class="nav-item">
                     <a href="./?page=logs" class="nav-link <?= $page === 'logs' ? 'active' : '' ?>">
