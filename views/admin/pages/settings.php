@@ -1183,7 +1183,7 @@ async function setMemberBotWebhook() {
         return;
     }
 
-    const webhookUrl = `${window.location.origin}${BASE_PATH}telegram-webhook.php?type=member`;
+    const webhookUrl = new URL('telegram-webhook.php?type=member', window.location.origin + window.location.pathname.replace(/admin\/.*$/, '')).href;
     
     const confirmed = await Swal.fire({
         title: 'ตั้งค่า Member Bot Webhook',
