@@ -16,10 +16,10 @@ class TelegramBot extends Telegram {
      */
     public static function sendMessage($chatId, $text, $keyboard = null) {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
@@ -47,10 +47,10 @@ class TelegramBot extends Telegram {
      */
     public static function answerCallbackQuery($callbackQueryId, $text = '', $showAlert = false) {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/answerCallbackQuery";
@@ -74,10 +74,10 @@ class TelegramBot extends Telegram {
      */
     public static function editMessage($chatId, $messageId, $text, $keyboard = null) {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/editMessageText";
@@ -157,10 +157,10 @@ class TelegramBot extends Telegram {
      */
     public static function setWebhook($webhookUrl) {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/setWebhook";
@@ -180,10 +180,10 @@ class TelegramBot extends Telegram {
      */
     public static function deleteWebhook() {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/deleteWebhook";
@@ -197,10 +197,10 @@ class TelegramBot extends Telegram {
      */
     public static function getWebhookInfo() {
         $settings = new \App\Models\SettingsModel();
-        $token = $settings->get('telegram_bot_token', '');
+        $token = $settings->get('member_bot_token', '');
         
         if (empty($token)) {
-            return ['success' => false, 'message' => 'Bot token not configured'];
+            return ['success' => false, 'message' => 'Member bot token not configured'];
         }
 
         $url = "https://api.telegram.org/bot{$token}/getWebhookInfo";

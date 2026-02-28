@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Core\Response;
 use App\Models\TelegramLinkModel;
+use App\Models\SettingsModel;
 use App\Core\Auth;
 
 class TelegramLinkController {
@@ -164,7 +165,8 @@ class TelegramLinkController {
      * @return string
      */
     private function generateBotLink($token) {
-        $botUsername = defined('TELEGRAM_BOT_USERNAME') ? TELEGRAM_BOT_USERNAME : 'YourBot';
+        $settings = new SettingsModel();
+        $botUsername = $settings->get('member_bot_username', 'YourBot');
         return "https://t.me/{$botUsername}?start=link_{$token}";
     }
 

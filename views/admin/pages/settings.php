@@ -487,6 +487,75 @@
                             </div>
                         </div>
 
+                        <div class="card shadow-sm border-success">
+                            <div class="card-header bg-success text-white">
+                                <h3 class="card-title mb-0"><i class="bi bi-person-plus me-2"></i>Telegram Bot สำหรับสมาชิก</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success py-2 mb-3">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Bot แยกสำหรับการเชื่อมต่อบัญชีสมาชิก รับแจ้งเตือนส่วนตัว และใช้งาน Mini App
+                                    <br><small class="text-muted">
+                                        <strong>แนะนำ:</strong> ใช้ Bot แยกจาก Admin Bot เพื่อความปลอดภัยและจัดการง่าย
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Member Bot Token</label>
+                                    <input type="text" class="form-control" name="member_bot_token" placeholder="เช่น 987654321:XYZabcDEFghiJKLmnoPQRstuvWXyz">
+                                    <small class="text-muted">Bot Token สำหรับการเชื่อมต่อกับสมาชิก</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Member Bot Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">@</span>
+                                        <input type="text" class="form-control" name="member_bot_username" placeholder="เช่น sdakks_member_bot">
+                                    </div>
+                                    <small class="text-muted">Username ของ Bot (ไม่มี @) สำหรับสร้าง deep link</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Webhook Secret</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="member_bot_webhook_secret" placeholder="รหัสลับสำหรับตรวจสอบ webhook">
+                                        <button type="button" class="btn btn-outline-success" onclick="generateWebhookSecret()" title="สุ่มรหัสลับใหม่">
+                                            <i class="bi bi-key me-1"></i>สุ่ม
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">รหัสลับสำหรับป้องกันการเรียก webhook จากภายนอก</small>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="memberBotEnabled" name="member_bot_enabled" value="1">
+                                            <label class="custom-control-label" for="memberBotEnabled">
+                                                <i class="bi bi-toggle-on me-1"></i> เปิดใช้งาน Member Bot
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="custom-control custom-switch">
+                                            <input type="checkbox" class="custom-control-input" id="memberBotNotifyPersonal" name="member_bot_notify_personal" value="1">
+                                            <label class="custom-control-label" for="memberBotNotifyPersonal">
+                                                <i class="bi bi-bell me-1"></i> แจ้งเตือนส่วนตัว
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="testMemberBot()">
+                                        <i class="bi bi-send me-1"></i>ทดสอบ Member Bot
+                                    </button>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setMemberBotWebhook()">
+                                            <i class="bi bi-link me-1"></i>ตั้ง Webhook
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="getMemberBotWebhookInfo()">
+                                            <i class="bi bi-info-circle me-1"></i>ดู Webhook
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card shadow-sm border-danger">
                             <div class="card-header bg-danger text-white"><h3 class="card-title mb-0"><i class="bi bi-shield-lock me-2"></i>รหัสยืนยันลบข้อมูล (Reset)</h3></div>
                             <div class="card-body">
@@ -1032,6 +1101,197 @@ $('#settingsForm').on('submit', async function(e) {
     }
     btn.prop('disabled', false).html('<i class="bi bi-check-lg me-2"></i>บันทึกการตั้งค่า');
 });
+
+// ═══════════════════════════════════════════════════════════════
+// Member Bot Functions
+// ═══════════════════════════════════════════════════════════════
+
+// สุ่ม webhook secret
+function generateWebhookSecret() {
+    const secret = 'sdakks_' + Math.random().toString(36).substr(2, 16) + '_' + Date.now().toString(36);
+    $('[name="member_bot_webhook_secret"]').val(secret);
+    App.info('สร้างรหัสลับใหม่เรียบร้อย');
+}
+
+// ทดสอบ Member Bot
+async function testMemberBot() {
+    const token = $('[name="member_bot_token"]').val();
+    if (!token) {
+        App.error('กรุณากรอก Member Bot Token แล้วบันทึกก่อน');
+        return;
+    }
+
+    const confirmed = await Swal.fire({
+        title: 'ทดสอบ Member Bot',
+        text: 'ตรวจสอบข้อมูล Bot และการเชื่อมต่อ?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-robot me-1"></i> ตรวจสอบ',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#28a745',
+    });
+    if (!confirmed.isConfirmed) return;
+
+    Swal.fire({ 
+        title: 'กำลังตรวจสอบ...', 
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+
+    try {
+        // เรียก API ทดสอบ Member Bot
+        const result = await API.post(API.apiUrl('settings', 'test-member-bot'), {});
+        Swal.close();
+        
+        if (result.success) {
+            const botInfo = result.bot_info;
+            Swal.fire({
+                title: '✅ Member Bot ใช้งานได้',
+                html: `
+                    <div class="text-start">
+                        <p><strong>ข้อมูล Bot:</strong></p>
+                        <ul class="list-unstyled ms-3">
+                            <li>🆔 Bot ID: <code>${botInfo.id}</code></li>
+                            <li>📛 ชื่อ: <strong>${botInfo.first_name}</strong></li>
+                            <li>👤 Username: <code>@${botInfo.username || 'ไม่มี'}</code></li>
+                            <li>👥 เข้ากลุ่มได้: ${botInfo.can_join_groups ? '✅' : '❌'}</li>
+                            <li>💬 อ่านกลุ่มได้: ${botInfo.can_read_all_group_messages ? '✅' : '❌'}</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'success',
+                confirmButtonText: 'เข้าใจแล้ว',
+                confirmButtonColor: '#28a745'
+            });
+        } else {
+            App.error(result.message || 'ไม่สามารถเชื่อมต่อ Member Bot ได้');
+        }
+    } catch (err) {
+        Swal.close();
+        const msg = (err.responseJSON && err.responseJSON.message) || 'เกิดข้อผิดพลาดในการตรวจสอบ';
+        App.error(msg);
+    }
+}
+
+// ตั้งค่า Member Bot Webhook
+async function setMemberBotWebhook() {
+    const token = $('[name="member_bot_token"]').val();
+    
+    if (!token) {
+        App.error('กรุณากรอก Member Bot Token แล้วบันทึกก่อน');
+        return;
+    }
+
+    const webhookUrl = `${window.location.origin}${BASE_PATH}telegram-webhook.php?type=member`;
+    
+    const confirmed = await Swal.fire({
+        title: 'ตั้งค่า Member Bot Webhook',
+        html: `
+            <div class="text-start">
+                <p>ตั้งค่า Webhook URL สำหรับ Member Bot:</p>
+                <div class="alert alert-info">
+                    <code>${webhookUrl}</code>
+                </div>
+                <small class="text-muted">
+                    Webhook จะใช้สำหรับรับข้อความจาก Member Bot และประมวลผลการเชื่อมต่อบัญชีสมาชิก
+                </small>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-link me-1"></i> ตั้งค่า Webhook',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#17a2b8',
+    });
+    if (!confirmed.isConfirmed) return;
+
+    Swal.fire({ 
+        title: 'กำลังตั้งค่า...', 
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+
+    try {
+        const result = await API.post(API.apiUrl('settings', 'set-member-bot-webhook'), {
+            webhook_url: webhookUrl
+        });
+        Swal.close();
+        
+        if (result.success) {
+            App.success('ตั้งค่า Member Bot Webhook สำเร็จ');
+        } else {
+            App.error(result.message || 'ไม่สามารถตั้งค่า Webhook ได้');
+        }
+    } catch (err) {
+        Swal.close();
+        const msg = (err.responseJSON && err.responseJSON.message) || 'เกิดข้อผิดพลาด';
+        App.error(msg);
+    }
+}
+
+// ดู Member Bot Webhook Info
+async function getMemberBotWebhookInfo() {
+    const token = $('[name="member_bot_token"]').val();
+    
+    if (!token) {
+        App.error('กรุณากรอก Member Bot Token แล้วบันทึกก่อน');
+        return;
+    }
+
+    Swal.fire({ 
+        title: 'กำลังตรวจสอบ...', 
+        allowOutsideClick: false, 
+        didOpen: () => Swal.showLoading() 
+    });
+
+    try {
+        const result = await API.post(API.apiUrl('settings', 'get-member-bot-webhook-info'), {});
+        Swal.close();
+        
+        if (result.success) {
+            const info = result.webhook_info;
+            const statusColor = info.url ? 'success' : 'warning';
+            const statusText = info.url ? 'ตั้งค่าแล้ว' : 'ยังไม่ตั้งค่า';
+            
+            Swal.fire({
+                title: '📋 ข้อมูล Member Bot Webhook',
+                html: `
+                    <div class="text-start">
+                        <div class="mb-3">
+                            <span class="badge bg-${statusColor}">${statusText}</span>
+                        </div>
+                        ${info.url ? `
+                            <p><strong>Webhook URL:</strong><br>
+                            <code class="d-block p-2 bg-light rounded">${info.url}</code></p>
+                        ` : '<p class="text-muted">ยังไม่ได้ตั้งค่า Webhook URL</p>'}
+                        
+                        ${info.pending_update_count !== undefined ? `
+                            <p><strong>Updates รอประมวลผล:</strong> ${info.pending_update_count}</p>
+                        ` : ''}
+                        
+                        ${info.last_error_date ? `
+                            <div class="alert alert-warning">
+                                <strong>Error ล่าสุด:</strong><br>
+                                ${info.last_error_message || 'Unknown error'}<br>
+                                <small>เมื่อ: ${new Date(info.last_error_date * 1000).toLocaleString('th-TH')}</small>
+                            </div>
+                        ` : ''}
+                    </div>
+                `,
+                icon: info.url ? 'info' : 'warning',
+                confirmButtonText: 'เข้าใจแล้ว'
+            });
+        } else {
+            App.error(result.message || 'ไม่สามารถดึงข้อมูล Webhook ได้');
+        }
+    } catch (err) {
+        Swal.close();
+        const msg = (err.responseJSON && err.responseJSON.message) || 'เกิดข้อผิดพลาด';
+        App.error(msg);
+    }
+}
 
 // ═══════════════════════════════════════════════════════════════
 

@@ -90,6 +90,8 @@ class SettingsController extends Controller
             'embed_stats_code',
             'telegram_bot_token', 'telegram_chat_id', 'telegram_notify_new_member',
             'telegram_notify_fee_slip', 'telegram_notify_activity_reg',
+            'member_bot_token', 'member_bot_username', 'member_bot_webhook_secret',
+            'member_bot_enabled', 'member_bot_notify_personal',
             'theme_color',
         ];
 
@@ -253,5 +255,173 @@ class SettingsController extends Controller
         );
 
         Response::success(['id' => $id], 'สร้างประเภทสมาชิกสำเร็จ', 201);
+    }
+
+    /**
+     * POST  ?controller=settings&action=test-member-bot
+     * ทดสอบการเชื่อมต่อ Member Bot
+     */
+    public function testMemberBot(): void
+    {
+        $this->requirePost();
+        $settings = $this->model('SettingsModel');
+        $token = $settings->get('member_bot_token', '');
+
+        if (empty($token)) {
+            Response::error('กรุณากำหนด Member Bot Token ในการตั้งค่าก่อน');
+        }
+
+        // ทดสอบ getMe API
+        $url = "https://api.telegram.org/bot{$token}/getMe";
+        
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            Response::error('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' . $error);
+        }
+
+        if ($httpCode !== 200) {
+            Response::error("HTTP Error: {$httpCode}");
+        }
+
+        $data = json_decode($response, true);
+
+        if (!$data || !isset($data['ok']) || !$data['ok']) {
+            Response::error($data['description'] ?? 'Member Bot Token ไม่ถูกต้อง');
+        }
+
+        $botInfo = $data['result'];
+
+        Response::success([
+            'message' => 'Member Bot ใช้งานได้ปกติ',
+            'bot_info' => [
+                'id' => $botInfo['id'],
+                'first_name' => $botInfo['first_name'],
+                'username' => $botInfo['username'] ?? null,
+                'can_join_groups' => $botInfo['can_join_groups'] ?? false,
+                'can_read_all_group_messages' => $botInfo['can_read_all_group_messages'] ?? false,
+                'supports_inline_queries' => $botInfo['supports_inline_queries'] ?? false
+            ]
+        ]);
+    }
+
+    /**
+     * POST  ?controller=settings&action=set-member-bot-webhook
+     * ตั้งค่า Member Bot Webhook
+     */
+    public function setMemberBotWebhook(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+        $settings = $this->model('SettingsModel');
+        $token = $settings->get('member_bot_token', '');
+
+        if (empty($token)) {
+            Response::error('กรุณากำหนด Member Bot Token ในการตั้งค่าก่อน');
+        }
+
+        if (empty($input['webhook_url'])) {
+            Response::error('กรุณาระบุ Webhook URL');
+        }
+
+        $webhookUrl = $input['webhook_url'];
+        $url = "https://api.telegram.org/bot{$token}/setWebhook";
+        
+        $payload = [
+            'url' => $webhookUrl,
+            'max_connections' => 40,
+            'allowed_updates' => ['message', 'callback_query']
+        ];
+
+        $secret = $settings->get('member_bot_webhook_secret', '');
+        if (!empty($secret)) {
+            $payload['secret_token'] = $secret;
+        }
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            Response::error('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' . $error);
+        }
+
+        $data = json_decode($response, true);
+
+        if ($httpCode === 200 && isset($data['ok']) && $data['ok']) {
+            Response::success([
+                'message' => 'ตั้งค่า Member Bot Webhook สำเร็จ',
+                'description' => $data['description'] ?? 'Webhook is set'
+            ]);
+        } else {
+            Response::error($data['description'] ?? 'ไม่สามารถตั้งค่า Webhook ได้');
+        }
+    }
+
+    /**
+     * POST  ?controller=settings&action=get-member-bot-webhook-info
+     * ดึงข้อมูล Member Bot Webhook
+     */
+    public function getMemberBotWebhookInfo(): void
+    {
+        $this->requirePost();
+        $settings = $this->model('SettingsModel');
+        $token = $settings->get('member_bot_token', '');
+
+        if (empty($token)) {
+            Response::error('กรุณากำหนด Member Bot Token ในการตั้งค่าก่อน');
+        }
+
+        $url = "https://api.telegram.org/bot{$token}/getWebhookInfo";
+        
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            Response::error('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' . $error);
+        }
+
+        $data = json_decode($response, true);
+
+        if ($httpCode === 200 && isset($data['ok']) && $data['ok']) {
+            Response::success([
+                'webhook_info' => $data['result']
+            ]);
+        } else {
+            Response::error($data['description'] ?? 'ไม่สามารถดึงข้อมูล Webhook ได้');
+        }
     }
 }
