@@ -26,7 +26,7 @@ if (!$data) {
 }
 
 // Log ข้อมูลที่เข้ามา (สำหรับ debug)
-if (getenv('TELEGRAM_WEBHOOK_DEBUG') === 'true') {
+if (defined('TELEGRAM_WEBHOOK_DEBUG') && TELEGRAM_WEBHOOK_DEBUG === 'true') {
     error_log('Telegram Webhook: ' . json_encode($data));
 }
 
@@ -93,13 +93,133 @@ function handleCallbackQuery($callbackQuery, $telegramLinkModel) {
     $callbackId = $callbackQuery['id'];
     $data = $callbackQuery['data'];
     
-    // ตอบกลับ callback query
-    TelegramBot::answerCallbackQuery($callbackId, 'ได้รับคำสั่งแล้ว');
-    
-    // ประมวลผลตามข้อมูล callback
-    if ($data === 'help') {
-        sendHelpMessage($chatId);
+    // ตรวจสอบสิทธิ์ admin
+    $adminChatIds = explode(',', defined('TELEGRAM_ADMIN_CHAT_IDS') ? TELEGRAM_ADMIN_CHAT_IDS : '');
+    if (!in_array((string)$chatId, $adminChatIds)) {
+        TelegramBot::answerCallbackQuery($callbackId, '🚫 คุณไม่มีสิทธิ์ดำเนินการนี้');
+        return;
     }
+    
+    // แปลง callback data เป็น array
+    $callbackData = json_decode($data, true);
+    
+    if ($callbackData && isset($callbackData['action'], $callbackData['type'], $callbackData['id'])) {
+        // เป็นการ approve/reject
+        handleApprovalCallback($callbackQuery, $callbackData);
+    } else if ($data === 'help') {
+        // ปุ่มช่วยเหลือ
+        TelegramBot::answerCallbackQuery($callbackId, 'กำลังแสดงความช่วยเหลือ');
+        sendHelpMessage($chatId);
+    } else {
+        // คำสั่งไม่รู้จัก
+        TelegramBot::answerCallbackQuery($callbackId, '❌ ไม่รู้จักคำสั่งนี้');
+    }
+}
+
+/**
+ * จัดการการ approve/reject ผ่าน callback
+ */
+function handleApprovalCallback($callbackQuery, $callbackData) {
+    $chatId = $callbackQuery['message']['chat']['id'];
+    $messageId = $callbackQuery['message']['message_id'];
+    $callbackId = $callbackQuery['id'];
+    
+    $action = $callbackData['action']; // approve หรือ reject
+    $type = $callbackData['type'];     // membership_fee หรือ activity_registration
+    $id = (int)$callbackData['id'];
+    
+    try {
+        $result = processApprovalAction($type, $id, $action);
+        
+        if ($result['success']) {
+            $emoji = $action === 'approve' ? '✅' : '❌';
+            $statusText = $action === 'approve' ? 'อนุมัติแล้ว' : 'ปฏิเสธแล้ว';
+            
+            // อัพเดทข้อความเดิม
+            $originalText = $callbackQuery['message']['text'];
+            $updatedText = $originalText . "\n\n{$emoji} **{$statusText}** โดย " . getUserName($callbackQuery['from']);
+            
+            TelegramBot::editMessage($chatId, $messageId, $updatedText);
+            TelegramBot::answerCallbackQuery($callbackId, "{$emoji} {$statusText} เรียบร้อย");
+            
+            // แจ้งผู้ใช้ (ถ้ามี chat_id)
+            notifyUserApprovalResult($type, $id, $action, $result['user_data'] ?? []);
+            
+        } else {
+            TelegramBot::answerCallbackQuery($callbackId, '❌ ' . ($result['message'] ?? 'เกิดข้อผิดพลาด'), true);
+        }
+        
+    } catch (Exception $e) {
+        error_log('Approval Callback Error: ' . $e->getMessage());
+        TelegramBot::answerCallbackQuery($callbackId, '❌ เกิดข้อผิดพลาดในระบบ', true);
+    }
+}
+
+/**
+ * ประมวลผลการ approve/reject
+ */
+function processApprovalAction($type, $id, $action) {
+    $status = $action === 'approve' ? 'approved' : 'rejected';
+    
+    try {
+        switch ($type) {
+            case 'membership_fee':
+                require_once __DIR__ . '/api/Models/MembershipFeeModel.php';
+                $model = new \App\Models\MembershipFeeModel();
+                return $model->updatePaymentStatus($id, $status);
+                
+            case 'activity_registration':
+                require_once __DIR__ . '/api/Models/ActivityRegistrationModel.php';
+                $model = new \App\Models\ActivityRegistrationModel();
+                return $model->updatePaymentStatus($id, $status);
+                
+            default:
+                return ['success' => false, 'message' => 'ประเภทข้อมูลไม่ถูกต้อง'];
+        }
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()];
+    }
+}
+
+/**
+ * แจ้งผลการอนุมัติให้ผู้ใช้ทราบ
+ */
+function notifyUserApprovalResult($type, $id, $action, $userData) {
+    if (empty($userData['telegram_chat_id'])) {
+        return; // ผู้ใช้ไม่ได้เชื่อมต่อ Telegram
+    }
+    
+    $emoji = $action === 'approve' ? '✅' : '❌';
+    $statusText = $action === 'approve' ? 'อนุมัติ' : 'ปฏิเสธ';
+    $typeText = $type === 'membership_fee' ? 'ค่าธรรมเนียมสมาชิก' : 'ค่าลงทะเบียนกิจกรรม';
+    
+    $message = "{$emoji} **การ{$statusText}{$typeText}**\n\n";
+    $message .= "📋 รายการของคุณได้รับการ{$statusText}แล้ว\n";
+    
+    if (isset($userData['amount'])) {
+        $message .= "💰 จำนวนเงิน: " . number_format($userData['amount'], 2) . " บาท\n";
+    }
+    
+    $message .= "📅 วันที่: " . date('d/m/Y H:i') . " น.\n\n";
+    
+    if ($action === 'approve') {
+        $message .= "ขอบคุณที่ใช้บริการ ✨";
+    } else {
+        $message .= "หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่";
+    }
+    
+    TelegramBot::sendMessage($userData['telegram_chat_id'], $message);
+}
+
+/**
+ * ดึงชื่อผู้ใช้จาก Telegram user object
+ */
+function getUserName($user) {
+    $name = trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
+    if (!empty($user['username'])) {
+        $name .= " (@{$user['username']})";
+    }
+    return $name ?: 'ไม่ทราบชื่อ';
 }
 
 /**
@@ -183,8 +303,8 @@ function sendHelpMessage($chatId) {
     $text .= "4. กดปุ่ม \"เปิด Telegram Bot\"\n";
     $text .= "5. กดปุ่ม \"Start\" ใน chat นี้\n\n";
     $text .= "📞 *ติดต่อขอความช่วยเหลือ:*\n";
-    $text .= "📧 อีเมล: " . (getenv('CONTACT_EMAIL') ?: 'admin@example.com') . "\n";
-    $text .= "🌐 เว็บไซต์: " . (getenv('BASE_URL') ?: 'https://yoursite.com');
+    $text .= "📧 อีเมล: " . (defined('CONTACT_EMAIL') ? CONTACT_EMAIL : 'admin@example.com') . "\n";
+    $text .= "🌐 เว็บไซต์: " . (defined('BASE_URL') ? BASE_URL : 'https://yoursite.com');
     
     TelegramBot::sendMessage($chatId, $text);
 }
@@ -203,7 +323,7 @@ function sendUnknownCommand($chatId, $firstName) {
  * แจ้ง admin เมื่อมีการเชื่อมต่อใหม่
  */
 function notifyAdminNewLink($userName, $userEmail, $firstName, $lastName, $username) {
-    $adminChatIds = explode(',', getenv('TELEGRAM_ADMIN_CHAT_IDS') ?: '');
+    $adminChatIds = explode(',', defined('TELEGRAM_ADMIN_CHAT_IDS') ? TELEGRAM_ADMIN_CHAT_IDS : '');
     
     if (empty($adminChatIds[0])) {
         return; // ไม่มี admin chat id

@@ -263,7 +263,7 @@ class TelegramBot extends Telegram {
      * @return array
      */
     public static function notifyAdmins($message, $keyboard = null) {
-        $adminChatIds = explode(',', getenv('TELEGRAM_ADMIN_CHAT_IDS') ?: '');
+        $adminChatIds = explode(',', defined('TELEGRAM_ADMIN_CHAT_IDS') ? TELEGRAM_ADMIN_CHAT_IDS : '');
         $results = [];
         
         foreach ($adminChatIds as $chatId) {

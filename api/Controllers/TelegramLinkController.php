@@ -98,7 +98,7 @@ class TelegramLinkController {
         }
 
         // ตรวจสอบ bot secret (ป้องกันการเรียก API จากภายนอก)
-        $expectedSecret = getenv('TELEGRAM_BOT_SECRET') ?: 'default_secret';
+        $expectedSecret = defined('TELEGRAM_BOT_SECRET') ? TELEGRAM_BOT_SECRET : 'default_secret';
         if (empty($data['bot_secret']) || $data['bot_secret'] !== $expectedSecret) {
             return Response::forbidden('Invalid bot secret');
         }
@@ -164,7 +164,7 @@ class TelegramLinkController {
      * @return string
      */
     private function generateBotLink($token) {
-        $botUsername = getenv('TELEGRAM_BOT_USERNAME') ?: 'YourBot'; // ต้องตั้งใน config
+        $botUsername = defined('TELEGRAM_BOT_USERNAME') ? TELEGRAM_BOT_USERNAME : 'YourBot';
         return "https://t.me/{$botUsername}?start=link_{$token}";
     }
 
