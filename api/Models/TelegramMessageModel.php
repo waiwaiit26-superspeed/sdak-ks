@@ -62,7 +62,7 @@ class TelegramMessageModel extends Model {
             'member_number',
             'member_type',
             'status',
-            'avatar',
+            'profile_image',
             'telegram_chat_id',
             'telegram_linked_at',
         ], array_merge($where, [
