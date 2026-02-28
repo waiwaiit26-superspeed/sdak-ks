@@ -69,7 +69,7 @@
                 <h5 class="modal-title"><i class="bi bi-receipt me-2"></i>ใบเสร็จรับเงิน</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow:hidden;">
+            <div class="modal-body" id="receiptPreviewBody" style="background:#e9ecef;overflow-x:hidden;overflow-y:auto;">
                 <div class="text-center py-4"><span class="spinner-border"></span></div>
             </div>
             <div class="modal-footer">
@@ -270,6 +270,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
+.receipt-canvas-wrapper {
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.15);
+}
 .receipt-render {
     width: 1123px;
     height: 794px;
@@ -278,7 +284,6 @@
     line-height: 1.5;
     padding: 30px;
     background: #fff;
-    box-shadow: 0 4px 24px rgba(0,0,0,.15);
     overflow: hidden;
     position: relative;
     transform-origin: top left;
@@ -308,8 +313,8 @@
 .receipt-render .receipt-body-section { font-size: 18px; flex-grow: 1; }
 .receipt-render .receipt-body-section > div { display: flex; align-items: baseline; margin-bottom: 12px !important; }
 .receipt-render .dotted-line { border-bottom: 1px dotted #555; display: inline-block; min-width: 80px; margin: 0; padding: 0 2px 0 1.5em; }
-.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 8px 20px; margin: 10px 0; font-size: 20px; }
-.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: 2px; font-size: 16px; }
+.receipt-render .receipt-amount-box { text-align: center; border: 1px solid #1a3c5e; border-radius: 8px; padding: 10px 24px; margin: 14px 0; font-size: 22px; }
+.receipt-render .receipt-sign { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 8px; font-size: 16px; }
 </style>
 
 <script>
@@ -330,11 +335,25 @@ function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
 
     function done() {
         setTimeout(function() {
-            const bodyW = modalBody.clientWidth - 30;
+            const bodyW = modalBody.clientWidth - 16;
             if (bodyW <= 0) return;
-            const scale = Math.min(bodyW / 1123, 1);
+            // Scale to fit both width and available viewport height
+            const modalContent = modalBody.closest('.modal-content');
+            const headerH = modalContent?.querySelector('.modal-header')?.offsetHeight || 56;
+            const footerH = modalContent?.querySelector('.modal-footer')?.offsetHeight || 56;
+            const alertEl = modalBody.querySelector('.alert');
+            const alertH = alertEl ? alertEl.offsetHeight + 12 : 0;
+            const availH = window.innerHeight - headerH - footerH - alertH - 60;
+            const scaleW = bodyW / 1123;
+            const scaleH = availH / 794;
+            const scale = Math.min(scaleW, scaleH, 1);
             receipt.style.transform = `scale(${scale})`;
-            modalBody.style.height = (794 * scale + 20) + 'px';
+            // Size wrapper to match scaled receipt and center it
+            const wrapper = receipt.closest('.receipt-canvas-wrapper');
+            if (wrapper) {
+                wrapper.style.width = Math.ceil(1123 * scale) + 'px';
+                wrapper.style.height = Math.ceil(794 * scale) + 'px';
+            }
             receipt.style.visibility = 'visible';
             if (loading) loading.style.display = 'none';
         }, 100);
@@ -886,6 +905,7 @@ async function viewReceipt(id) {
         <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
         <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptModalPercent">0</span>%</div>
     </div>
+    <div class="receipt-canvas-wrapper" id="receiptCanvasWrapper">
     <div id="modalReceiptCanvas" class="receipt-render" style="visibility:hidden;">
         ${window._receiptLogoUrl ? `<img src="${window._receiptLogoUrl}" class="receipt-watermark" alt="">` : ''}
         <div class="receipt-inner">
@@ -918,6 +938,7 @@ async function viewReceipt(id) {
         </div>
         </div>
         </div>
+    </div>
     </div>`);
 
     scaleModalReceipt('receiptPreviewBody', 'modalReceiptCanvas', 'receiptModalLoading', 'receiptModalPercent');
