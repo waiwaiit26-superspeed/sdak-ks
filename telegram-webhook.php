@@ -2,13 +2,19 @@
 /**
  * Telegram Bot Webhook Handler
  * รับและประมวลผลข้อความจาก Telegram Bot
+ * 
+ * รองรับ 2 ประเภท:
+ * - ?type=member  → Member Bot (เชื่อมต่อบัญชีสมาชิก)
+ * - ไม่มี type    → Admin Bot (แจ้งเตือน admin)
  */
 
+require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/config/database.php';
 
 use App\Core\TelegramBot;
 use App\Models\TelegramLinkModel;
+use App\Models\SettingsModel;
 
 // ตรวจสอบว่าเป็น POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,8 +32,10 @@ if (!$data) {
 }
 
 // Log ข้อมูลที่เข้ามา (สำหรับ debug)
-if (defined('TELEGRAM_WEBHOOK_DEBUG') && TELEGRAM_WEBHOOK_DEBUG === 'true') {
-    error_log('Telegram Webhook: ' . json_encode($data));
+$settings = new SettingsModel();
+$debugMode = $settings->get('telegram_webhook_debug', '');
+if ($debugMode) {
+    error_log('Telegram Webhook [' . ($type ?? 'admin') . ']: ' . json_encode($data));
 }
 
 try {
@@ -94,7 +102,8 @@ function handleCallbackQuery($callbackQuery, $telegramLinkModel) {
     $data = $callbackQuery['data'];
     
     // ตรวจสอบสิทธิ์ admin
-    $adminChatIds = explode(',', defined('TELEGRAM_ADMIN_CHAT_IDS') ? TELEGRAM_ADMIN_CHAT_IDS : '');
+    $settings = new SettingsModel();
+    $adminChatIds = array_filter(array_map('trim', explode(',', $settings->get('telegram_chat_id', ''))));
     if (!in_array((string)$chatId, $adminChatIds)) {
         TelegramBot::answerCallbackQuery($callbackId, '🚫 คุณไม่มีสิทธิ์ดำเนินการนี้');
         return;
@@ -302,9 +311,13 @@ function sendHelpMessage($chatId) {
     $text .= "3. กดปุ่ม \"เชื่อมต่อ Telegram\"\n";
     $text .= "4. กดปุ่ม \"เปิด Telegram Bot\"\n";
     $text .= "5. กดปุ่ม \"Start\" ใน chat นี้\n\n";
+    $settings = new SettingsModel();
+    $contactEmail = $settings->get('contact_email', 'admin@example.com');
+    $siteUrl = $settings->get('site_url', 'https://sdak.obec.in');
+    
     $text .= "📞 *ติดต่อขอความช่วยเหลือ:*\n";
-    $text .= "📧 อีเมล: " . (defined('CONTACT_EMAIL') ? CONTACT_EMAIL : 'admin@example.com') . "\n";
-    $text .= "🌐 เว็บไซต์: " . (defined('BASE_URL') ? BASE_URL : 'https://yoursite.com');
+    $text .= "📧 อีเมล: {$contactEmail}\n";
+    $text .= "🌐 เว็บไซต์: {$siteUrl}";
     
     TelegramBot::sendMessage($chatId, $text);
 }
@@ -323,9 +336,11 @@ function sendUnknownCommand($chatId, $firstName) {
  * แจ้ง admin เมื่อมีการเชื่อมต่อใหม่
  */
 function notifyAdminNewLink($userName, $userEmail, $firstName, $lastName, $username) {
-    $adminChatIds = explode(',', defined('TELEGRAM_ADMIN_CHAT_IDS') ? TELEGRAM_ADMIN_CHAT_IDS : '');
+    $settings = new SettingsModel();
+    $adminChatIdsStr = $settings->get('telegram_chat_id', '');
+    $adminChatIds = array_filter(array_map('trim', explode(',', $adminChatIdsStr)));
     
-    if (empty($adminChatIds[0])) {
+    if (empty($adminChatIds)) {
         return; // ไม่มี admin chat id
     }
     
