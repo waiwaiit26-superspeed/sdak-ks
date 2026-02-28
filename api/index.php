@@ -56,19 +56,20 @@ if (empty($controller)) {
 
 // ─── Controller Map ───
 $controllerMap = [
-    'auth'      => 'AuthController',
-    'member'    => 'MemberController',
-    'news'      => 'NewsController',
-    'activity'  => 'ActivityController',
-    'dashboard' => 'DashboardController',
-    'upload'    => 'UploadController',
-    'page'      => 'PageController',
-    'nav'       => 'NavController',
-    'log'       => 'LogController',
-    'settings'  => 'SettingsController',
-    'fee'       => 'FeeController',
-    'receipt'   => 'ReceiptController',
-    'finance'   => 'FinanceController',
+    'auth'          => 'AuthController',
+    'member'        => 'MemberController',
+    'news'          => 'NewsController',
+    'activity'      => 'ActivityController',
+    'dashboard'     => 'DashboardController',
+    'upload'        => 'UploadController',
+    'page'          => 'PageController',
+    'nav'           => 'NavController',
+    'log'           => 'LogController',
+    'settings'      => 'SettingsController',
+    'fee'           => 'FeeController',
+    'receipt'       => 'ReceiptController',
+    'finance'       => 'FinanceController',
+    'telegram-link' => 'TelegramLinkController',
 ];
 
 if (!isset($controllerMap[$controller])) {
@@ -126,6 +127,7 @@ if ($currentUser && $currentUser['status'] !== 'active') {
         'activity' => ['list', 'detail', 'register', 'cancel-registration', 'upload-slip', 'registrations', 'pending-payments'],
         'page'     => ['list', 'detail'],
         'dashboard'=> ['public_stats'],
+        'telegram-link' => ['status', 'create-token', 'unlink'],
     ];
 
     $isAllowed = in_array($controller, $allowedForPending)
