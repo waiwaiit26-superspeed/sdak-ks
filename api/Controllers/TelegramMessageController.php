@@ -92,7 +92,7 @@ class TelegramMessageController extends Controller {
             'success' => $successCount,
             'failed' => $failCount,
             'errors' => $errors,
-        ], "ส่งสำเร็จ {$successCount}/{$successCount + $failCount} คน");
+        ], 'ส่งสำเร็จ ' . $successCount . '/' . ($successCount + $failCount) . ' คน');
     }
 
     /**
@@ -160,7 +160,7 @@ class TelegramMessageController extends Controller {
             'success' => $successCount,
             'failed' => $failCount,
             'errors' => $errors,
-        ], "ส่งรูปภาพสำเร็จ {$successCount}/{$successCount + $failCount} คน");
+        ], 'ส่งรูปภาพสำเร็จ ' . $successCount . '/' . ($successCount + $failCount) . ' คน');
     }
 
     /**
@@ -228,7 +228,7 @@ class TelegramMessageController extends Controller {
             'success' => $successCount,
             'failed' => $failCount,
             'errors' => $errors,
-        ], "ส่งไฟล์สำเร็จ {$successCount}/{$successCount + $failCount} คน");
+        ], 'ส่งไฟล์สำเร็จ ' . $successCount . '/' . ($successCount + $failCount) . ' คน');
     }
 
     /**
@@ -301,7 +301,7 @@ class TelegramMessageController extends Controller {
             'success' => $successCount,
             'failed' => $failCount,
             'errors' => $errors,
-        ], "ส่งวิดีโอสำเร็จ {$successCount}/{$successCount + $failCount} คน");
+        ], 'ส่งวิดีโอสำเร็จ ' . $successCount . '/' . ($successCount + $failCount) . ' คน');
     }
 
     /**
