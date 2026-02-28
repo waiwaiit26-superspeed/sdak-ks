@@ -121,6 +121,8 @@ class RoleAccess
             'list'              => ['admin'],
             'detail'            => ['member', 'admin'],
             'find-by-ref'       => ['member', 'admin'],
+            'reference-data'    => ['member', 'admin'],
+            'search-reference'  => ['member', 'admin'],
             'create'            => ['member', 'admin'],
             'update'            => ['member', 'admin'],
             'next-number'       => ['member', 'admin'],

@@ -50,6 +50,13 @@ class ReceiptController extends Controller
             $receipt['member_type_label'] = $mt ? $mt['label'] : $receipt['member_type'];
         }
 
+        // Load reference data (source transaction)
+        $refData = $receipts->getReferenceData(
+            $receipt['receipt_type'] ?? '',
+            !empty($receipt['reference_id']) ? (int)$receipt['reference_id'] : null
+        );
+        $receipt['reference_data'] = $refData;
+
         // Add receipt settings for rendering
         $settings = $this->model('SettingsModel');
         $receipt['organization_name'] = $settings->get('receipt_organization_name', 'สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์');
@@ -362,6 +369,61 @@ class ReceiptController extends Controller
         } else {
             Response::success(['duplicate' => false]);
         }
+    }
+
+    /**
+     * GET  ?controller=receipt&action=reference-data
+     * Load reference/source data for a receipt (membership fee or activity registration)
+     * Used by the "โหลดข้อมูลจากระบบ" button to populate receipt fields
+     */
+    public function referenceData(): void
+    {
+        $receiptType = trim($this->query('receipt_type') ?? '');
+        $referenceId = (int)($this->query('reference_id') ?? 0);
+
+        if (!$receiptType || !$referenceId) {
+            Response::error('กรุณาระบุ receipt_type และ reference_id');
+        }
+
+        $receipts = $this->model('ReceiptModel');
+        $refData = $receipts->getReferenceData($receiptType, $referenceId);
+
+        if (!$refData) {
+            Response::error('ไม่พบข้อมูลอ้างอิง', 404);
+        }
+
+        // Resolve member_type label
+        if (!empty($refData['member_type'])) {
+            $memberTypes = $this->model('MemberTypeModel');
+            $mt = $memberTypes->findByKey($refData['member_type']);
+            $refData['member_type_label'] = $mt ? $mt['label'] : $refData['member_type'];
+        }
+
+        Response::success($refData);
+    }
+
+    /**
+     * GET  ?controller=receipt&action=search-reference
+     * Search for membership fees or activity registrations to reference
+     * Used when creating a receipt and want to link it to a source
+     */
+    public function searchReference(): void
+    {
+        $type = trim($this->query('type') ?? '');
+        $q    = trim($this->query('q') ?? '');
+
+        if (!$type) Response::error('กรุณาระบุประเภท (membership_fee / activity_fee)');
+
+        $receipts = $this->model('ReceiptModel');
+        $results = [];
+
+        if ($type === 'membership_fee') {
+            $results = $receipts->searchMembershipFeeReferences($q);
+        } elseif ($type === 'activity_fee') {
+            $results = $receipts->searchActivityFeeReferences($q);
+        }
+
+        Response::success($results);
     }
 
     /**

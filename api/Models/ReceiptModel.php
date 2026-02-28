@@ -130,6 +130,197 @@ class ReceiptModel extends Model
     }
 
     /**
+     * Load reference/source data for a receipt.
+     * Returns enriched info about what this receipt was generated from.
+     *
+     * @return array|null  Reference data or null if not applicable
+     */
+    public function getReferenceData(string $receiptType, ?int $referenceId): ?array
+    {
+        if (!$referenceId || $referenceId <= 0) return null;
+
+        if ($receiptType === 'membership_fee') {
+            // Load from membership_fees + user
+            $row = $this->db->get('membership_fees', [
+                '[>]users' => ['user_id' => 'id'],
+            ], [
+                'membership_fees.id', 'membership_fees.user_id',
+                'membership_fees.year', 'membership_fees.amount',
+                'membership_fees.fee_type', 'membership_fees.status',
+                'membership_fees.payment_slip', 'membership_fees.paid_at',
+                'membership_fees.created_at',
+                'users.full_name', 'users.email', 'users.phone',
+                'users.member_type', 'users.school_organization',
+                'users.work_address', 'users.home_address',
+                'users.profile_image',
+            ], [
+                'membership_fees.id' => $referenceId,
+            ]);
+            if (!$row) return null;
+
+            return [
+                'source_type'  => 'membership_fee',
+                'source_label' => 'ค่าธรรมเนียมสมาชิก',
+                'source_id'    => (int)$row['id'],
+                'user_id'      => (int)$row['user_id'],
+                'full_name'    => $row['full_name'],
+                'email'        => $row['email'],
+                'phone'        => $row['phone'] ?? '',
+                'member_type'  => $row['member_type'] ?? '',
+                'school_organization' => $row['school_organization'] ?? '',
+                'work_address' => $row['work_address'] ?? '',
+                'home_address' => $row['home_address'] ?? '',
+                'profile_image' => $row['profile_image'] ?? '',
+                'fee_year'     => (int)$row['year'],
+                'fee_type'     => $row['fee_type'] ?? 'annual',
+                'fee_amount'   => (float)$row['amount'],
+                'fee_status'   => $row['status'],
+                'payment_slip' => $row['payment_slip'] ?? '',
+                'paid_at'      => $row['paid_at'] ?? '',
+                'created_at'   => $row['created_at'] ?? '',
+            ];
+        }
+
+        if ($receiptType === 'activity_fee') {
+            // Load from activity_registrations + user + activity
+            $row = $this->db->get('activity_registrations', [
+                '[>]users'      => ['user_id' => 'id'],
+                '[>]activities' => ['activity_id' => 'id'],
+            ], [
+                'activity_registrations.id',
+                'activity_registrations.activity_id',
+                'activity_registrations.user_id',
+                'activity_registrations.status',
+                'activity_registrations.payment_status',
+                'activity_registrations.payment_proof',
+                'activity_registrations.note',
+                'activity_registrations.registered_at',
+                'users.full_name', 'users.email', 'users.phone',
+                'users.member_type', 'users.school_organization',
+                'users.work_address', 'users.home_address',
+                'users.profile_image',
+                'activities.title(activity_title)',
+                'activities.fee_amount(activity_fee_amount)',
+                'activities.fee_description(activity_fee_description)',
+                'activities.start_date(activity_start_date)',
+                'activities.end_date(activity_end_date)',
+                'activities.location(activity_location)',
+            ], [
+                'activity_registrations.id' => $referenceId,
+            ]);
+            if (!$row) return null;
+
+            return [
+                'source_type'   => 'activity_fee',
+                'source_label'  => 'ค่าลงทะเบียนกิจกรรม',
+                'source_id'     => (int)$row['id'],
+                'user_id'       => (int)$row['user_id'],
+                'full_name'     => $row['full_name'],
+                'email'         => $row['email'],
+                'phone'         => $row['phone'] ?? '',
+                'member_type'   => $row['member_type'] ?? '',
+                'school_organization' => $row['school_organization'] ?? '',
+                'work_address'  => $row['work_address'] ?? '',
+                'home_address'  => $row['home_address'] ?? '',
+                'profile_image' => $row['profile_image'] ?? '',
+                'activity_id'   => (int)$row['activity_id'],
+                'activity_title' => $row['activity_title'] ?? '',
+                'activity_fee_amount' => (float)($row['activity_fee_amount'] ?? 0),
+                'activity_fee_description' => $row['activity_fee_description'] ?? '',
+                'activity_start_date' => $row['activity_start_date'] ?? '',
+                'activity_end_date'   => $row['activity_end_date'] ?? '',
+                'activity_location'   => $row['activity_location'] ?? '',
+                'registration_status' => $row['status'],
+                'payment_status'      => $row['payment_status'],
+                'payment_proof'       => $row['payment_proof'] ?? '',
+                'note'                => $row['note'] ?? '',
+                'registered_at'       => $row['registered_at'] ?? '',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Search for membership fee records that can be referenced by a receipt
+     */
+    public function searchMembershipFeeReferences(string $q = '', int $limit = 50): array
+    {
+        $where = ['membership_fees.status' => 'paid'];
+        if ($q) {
+            $where['OR'] = [
+                'users.full_name[~]' => '%' . $q . '%',
+                'users.email[~]' => '%' . $q . '%',
+            ];
+        }
+        $where['ORDER'] = ['membership_fees.created_at' => 'DESC'];
+        $where['LIMIT'] = $limit;
+
+        $rows = $this->db->select('membership_fees', [
+            '[>]users' => ['user_id' => 'id'],
+        ], [
+            'membership_fees.id',
+            'membership_fees.user_id',
+            'membership_fees.year',
+            'membership_fees.amount',
+            'membership_fees.fee_type',
+            'membership_fees.status',
+            'users.full_name',
+            'users.email',
+        ], $where) ?: [];
+
+        foreach ($rows as &$r) {
+            $existing = $this->findByReference('membership_fee', (int)$r['id']);
+            $feeLabel = $r['fee_type'] === 'onetime' ? 'ครั้งเดียว' : 'ปี ' . $r['year'];
+            $r['label'] = $r['full_name'] . ' — ค่าธรรมเนียม' . $feeLabel . ' (' . number_format($r['amount'], 2) . ' บาท)';
+            $r['has_receipt'] = (bool)$existing;
+            $r['reference_id'] = (int)$r['id'];
+        }
+        return $rows;
+    }
+
+    /**
+     * Search for activity registration records that can be referenced by a receipt
+     */
+    public function searchActivityFeeReferences(string $q = '', int $limit = 50): array
+    {
+        $where = [
+            'activity_registrations.payment_status' => 'paid',
+            'activities.has_fee' => 1,
+        ];
+        if ($q) {
+            $where['OR'] = [
+                'users.full_name[~]' => '%' . $q . '%',
+                'activities.title[~]' => '%' . $q . '%',
+            ];
+        }
+        $where['ORDER'] = ['activity_registrations.registered_at' => 'DESC'];
+        $where['LIMIT'] = $limit;
+
+        $rows = $this->db->select('activity_registrations', [
+            '[>]users'      => ['user_id' => 'id'],
+            '[>]activities' => ['activity_id' => 'id'],
+        ], [
+            'activity_registrations.id',
+            'activity_registrations.user_id',
+            'activity_registrations.activity_id',
+            'activity_registrations.payment_status',
+            'users.full_name',
+            'users.email',
+            'activities.title(activity_title)',
+            'activities.fee_amount',
+        ], $where) ?: [];
+
+        foreach ($rows as &$r) {
+            $existing = $this->findByReference('activity_fee', (int)$r['id']);
+            $r['label'] = $r['full_name'] . ' — ' . ($r['activity_title'] ?? 'กิจกรรม') . ' (' . number_format($r['fee_amount'] ?? 0, 2) . ' บาท)';
+            $r['has_receipt'] = (bool)$existing;
+            $r['reference_id'] = (int)$r['id'];
+        }
+        return $rows;
+    }
+
+    /**
      * Paginated list for admin
      */
     public function getFilteredList(array $filters, int $page, int $perPage): array
@@ -168,7 +359,8 @@ class ReceiptModel extends Model
         $where['LIMIT'] = [($page - 1) * $perPage, $perPage];
         $data = $this->selectJoin($join, [
             'receipts.id', 'receipts.receipt_number', 'receipts.book_number',
-            'receipts.receipt_type', 'receipts.title', 'receipts.payer_name',
+            'receipts.receipt_type', 'receipts.reference_id',
+            'receipts.title', 'receipts.description', 'receipts.payer_name',
             'receipts.payer_address',
             'receipts.amount', 'receipts.issued_date', 'receipts.created_at',
             'users.full_name', 'users.member_type',

@@ -536,6 +536,12 @@ const API = {
     async searchReceiptMembers(q = '') {
         return this.get(this.apiUrl('receipt', 'search-members'), { q });
     },
+    async getReceiptReferenceData(receiptType, referenceId) {
+        return this.get(this.apiUrl('receipt', 'reference-data'), { receipt_type: receiptType, reference_id: referenceId });
+    },
+    async searchReceiptReference(type, q = '') {
+        return this.get(this.apiUrl('receipt', 'search-reference'), { type, q });
+    },
     async getMyReceipts() {
         return this.get(this.apiUrl('receipt', 'my-receipts'));
     },
