@@ -55,6 +55,24 @@
                     </div>
                 </div>
             </div>
+            <!-- Telegram Connect Card -->
+            <div class="card shadow-sm mt-3" id="telegramConnectCard">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <img src="https://telegram.org/img/t_logo.svg" alt="Telegram" width="32" height="32" class="me-2">
+                        <span class="h6 mb-0">เชื่อมต่อ Telegram</span>
+                    </div>
+                    <div id="telegramStatusSection">
+                        <span class="badge bg-secondary" id="telegramStatusBadge">ยังไม่ได้เชื่อมต่อ</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary mt-2" id="btnConnectTelegram">
+                        <i class="bi bi-telegram me-1"></i> เชื่อมต่อบัญชี Telegram
+                    </button>
+                    <div class="mt-2 small text-muted" id="telegramConnectHint">
+                        กดปุ่มเพื่อเชื่อมบัญชี Telegram ของคุณกับระบบ<br>เพื่อรับการแจ้งเตือนและใช้งานฟีเจอร์เพิ่มเติม
+                    </div>
+                </div>
+            </div>
         </div>
 
 <!-- Avatar Options Modal -->
@@ -1226,6 +1244,171 @@ $(function () {
             App.error(result.message || 'เกิดข้อผิดพลาด');
         }
     };
+
+    // ========================
+    // Telegram Link Functions
+    // ========================
+    
+    let telegramLinkInProgress = false;
+
+    // โหลดสถานะการเชื่อมต่อ Telegram
+    async function loadTelegramStatus() {
+        try {
+            const result = await API.makeRequest('telegram-link', 'status');
+            if (result.success) {
+                updateTelegramUI(result.data);
+            }
+        } catch (error) {
+            console.warn('ไม่สามารถโหลดสถานะ Telegram ได้:', error);
+        }
+    }
+
+    // อัปเดต UI ตามสถานะการเชื่อมต่อ
+    function updateTelegramUI(status) {
+        const statusBadge = $('#telegramStatusBadge');
+        const connectBtn = $('#btnConnectTelegram');
+        const hintText = $('#telegramConnectHint');
+
+        if (status.is_linked) {
+            statusBadge.removeClass('bg-secondary').addClass('bg-success').text('เชื่อมต่อแล้ว');
+            connectBtn.removeClass('btn-outline-primary').addClass('btn-outline-danger')
+                     .html('<i class="bi bi-x-circle me-1"></i> ยกเลิกการเชื่อมต่อ');
+            hintText.html(`เชื่อมต่อเมื่อ: ${status.linked_at_thai || status.linked_at}<br>Chat ID: <code>${status.chat_id}</code>`);
+        } else {
+            statusBadge.removeClass('bg-success').addClass('bg-secondary').text('ยังไม่ได้เชื่อมต่อ');
+            connectBtn.removeClass('btn-outline-danger').addClass('btn-outline-primary')
+                     .html('<i class="bi bi-telegram me-1"></i> เชื่อมต่อบัญชี Telegram');
+            hintText.html('กดปุ่มเพื่อเชื่อมบัญชี Telegram ของคุณกับระบบ<br>เพื่อรับการแจ้งเตือนและใช้งานฟีเจอร์เพิ่มเติม');
+        }
+    }
+
+    // การเชื่อมต่อ Telegram
+    async function handleTelegramConnect() {
+        if (telegramLinkInProgress) return;
+
+        try {
+            const result = await API.makeRequest('telegram-link', 'status');
+            if (result.success && result.data.is_linked) {
+                // ยกเลิกการเชื่อมต่อ
+                const confirmed = await Swal.fire({
+                    title: 'ยกเลิกการเชื่อมต่อ Telegram?',
+                    text: 'คุณจะไม่ได้รับการแจ้งเตือนผ่าน Telegram อีกต่อไป',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="bi bi-x-circle me-1"></i> ยกเลิกการเชื่อมต่อ',
+                    cancelButtonText: 'ไม่ยกเลิก',
+                    confirmButtonColor: '#dc3545'
+                });
+
+                if (confirmed.isConfirmed) {
+                    telegramLinkInProgress = true;
+                    const unlinkResult = await API.makeRequest('telegram-link', 'unlink', {}, 'POST');
+                    if (unlinkResult.success) {
+                        App.success('ยกเลิกการเชื่อมต่อ Telegram เรียบร้อย');
+                        await loadTelegramStatus();
+                    } else {
+                        App.error(unlinkResult.message || 'เกิดข้อผิดพลาด');
+                    }
+                    telegramLinkInProgress = false;
+                }
+            } else {
+                // เชื่อมต่อ Telegram
+                telegramLinkInProgress = true;
+                
+                const tokenResult = await API.makeRequest('telegram-link', 'create-token', {}, 'POST');
+                if (!tokenResult.success) {
+                    App.error(tokenResult.message || 'ไม่สามารถสร้าง token ได้');
+                    telegramLinkInProgress = false;
+                    return;
+                }
+
+                const botLink = tokenResult.data.bot_link;
+                const expiresAt = new Date(tokenResult.data.expires_at);
+                
+                const result = await Swal.fire({
+                    title: '<i class="bi bi-telegram text-primary"></i> เชื่อมต่อ Telegram',
+                    html: `
+                        <div class="text-start">
+                            <p><strong>ขั้นตอนการเชื่อมต่อ:</strong></p>
+                            <ol class="small">
+                                <li>กดปุ่ม "เปิด Telegram Bot" ด้านล่าง</li>
+                                <li>กดปุ่ม "Start" ใน Telegram</li>
+                                <li>รอสักครู่ ระบบจะเชื่อมต่ออัตโนมัติ</li>
+                            </ol>
+                            <div class="alert alert-warning mt-2 mb-0">
+                                <small><i class="bi bi-clock me-1"></i> ลิงก์นี้หมดอายุเวลา: <strong>${expiresAt.toLocaleString('th-TH')}</strong></small>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="bi bi-telegram me-1"></i> เปิด Telegram Bot',
+                    cancelButtonText: 'ยกเลิก',
+                    confirmButtonColor: '#0088cc',
+                    allowOutsideClick: false,
+                    preConfirm: () => {
+                        window.open(botLink, '_blank');
+                        return true;
+                    }
+                });
+
+                if (result.isConfirmed) {
+                    // แสดง modal รอการเชื่อมต่อ
+                    Swal.fire({
+                        title: 'รอการเชื่อมต่อ...',
+                        html: `
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mb-2">กรุณากดปุ่ม "Start" ใน Telegram</p>
+                                <small class="text-muted">ระบบจะตรวจสอบการเชื่อมต่อทุก 3 วินาที</small>
+                            </div>
+                        `,
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            // ตรวจสอบสถานะทุก 3 วินาที
+                            const checkInterval = setInterval(async () => {
+                                try {
+                                    const statusCheck = await API.makeRequest('telegram-link', 'status');
+                                    if (statusCheck.success && statusCheck.data.is_linked) {
+                                        clearInterval(checkInterval);
+                                        Swal.close();
+                                        App.success('เชื่อมต่อ Telegram สำเร็จแล้ว! 🎉');
+                                        await loadTelegramStatus();
+                                        telegramLinkInProgress = false;
+                                    }
+                                } catch (error) {
+                                    console.log('กำลังตรวจสอบ...');
+                                }
+                            }, 3000);
+
+                            // หยุดตรวจสอบหลัง 2 นาที
+                            setTimeout(() => {
+                                clearInterval(checkInterval);
+                                if (Swal.isVisible()) {
+                                    Swal.close();
+                                    App.info('หมดเวลารอการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+                                    telegramLinkInProgress = false;
+                                }
+                            }, 120000);
+                        }
+                    });
+                } else {
+                    telegramLinkInProgress = false;
+                }
+            }
+        } catch (error) {
+            App.error('เกิดข้อผิดพลาด: ' + error.message);
+            telegramLinkInProgress = false;
+        }
+    }
+
+    // Event listeners
+    $('#btnConnectTelegram').on('click', handleTelegramConnect);
+
+    // โหลดสถานะ Telegram เมื่อโหลดหน้า
+    loadTelegramStatus();
 });
 </script>
 

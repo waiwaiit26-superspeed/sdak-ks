@@ -623,5 +623,21 @@ const API = {
     },
     async getMyFinancePermissions() {
         return this.get(this.apiUrl('finance', 'my-permissions'));
+    },
+
+    // ========================
+    // Telegram Link API
+    // ========================
+    async getTelegramStatus() {
+        return this.get(this.apiUrl('telegram-link', 'status'));
+    },
+    async createTelegramToken() {
+        return this.post(this.apiUrl('telegram-link', 'create-token'));
+    },
+    async unlinkTelegram() {
+        return this.post(this.apiUrl('telegram-link', 'unlink'));
+    },
+    async getLinkedMembers(search = '', page = 1, limit = 20) {
+        return this.get(this.apiUrl('telegram-link', 'linked-members') + `&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`);
     }
 };

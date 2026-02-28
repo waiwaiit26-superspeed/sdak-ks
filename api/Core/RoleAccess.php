@@ -154,6 +154,13 @@ class RoleAccess
             'update-manager-permissions'=> ['admin'],
             'my-permissions'            => ['member', 'admin'],
         ],
+        'telegram-link' => [
+            'create-token'       => ['member', 'admin'],
+            'status'             => ['member', 'admin'],
+            'unlink'             => ['member', 'admin'],
+            'process-link'       => ['*'], // สำหรับ Bot เรียก (ตรวจสอบ secret ใน Controller)
+            'linked-members'     => ['admin'],
+        ],
     ];
 
     /**
