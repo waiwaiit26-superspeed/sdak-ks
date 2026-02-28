@@ -26,6 +26,26 @@ class TelegramLinkController extends Controller {
             Response::forbidden('ไม่มีสิทธิ์ใช้งาน');
         }
 
+        // ดึง bot username จาก Telegram API (ไม่ใช้ค่า default 'YourBot')
+        $settings = $this->model('SettingsModel');
+        $botToken = $settings->get('member_bot_token', '');
+        $botUsername = $settings->get('member_bot_username', '');
+
+        // ถ้ามี token ให้ดึง username จาก Telegram API
+        if (!empty($botToken) && empty($botUsername)) {
+            $botInfo = $this->getBotInfo($botToken);
+            if ($botInfo && !empty($botInfo['username'])) {
+                $botUsername = $botInfo['username'];
+                // บันทึกไว้ใน settings เพื่อไม่ต้องเรียก API ซ้ำ
+                $settings->set('member_bot_username', $botUsername);
+            }
+        }
+
+        if (empty($botUsername)) {
+            Response::error('กรุณาตั้งค่า Bot Token ในหน้า Admin Settings ก่อน');
+            return;
+        }
+
         $model = $this->model('TelegramLinkModel');
         $result = $model->createLinkToken($userId);
 
@@ -33,7 +53,7 @@ class TelegramLinkController extends Controller {
             Response::success([
                 'token' => $result['token'],
                 'expires_at' => $result['expires_at'],
-                'bot_link' => $this->generateBotLink($result['token'])
+                'bot_link' => "https://t.me/{$botUsername}?start=link_{$result['token']}"
             ]);
         } else {
             Response::error($result['message']);
@@ -182,9 +202,23 @@ class TelegramLinkController extends Controller {
     /**
      * สร้าง link ไปที่ Telegram Bot พร้อม token
      */
-    private function generateBotLink($token) {
-        $settings = $this->model('SettingsModel');
-        $botUsername = $settings->get('member_bot_username', 'YourBot');
+    private function generateBotLink($token, $botUsername = null) {
+        if (empty($botUsername)) {
+            $settings = $this->model('SettingsModel');
+            $botUsername = $settings->get('member_bot_username', '');
+            
+            // ถ้ายังไม่มี ดึงจาก Telegram API
+            if (empty($botUsername)) {
+                $botToken = $settings->get('member_bot_token', '');
+                if (!empty($botToken)) {
+                    $botInfo = $this->getBotInfo($botToken);
+                    if ($botInfo && !empty($botInfo['username'])) {
+                        $botUsername = $botInfo['username'];
+                        $settings->set('member_bot_username', $botUsername);
+                    }
+                }
+            }
+        }
         return "https://t.me/{$botUsername}?start=link_{$token}";
     }
 

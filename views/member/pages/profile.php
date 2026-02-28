@@ -1332,12 +1332,25 @@ $(function () {
 
                 if (confirmed.isConfirmed) {
                     telegramLinkInProgress = true;
-                    const unlinkResult = await API.post(API.apiUrl('telegram-link', 'unlink'));
-                    if (unlinkResult.success) {
-                        App.success('ยกเลิกการเชื่อมต่อ Telegram เรียบร้อย');
-                        await loadTelegramStatus();
-                    } else {
-                        App.error(unlinkResult.message || 'เกิดข้อผิดพลาด');
+                    // แสดง loading ขณะยกเลิก
+                    Swal.fire({
+                        title: 'กำลังยกเลิกการเชื่อมต่อ...',
+                        html: '<div class="d-flex justify-content-center"><div class="spinner-border text-danger" role="status"></div></div>',
+                        allowOutsideClick: false,
+                        showConfirmButton: false
+                    });
+                    try {
+                        const unlinkResult = await API.post(API.apiUrl('telegram-link', 'unlink'));
+                        Swal.close();
+                        if (unlinkResult.success) {
+                            App.success('ยกเลิกการเชื่อมต่อ Telegram เรียบร้อย');
+                            await loadTelegramStatus();
+                        } else {
+                            App.error(unlinkResult.message || 'เกิดข้อผิดพลาด');
+                        }
+                    } catch (err) {
+                        Swal.close();
+                        App.error('เกิดข้อผิดพลาดในการยกเลิกเชื่อมต่อ');
                     }
                     telegramLinkInProgress = false;
                 }
