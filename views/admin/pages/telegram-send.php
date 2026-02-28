@@ -190,14 +190,31 @@
 
                                 <!-- ส่วน photo -->
                                 <div id="sectionPhoto" style="display:none;">
-                                    <div class="mb-3">
-                                        <label class="form-label font-weight-bold">เลือกรูปภาพ</label>
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="msgPhoto" accept="image/*">
-                                            <label class="custom-file-label" for="msgPhoto" data-browse="เลือกไฟล์">ยังไม่ได้เลือกรูป</label>
+                                    <div class="mb-2">
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="photoSource" id="photoSourceUpload" value="upload" checked>
+                                            <label class="btn btn-outline-primary" for="photoSourceUpload"><i class="bi bi-upload mr-1"></i> อัพโหลดไฟล์</label>
+                                            <input type="radio" class="btn-check" name="photoSource" id="photoSourceUrl" value="url">
+                                            <label class="btn btn-outline-primary" for="photoSourceUrl"><i class="bi bi-link-45deg mr-1"></i> ลิงก์ URL</label>
                                         </div>
-                                        <div id="photoPreview" class="mt-2" style="display:none;">
-                                            <img id="photoPreviewImg" src="" class="img-fluid rounded" style="max-height:200px;">
+                                    </div>
+                                    <div id="photoUploadSection">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">เลือกรูปภาพ</label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="msgPhoto" accept="image/*">
+                                                <label class="custom-file-label" for="msgPhoto" data-browse="เลือกไฟล์">ยังไม่ได้เลือกรูป</label>
+                                            </div>
+                                            <div id="photoPreview" class="mt-2" style="display:none;">
+                                                <img id="photoPreviewImg" src="" class="img-fluid rounded" style="max-height:200px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="photoUrlSection" style="display:none;">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">URL รูปภาพ</label>
+                                            <input type="url" class="form-control" id="msgPhotoUrl" placeholder="https://example.com/image.jpg">
+                                            <small class="text-muted">ใส่ลิงก์รูปภาพที่เข้าถึงได้แบบสาธารณะ (jpg, png, gif)</small>
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -208,13 +225,30 @@
 
                                 <!-- ส่วน document -->
                                 <div id="sectionDocument" style="display:none;">
-                                    <div class="mb-3">
-                                        <label class="form-label font-weight-bold">เลือกไฟล์</label>
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="msgDocument">
-                                            <label class="custom-file-label" for="msgDocument" data-browse="เลือกไฟล์">ยังไม่ได้เลือกไฟล์</label>
+                                    <div class="mb-2">
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="docSource" id="docSourceUpload" value="upload" checked>
+                                            <label class="btn btn-outline-primary" for="docSourceUpload"><i class="bi bi-upload mr-1"></i> อัพโหลดไฟล์</label>
+                                            <input type="radio" class="btn-check" name="docSource" id="docSourceUrl" value="url">
+                                            <label class="btn btn-outline-primary" for="docSourceUrl"><i class="bi bi-link-45deg mr-1"></i> ลิงก์ URL</label>
                                         </div>
-                                        <small class="text-muted">รองรับ PDF, Word, Excel, ZIP และอื่นๆ (ไม่เกิน 50MB)</small>
+                                    </div>
+                                    <div id="docUploadSection">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">เลือกไฟล์</label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="msgDocument">
+                                                <label class="custom-file-label" for="msgDocument" data-browse="เลือกไฟล์">ยังไม่ได้เลือกไฟล์</label>
+                                            </div>
+                                            <small class="text-muted">รองรับ PDF, Word, Excel, ZIP และอื่นๆ (ไม่เกิน 50MB)</small>
+                                        </div>
+                                    </div>
+                                    <div id="docUrlSection" style="display:none;">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">URL ไฟล์</label>
+                                            <input type="url" class="form-control" id="msgDocUrl" placeholder="https://example.com/document.pdf">
+                                            <small class="text-muted">ใส่ลิงก์ไฟล์ที่เข้าถึงได้แบบสาธารณะ</small>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">แคปชั่น (ไม่บังคับ)</label>
@@ -224,13 +258,30 @@
 
                                 <!-- ส่วน video -->
                                 <div id="sectionVideo" style="display:none;">
-                                    <div class="mb-3">
-                                        <label class="form-label font-weight-bold">เลือกวิดีโอ</label>
-                                        <div class="custom-file">
-                                            <input type="file" class="custom-file-input" id="msgVideo" accept="video/*">
-                                            <label class="custom-file-label" for="msgVideo" data-browse="เลือกไฟล์">ยังไม่ได้เลือกวิดีโอ</label>
+                                    <div class="mb-2">
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check" name="videoSource" id="videoSourceUpload" value="upload" checked>
+                                            <label class="btn btn-outline-primary" for="videoSourceUpload"><i class="bi bi-upload mr-1"></i> อัพโหลดไฟล์</label>
+                                            <input type="radio" class="btn-check" name="videoSource" id="videoSourceUrl" value="url">
+                                            <label class="btn btn-outline-primary" for="videoSourceUrl"><i class="bi bi-link-45deg mr-1"></i> ลิงก์ URL</label>
                                         </div>
-                                        <small class="text-muted">รองรับ MP4, MOV และอื่นๆ (ไม่เกิน 50MB)</small>
+                                    </div>
+                                    <div id="videoUploadSection">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">เลือกวิดีโอ</label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="msgVideo" accept="video/*">
+                                                <label class="custom-file-label" for="msgVideo" data-browse="เลือกไฟล์">ยังไม่ได้เลือกวิดีโอ</label>
+                                            </div>
+                                            <small class="text-muted">รองรับ MP4, MOV และอื่นๆ (ไม่เกิน 50MB)</small>
+                                        </div>
+                                    </div>
+                                    <div id="videoUrlSection" style="display:none;">
+                                        <div class="mb-3">
+                                            <label class="form-label font-weight-bold">URL วิดีโอ</label>
+                                            <input type="url" class="form-control" id="msgVideoUrl" placeholder="https://example.com/video.mp4">
+                                            <small class="text-muted">ใส่ลิงก์วิดีโอที่เข้าถึงได้แบบสาธารณะ (mp4)</small>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">แคปชั่น (ไม่บังคับ)</label>
@@ -521,6 +572,26 @@ $(function() {
         $(this).siblings('.custom-file-label').text(fileName || 'เลือกไฟล์');
     });
 
+    // Source toggle (URL / Upload) for photo, document, video
+    $('input[name="photoSource"]').on('change', function() {
+        const isUrl = $(this).val() === 'url';
+        $('#photoUploadSection').toggle(!isUrl);
+        $('#photoUrlSection').toggle(isUrl);
+        updateSelectedUI();
+    });
+    $('input[name="docSource"]').on('change', function() {
+        const isUrl = $(this).val() === 'url';
+        $('#docUploadSection').toggle(!isUrl);
+        $('#docUrlSection').toggle(isUrl);
+        updateSelectedUI();
+    });
+    $('input[name="videoSource"]').on('change', function() {
+        const isUrl = $(this).val() === 'url';
+        $('#videoUploadSection').toggle(!isUrl);
+        $('#videoUrlSection').toggle(isUrl);
+        updateSelectedUI();
+    });
+
     // Photo preview
     $('#msgPhoto').on('change', function() {
         const file = this.files[0];
@@ -541,17 +612,36 @@ $(function() {
     $('#msgText, #msgPhotoCaption, #msgDocCaption, #msgVideoCaption').on('input', function() {
         updateSelectedUI();
     });
+    $('#msgPhotoUrl, #msgDocUrl, #msgVideoUrl').on('input', function() {
+        updateSelectedUI();
+    });
     $('#msgDocument, #msgVideo').on('change', function() {
         updateSelectedUI();
     });
+
+    function getMediaSource(type) {
+        if (type === 'photo') return $('input[name="photoSource"]:checked').val() || 'upload';
+        if (type === 'document') return $('input[name="docSource"]:checked').val() || 'upload';
+        if (type === 'video') return $('input[name="videoSource"]:checked').val() || 'upload';
+        return 'upload';
+    }
 
     function checkMessageContent() {
         const type = $('input[name="msgType"]:checked').val();
         switch (type) {
             case 'text': return !!$('#msgText').val().trim();
-            case 'photo': return !!$('#msgPhoto')[0].files.length;
-            case 'document': return !!$('#msgDocument')[0].files.length;
-            case 'video': return !!$('#msgVideo')[0].files.length;
+            case 'photo': {
+                const src = getMediaSource('photo');
+                return src === 'url' ? !!$('#msgPhotoUrl').val().trim() : !!$('#msgPhoto')[0].files.length;
+            }
+            case 'document': {
+                const src = getMediaSource('document');
+                return src === 'url' ? !!$('#msgDocUrl').val().trim() : !!$('#msgDocument')[0].files.length;
+            }
+            case 'video': {
+                const src = getMediaSource('video');
+                return src === 'url' ? !!$('#msgVideoUrl').val().trim() : !!$('#msgVideo')[0].files.length;
+            }
         }
         return false;
     }
@@ -599,23 +689,48 @@ $(function() {
                     parse_mode: 'HTML',
                 });
             } else {
-                // ใช้ FormData สำหรับ file upload
-                const formData = new FormData();
-                formData.append('member_ids', JSON.stringify(memberIds));
-                formData.append('parse_mode', 'HTML');
+                const source = getMediaSource(type);
 
-                if (type === 'photo') {
-                    formData.append('photo', $('#msgPhoto')[0].files[0]);
-                    formData.append('caption', $('#msgPhotoCaption').val().trim());
-                    result = await sendFormData('send-photo', formData);
-                } else if (type === 'document') {
-                    formData.append('document', $('#msgDocument')[0].files[0]);
-                    formData.append('caption', $('#msgDocCaption').val().trim());
-                    result = await sendFormData('send-document', formData);
-                } else if (type === 'video') {
-                    formData.append('video', $('#msgVideo')[0].files[0]);
-                    formData.append('caption', $('#msgVideoCaption').val().trim());
-                    result = await sendFormData('send-video', formData);
+                if (source === 'url') {
+                    // ส่งเป็น JSON (URL mode)
+                    let urlVal = '', caption = '';
+                    if (type === 'photo') {
+                        urlVal = $('#msgPhotoUrl').val().trim();
+                        caption = $('#msgPhotoCaption').val().trim();
+                    } else if (type === 'document') {
+                        urlVal = $('#msgDocUrl').val().trim();
+                        caption = $('#msgDocCaption').val().trim();
+                    } else if (type === 'video') {
+                        urlVal = $('#msgVideoUrl').val().trim();
+                        caption = $('#msgVideoCaption').val().trim();
+                    }
+                    result = await API.post(API.apiUrl('telegram-message', 'send-' + type), {
+                        member_ids: memberIds,
+                        url: urlVal,
+                        caption: caption,
+                        source: 'url',
+                        parse_mode: 'HTML',
+                    });
+                } else {
+                    // ส่งเป็นไฟล์อัพโหลด (FormData)
+                    const formData = new FormData();
+                    formData.append('member_ids', JSON.stringify(memberIds));
+                    formData.append('parse_mode', 'HTML');
+                    formData.append('source', 'upload');
+
+                    if (type === 'photo') {
+                        formData.append('photo', $('#msgPhoto')[0].files[0]);
+                        formData.append('caption', $('#msgPhotoCaption').val().trim());
+                        result = await sendFormData('send-photo', formData);
+                    } else if (type === 'document') {
+                        formData.append('document', $('#msgDocument')[0].files[0]);
+                        formData.append('caption', $('#msgDocCaption').val().trim());
+                        result = await sendFormData('send-document', formData);
+                    } else if (type === 'video') {
+                        formData.append('video', $('#msgVideo')[0].files[0]);
+                        formData.append('caption', $('#msgVideoCaption').val().trim());
+                        result = await sendFormData('send-video', formData);
+                    }
                 }
             }
 
@@ -671,8 +786,11 @@ $(function() {
         $('#msgText').val('');
         $('#msgPhotoCaption, #msgDocCaption, #msgVideoCaption').val('');
         $('#msgPhoto, #msgDocument, #msgVideo').val('');
+        $('#msgPhotoUrl, #msgDocUrl, #msgVideoUrl').val('');
         $('.custom-file-label').text('เลือกไฟล์');
         $('#photoPreview').hide();
+        // Reset source toggles to upload
+        $('#photoSourceUpload, #docSourceUpload, #videoSourceUpload').prop('checked', true).trigger('change');
         selectedMembers.clear();
         $('.member-check, #checkAll').prop('checked', false);
         updateSelectedUI();

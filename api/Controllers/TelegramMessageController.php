@@ -105,16 +105,27 @@ class TelegramMessageController extends Controller {
             Response::forbidden('เฉพาะ admin เท่านั้น');
         }
 
-        $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
-        $caption = trim($_POST['caption'] ?? '');
-        $parseMode = $_POST['parse_mode'] ?? 'HTML';
+        // ตรวจสอบว่าเป็น JSON (URL mode) หรือ multipart (upload mode)
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isJson = strpos($contentType, 'application/json') !== false;
+
+        if ($isJson) {
+            $body = $this->input();
+            $memberIds = $body['member_ids'] ?? [];
+            $caption = trim($body['caption'] ?? '');
+            $parseMode = $body['parse_mode'] ?? 'HTML';
+            $source = $body['source'] ?? 'url';
+            $photoUrl = trim($body['url'] ?? '');
+        } else {
+            $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
+            $caption = trim($_POST['caption'] ?? '');
+            $parseMode = $_POST['parse_mode'] ?? 'HTML';
+            $source = $_POST['source'] ?? 'upload';
+            $photoUrl = trim($_POST['url'] ?? '');
+        }
 
         if (empty($memberIds) || !is_array($memberIds)) {
             Response::error('กรุณาเลือกสมาชิกอย่างน้อย 1 คน');
-        }
-
-        if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
-            Response::error('กรุณาเลือกรูปภาพ');
         }
 
         $settings = $this->model('SettingsModel');
@@ -130,19 +141,42 @@ class TelegramMessageController extends Controller {
             Response::error('ไม่พบสมาชิกที่เชื่อมต่อ Telegram');
         }
 
-        $photoPath = $_FILES['photo']['tmp_name'];
-        $photoName = $_FILES['photo']['name'];
+        // Validate based on source
+        if ($source === 'url') {
+            if (empty($photoUrl)) {
+                Response::error('กรุณาใส่ URL รูปภาพ');
+            }
+        } else {
+            if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+                Response::error('กรุณาเลือกรูปภาพ');
+            }
+        }
+
         $successCount = 0;
         $failCount = 0;
         $errors = [];
 
-        foreach ($recipients as $r) {
-            $result = $this->telegramSendPhoto($botToken, $r['telegram_chat_id'], $photoPath, $photoName, $caption, $parseMode);
-            if ($result['success']) {
-                $successCount++;
-            } else {
-                $failCount++;
-                $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+        if ($source === 'url') {
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendMediaUrl($botToken, 'sendPhoto', 'photo', $r['telegram_chat_id'], $photoUrl, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
+            }
+        } else {
+            $photoPath = $_FILES['photo']['tmp_name'];
+            $photoName = $_FILES['photo']['name'];
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendPhoto($botToken, $r['telegram_chat_id'], $photoPath, $photoName, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
             }
         }
 
@@ -152,7 +186,7 @@ class TelegramMessageController extends Controller {
             count($recipients),
             $successCount,
             $failCount,
-            $caption ?: '[รูปภาพ]'
+            $caption ?: ($source === 'url' ? "[รูปภาพ URL: {$photoUrl}]" : '[รูปภาพ]')
         );
 
         Response::success([
@@ -173,16 +207,26 @@ class TelegramMessageController extends Controller {
             Response::forbidden('เฉพาะ admin เท่านั้น');
         }
 
-        $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
-        $caption = trim($_POST['caption'] ?? '');
-        $parseMode = $_POST['parse_mode'] ?? 'HTML';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isJson = strpos($contentType, 'application/json') !== false;
+
+        if ($isJson) {
+            $body = $this->input();
+            $memberIds = $body['member_ids'] ?? [];
+            $caption = trim($body['caption'] ?? '');
+            $parseMode = $body['parse_mode'] ?? 'HTML';
+            $source = $body['source'] ?? 'url';
+            $docUrl = trim($body['url'] ?? '');
+        } else {
+            $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
+            $caption = trim($_POST['caption'] ?? '');
+            $parseMode = $_POST['parse_mode'] ?? 'HTML';
+            $source = $_POST['source'] ?? 'upload';
+            $docUrl = trim($_POST['url'] ?? '');
+        }
 
         if (empty($memberIds) || !is_array($memberIds)) {
             Response::error('กรุณาเลือกสมาชิกอย่างน้อย 1 คน');
-        }
-
-        if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
-            Response::error('กรุณาเลือกไฟล์');
         }
 
         $settings = $this->model('SettingsModel');
@@ -198,20 +242,43 @@ class TelegramMessageController extends Controller {
             Response::error('ไม่พบสมาชิกที่เชื่อมต่อ Telegram');
         }
 
-        $filePath = $_FILES['document']['tmp_name'];
-        $fileName = $_FILES['document']['name'];
+        if ($source === 'url') {
+            if (empty($docUrl)) {
+                Response::error('กรุณาใส่ URL ไฟล์');
+            }
+        } else {
+            if (!isset($_FILES['document']) || $_FILES['document']['error'] !== UPLOAD_ERR_OK) {
+                Response::error('กรุณาเลือกไฟล์');
+            }
+        }
+
         $successCount = 0;
         $failCount = 0;
         $errors = [];
 
-        foreach ($recipients as $r) {
-            $result = $this->telegramSendDocument($botToken, $r['telegram_chat_id'], $filePath, $fileName, $caption, $parseMode);
-            if ($result['success']) {
-                $successCount++;
-            } else {
-                $failCount++;
-                $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+        if ($source === 'url') {
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendMediaUrl($botToken, 'sendDocument', 'document', $r['telegram_chat_id'], $docUrl, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
             }
+        } else {
+            $filePath = $_FILES['document']['tmp_name'];
+            $fileName = $_FILES['document']['name'];
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendDocument($botToken, $r['telegram_chat_id'], $filePath, $fileName, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
+            }
+            $fileName = $_FILES['document']['name'] ?? '';
         }
 
         $model->logMessage(
@@ -220,7 +287,7 @@ class TelegramMessageController extends Controller {
             count($recipients),
             $successCount,
             $failCount,
-            $caption ?: "[ไฟล์: {$fileName}]"
+            $caption ?: ($source === 'url' ? "[ไฟล์ URL: {$docUrl}]" : "[ไฟล์: " . ($_FILES['document']['name'] ?? '') . "]")
         );
 
         Response::success([
@@ -241,21 +308,26 @@ class TelegramMessageController extends Controller {
             Response::forbidden('เฉพาะ admin เท่านั้น');
         }
 
-        $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
-        $caption = trim($_POST['caption'] ?? '');
-        $parseMode = $_POST['parse_mode'] ?? 'HTML';
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isJson = strpos($contentType, 'application/json') !== false;
+
+        if ($isJson) {
+            $body = $this->input();
+            $memberIds = $body['member_ids'] ?? [];
+            $caption = trim($body['caption'] ?? '');
+            $parseMode = $body['parse_mode'] ?? 'HTML';
+            $source = $body['source'] ?? 'url';
+            $videoUrl = trim($body['url'] ?? '');
+        } else {
+            $memberIds = json_decode($_POST['member_ids'] ?? '[]', true);
+            $caption = trim($_POST['caption'] ?? '');
+            $parseMode = $_POST['parse_mode'] ?? 'HTML';
+            $source = $_POST['source'] ?? 'upload';
+            $videoUrl = trim($_POST['url'] ?? '');
+        }
 
         if (empty($memberIds) || !is_array($memberIds)) {
             Response::error('กรุณาเลือกสมาชิกอย่างน้อย 1 คน');
-        }
-
-        if (!isset($_FILES['video']) || $_FILES['video']['error'] !== UPLOAD_ERR_OK) {
-            Response::error('กรุณาเลือกวิดีโอ');
-        }
-
-        // จำกัดขนาด 50MB
-        if ($_FILES['video']['size'] > 50 * 1024 * 1024) {
-            Response::error('ไฟล์วิดีโอต้องไม่เกิน 50MB');
         }
 
         $settings = $this->model('SettingsModel');
@@ -271,19 +343,45 @@ class TelegramMessageController extends Controller {
             Response::error('ไม่พบสมาชิกที่เชื่อมต่อ Telegram');
         }
 
-        $filePath = $_FILES['video']['tmp_name'];
-        $fileName = $_FILES['video']['name'];
+        if ($source === 'url') {
+            if (empty($videoUrl)) {
+                Response::error('กรุณาใส่ URL วิดีโอ');
+            }
+        } else {
+            if (!isset($_FILES['video']) || $_FILES['video']['error'] !== UPLOAD_ERR_OK) {
+                Response::error('กรุณาเลือกวิดีโอ');
+            }
+            // จำกัดขนาด 50MB
+            if ($_FILES['video']['size'] > 50 * 1024 * 1024) {
+                Response::error('ไฟล์วิดีโอต้องไม่เกิน 50MB');
+            }
+        }
+
         $successCount = 0;
         $failCount = 0;
         $errors = [];
 
-        foreach ($recipients as $r) {
-            $result = $this->telegramSendVideo($botToken, $r['telegram_chat_id'], $filePath, $fileName, $caption, $parseMode);
-            if ($result['success']) {
-                $successCount++;
-            } else {
-                $failCount++;
-                $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+        if ($source === 'url') {
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendMediaUrl($botToken, 'sendVideo', 'video', $r['telegram_chat_id'], $videoUrl, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
+            }
+        } else {
+            $filePath = $_FILES['video']['tmp_name'];
+            $fileName = $_FILES['video']['name'];
+            foreach ($recipients as $r) {
+                $result = $this->telegramSendVideo($botToken, $r['telegram_chat_id'], $filePath, $fileName, $caption, $parseMode);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                    $errors[] = ['name' => $r['full_name'], 'error' => $result['message']];
+                }
             }
         }
 
@@ -293,7 +391,7 @@ class TelegramMessageController extends Controller {
             count($recipients),
             $successCount,
             $failCount,
-            $caption ?: "[วิดีโอ: {$fileName}]"
+            $caption ?: ($source === 'url' ? "[วิดีโอ URL: {$videoUrl}]" : "[วิดีโอ: " . ($_FILES['video']['name'] ?? '') . "]")
         );
 
         Response::success([
@@ -334,6 +432,30 @@ class TelegramMessageController extends Controller {
             'parse_mode' => $parseMode,
             'disable_web_page_preview' => false,
         ];
+
+        return $this->telegramRequest($url, $payload);
+    }
+
+    /**
+     * ส่ง media (photo/document/video) แบบ URL ผ่าน Telegram Bot API (JSON)
+     * @param string $token Bot token
+     * @param string $method เช่น sendPhoto, sendDocument, sendVideo
+     * @param string $mediaField เช่น photo, document, video
+     * @param string $chatId
+     * @param string $mediaUrl URL ของ media
+     * @param string $caption
+     * @param string $parseMode
+     */
+    private function telegramSendMediaUrl($token, $method, $mediaField, $chatId, $mediaUrl, $caption = '', $parseMode = 'HTML') {
+        $url = "https://api.telegram.org/bot{$token}/{$method}";
+        $payload = [
+            'chat_id' => $chatId,
+            $mediaField => $mediaUrl,
+        ];
+        if (!empty($caption)) {
+            $payload['caption'] = $caption;
+            $payload['parse_mode'] = $parseMode;
+        }
 
         return $this->telegramRequest($url, $payload);
     }
