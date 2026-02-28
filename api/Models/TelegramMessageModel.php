@@ -13,63 +13,47 @@ class TelegramMessageModel extends Model {
     public function getMembers(array $filters = []) {
         $search = $filters['search'] ?? '';
         $status = $filters['status'] ?? '';
-        $telegramStatus = $filters['telegram_status'] ?? ''; // linked, not_linked
+        $telegramStatus = $filters['telegram_status'] ?? '';
         $memberType = $filters['member_type'] ?? '';
         $page = max(1, intval($filters['page'] ?? 1));
         $limit = max(10, min(100, intval($filters['limit'] ?? 20)));
         $offset = ($page - 1) * $limit;
 
-        $where = ['AND' => []];
+        // สร้าง WHERE clause
+        $where = [];
 
-        // ค้นหา
         if (!empty($search)) {
-            $where['AND']['OR'] = [
-                'users.full_name[~]' => $search,
-                'users.email[~]' => $search,
-                'users.phone[~]' => $search,
-                'users.member_number[~]' => $search,
+            $where['OR'] = [
+                'full_name[~]' => $search,
+                'email[~]' => $search,
+                'phone[~]' => $search,
+                'member_number[~]' => $search,
             ];
         }
 
-        // สถานะสมาชิก
         if (!empty($status)) {
-            $where['AND']['users.status'] = $status;
+            $where['status'] = $status;
         }
 
-        // สถานะ Telegram
         if ($telegramStatus === 'linked') {
-            $where['AND']['users.telegram_chat_id[!]'] = null;
+            $where['telegram_chat_id[!]'] = null;
         } elseif ($telegramStatus === 'not_linked') {
-            $where['AND']['users.telegram_chat_id'] = null;
+            $where['telegram_chat_id'] = null;
         }
 
-        // ประเภทสมาชิก
         if (!empty($memberType)) {
-            $where['AND']['users.member_type'] = $memberType;
+            $where['member_type'] = $memberType;
         }
 
-        // ถ้าไม่มีเงื่อนไข
-        if (empty($where['AND'])) {
-            $where = [];
-        }
-
-        // นับจำนวน
+        // นับจำนวนทั้งหมด (ตาม filter)
         $total = $this->db->count('users', $where ?: null);
 
-        // นับสมาชิกที่มี Telegram
-        $telegramWhere = $where;
-        if (empty($telegramWhere)) {
-            $telegramWhere = ['telegram_chat_id[!]' => null];
-        } else {
-            $telegramWhere['AND']['telegram_chat_id[!]'] = null;
-        }
-        $totalTelegram = $this->db->count('users', $telegramWhere);
+        // นับสมาชิกที่มี Telegram (ตาม filter)
+        $tgWhere = $where;
+        $tgWhere['telegram_chat_id[!]'] = null;
+        $totalTelegram = $this->db->count('users', $tgWhere);
 
         // ดึงข้อมูล
-        $queryWhere = $where ?: [];
-        $queryWhere['LIMIT'] = [$offset, $limit];
-        $queryWhere['ORDER'] = ['users.full_name' => 'ASC'];
-
         $members = $this->db->select('users', [
             'id',
             'full_name',
@@ -81,7 +65,10 @@ class TelegramMessageModel extends Model {
             'avatar',
             'telegram_chat_id',
             'telegram_linked_at',
-        ], $queryWhere);
+        ], array_merge($where, [
+            'ORDER' => ['full_name' => 'ASC'],
+            'LIMIT' => [$offset, $limit],
+        ]));
 
         return [
             'members' => $members ?: [],
@@ -91,7 +78,7 @@ class TelegramMessageModel extends Model {
                 'total' => $total,
                 'per_page' => $limit,
                 'current_page' => $page,
-                'last_page' => ceil($total / $limit),
+                'last_page' => max(1, ceil($total / $limit)),
             ]
         ];
     }
