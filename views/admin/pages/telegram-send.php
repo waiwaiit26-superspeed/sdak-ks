@@ -1,25 +1,31 @@
-<?php $pageTitle = 'ส่งข่าว Telegram'; $page = 'telegram-send'; ?>
-<?php include ROOT_PATH . 'templates/admin/header.php'; ?>
-<?php include ROOT_PATH . 'templates/admin/navbar-top.php'; ?>
-<?php include ROOT_PATH . 'templates/admin/sidebar.php'; ?>
+<?php
+/**
+ * Admin — ส่งข่าว Telegram
+ */
+$pageTitle = 'ส่งข่าว Telegram';
+$page = 'telegram-send';
+include ROOT_PATH . 'templates/admin/header.php';
+include ROOT_PATH . 'templates/admin/sidebar.php';
+?>
 
-    <!-- Content Wrapper -->
-    <div class="content-wrapper">
-        <div class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6"><h1 class="m-0"><i class="bi bi-send me-2"></i>ส่งข่าว Telegram</h1></div>
-                    <div class="col-sm-6">
-                        <ol class="breadcrumb float-sm-right">
-                            <li class="breadcrumb-item"><a href="./?page=dashboard">แผงควบคุม</a></li>
-                            <li class="breadcrumb-item active">ส่งข่าว Telegram</li>
-                        </ol>
-                    </div>
+<!-- Content Wrapper -->
+<div class="content-wrapper">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6"><h1><i class="bi bi-send me-2"></i>ส่งข่าว Telegram</h1></div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="./?page=dashboard">หน้าแรก</a></li>
+                        <li class="breadcrumb-item active">ส่งข่าว Telegram</li>
+                    </ol>
                 </div>
             </div>
         </div>
-        <section class="content">
-            <div class="container-fluid">
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
                 <div class="row">
                     <!-- ============ ซ้าย: เลือกสมาชิก ============ -->
                     <div class="col-lg-7">
@@ -327,6 +333,9 @@
                         </div>
                     </div>
                 </div>
+        </div>
+    </section>
+</div>
 
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
 
