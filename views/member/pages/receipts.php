@@ -74,6 +74,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" onclick="openEditReceiptNumber()" id="btnEditReceiptNum" style="display:none"><i class="bi bi-pencil-square me-1"></i> แก้ไขใบเสร็จ</button>
+                <button type="button" class="btn btn-info text-white" onclick="showReferenceInfo()" id="btnRefInfo" style="display:none;"><i class="bi bi-link-45deg me-1"></i> ข้อมูลอ้างอิง</button>
                 <button type="button" class="btn btn-info" onclick="openEditAddress()" id="btnEditAddress"><i class="bi bi-geo-alt me-1"></i> แก้ไขที่อยู่</button>
                 <button type="button" class="btn btn-primary" onclick="downloadModalPDF()"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</button>
                 <button type="button" class="btn btn-success" onclick="downloadModalPNG()"><i class="bi bi-image me-1"></i> PNG</button>
@@ -93,6 +94,37 @@
             </div>
             <form id="createReceiptForm">
             <div class="modal-body">
+                <!-- Reference Source Section -->
+                <div class="card bg-light mb-3" id="referenceSourceSection">
+                    <div class="card-body py-2">
+                        <h6 class="mb-2"><i class="bi bi-link-45deg me-1"></i>โหลดข้อมูลจากระบบ <small class="text-muted">(เลือกได้)</small></h6>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <select id="createRefType" class="form-control form-control-sm">
+                                    <option value="">-- ไม่อ้างอิง (ออกใบเสร็จด้วยตัวเอง) --</option>
+                                    <option value="membership_fee">ค่าธรรมเนียมสมาชิก</option>
+                                    <option value="activity_fee">ค่าลงทะเบียนกิจกรรม</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <select id="createRefSelect" class="form-control form-control-sm" style="width:100%" disabled>
+                                    <option value="">-- เลือกรายการอ้างอิง --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="loadReferenceData()" id="btnLoadRef" disabled>
+                                    <i class="bi bi-download me-1"></i> โหลดข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                        <div id="refLoadedInfo" class="mt-2" style="display:none;">
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>โหลดข้อมูลจากระบบแล้ว</span>
+                            <small class="text-muted ms-2" id="refLoadedLabel"></small>
+                            <input type="hidden" id="createRefId">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">ได้รับเงินจาก <span class="text-danger">*</span></label>
@@ -171,6 +203,16 @@
             <form id="editReceiptNumForm">
             <div class="modal-body">
                 <input type="hidden" id="editReceiptId">
+                <!-- Reference reload button -->
+                <div id="editRefReloadSection" class="mb-3" style="display:none;">
+                    <div class="alert alert-info py-2 mb-0">
+                        <i class="bi bi-link-45deg me-1"></i>
+                        <span id="editRefLabel">ใบเสร็จนี้อ้างอิงจากระบบ</span>
+                        <button type="button" class="btn btn-outline-info btn-sm ms-2" onclick="reloadRefDataIntoEditFromAPI()">
+                            <i class="bi bi-download me-1"></i> โหลดข้อมูลจากระบบ
+                        </button>
+                    </div>
+                </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">เลขที่ใบเสร็จ</label>
                     <div class="input-group">
@@ -185,11 +227,51 @@
                     <input type="text" id="editPayerName" class="form-control" placeholder="ชื่อผู้ชำระเงิน">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
-                    <input type="text" id="editPayerAddress" class="form-control" placeholder="ที่อยู่ (ไม่ระบุก็ได้)">
+                    <label class="form-label fw-bold">รายละเอียด (เป็น)</label>
+                    <textarea id="editDescription" class="form-control" rows="2" placeholder="รายละเอียด"></textarea>
                 </div>
                 <div class="mb-2">
                     <small class="text-muted" id="editReceiptInfo"></small>
+                </div>
+                <hr>
+                <h6 class="mb-3"><i class="bi bi-geo-alt me-1"></i>ที่อยู่ผู้ชำระเงิน</h6>
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="form-label fw-bold">เลขที่</label>
+                        <input type="text" id="editAddrNoEdit" class="form-control" placeholder="เลขที่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">หมู่ที่</label>
+                        <input type="text" id="editAddrMooEdit" class="form-control" placeholder="หมู่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">ซอย</label>
+                        <input type="text" id="editAddrSoiEdit" class="form-control" placeholder="ซอย">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ถนน</label>
+                    <input type="text" id="editAddrRoadEdit" class="form-control" placeholder="ถนน">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">ตำบล</label>
+                        <input type="text" id="editAddrSubEdit" class="form-control" placeholder="ตำบล">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">อำเภอ</label>
+                        <input type="text" id="editAddrDistEdit" class="form-control" placeholder="อำเภอ">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">จังหวัด</label>
+                        <input type="text" id="editAddrProvEdit" class="form-control" placeholder="จังหวัด">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">รหัสไปรษณีย์</label>
+                        <input type="text" id="editAddrZipEdit" class="form-control" placeholder="รหัสไปรษณีย์">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -321,6 +403,7 @@
 let currentReceiptData = null;
 let isFinanceManager = false;
 let membersCache = [];
+let categoriesCache = [];
 
 function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
     const modalBody = document.getElementById(bodyId);
@@ -440,22 +523,22 @@ $(function () {
             return;
         }
 
-        // Map category to receipt_type
-        let receiptType = 'other';
-        if (categoryName) {
-            const lower = categoryName.toLowerCase();
-            if (lower.includes('ธรรมเนียม') || lower.includes('สมาชิก')) receiptType = 'membership_fee';
-            else if (lower.includes('กิจกรรม') || lower.includes('ลงทะเบียน')) receiptType = 'activity_fee';
-        }
-
         const data = {
             title: $('#createTitle').val().trim(),
-            receipt_type: receiptType,
+            receipt_type: 'other',
             amount: parseFloat($('#createAmount').val()),
             issued_date: $('#createIssuedDate').val() || undefined,
             description: $('#createDescription').val().trim() || undefined,
             receipt_number: $('#createReceiptNumber').val().trim() || undefined,
         };
+
+        // Add reference data if loaded from system
+        const refType = $('#createRefType').val();
+        const refId   = $('#createRefId').val();
+        if (refType && refId) {
+            data.receipt_type = refType;
+            data.reference_id = parseInt(refId);
+        }
 
         const payerAddress = $('#createPayerAddress').data('addrJson') || $('#createPayerAddress').val().trim();
         if (payerAddress) data.payer_address = payerAddress;
@@ -464,6 +547,15 @@ $(function () {
             data.user_id = userId;
         } else {
             data.payer_name = payerName;
+        }
+
+        // Map category to receipt_type only if not already set by reference
+        if (!refType || !refId) {
+            if (categoryName) {
+                const lower = categoryName.toLowerCase();
+                if (lower.includes('ธรรมเนียม') || lower.includes('สมาชิก')) data.receipt_type = 'membership_fee';
+                else if (lower.includes('กิจกรรม') || lower.includes('ลงทะเบียน')) data.receipt_type = 'activity_fee';
+            }
         }
 
         if (!data.title) { App.error('กรุณาระบุหัวข้อ'); return; }
@@ -495,8 +587,30 @@ $(function () {
 
         const updateData = { id: id, receipt_number: receiptNumber };
         if (payerName) updateData.payer_name = payerName;
-        const editAddress = $('#editPayerAddress').val().trim();
-        updateData.payer_address = editAddress || null;
+
+        // Include description
+        const desc = $('#editDescription').val().trim();
+        if (desc !== (currentReceiptData.description || '').trim()) {
+            updateData.description = desc;
+        }
+
+        // Build structured address JSON
+        const no   = $('#editAddrNoEdit').val().trim();
+        const moo  = $('#editAddrMooEdit').val().trim();
+        const soi  = $('#editAddrSoiEdit').val().trim();
+        const road = $('#editAddrRoadEdit').val().trim();
+        const sub  = $('#editAddrSubEdit').val().trim();
+        const dist = $('#editAddrDistEdit').val().trim();
+        const prov = $('#editAddrProvEdit').val().trim();
+        const zip  = $('#editAddrZipEdit').val().trim();
+
+        let detail = no && no !== '-' ? no : '';
+        if (moo && moo !== '-') detail += '   หมู่ ' + moo;
+        if (soi && soi !== '-') detail += '   ซอย ' + soi;
+        if (road && road !== '-') detail += '   ถนน ' + road;
+        detail = detail.trim();
+
+        updateData.payer_address = JSON.stringify({ detail, subdistrict: sub, district: dist, province: prov, zipcode: zip });
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
@@ -637,6 +751,7 @@ async function loadMembersList() {
 async function loadCategories() {
     const result = await API.getFinanceActiveCategories('income');
     if (result.success && result.data) {
+        categoriesCache = result.data;
         const select = $('#createCategory');
         select.find('option:not(:first)').remove();
         result.data.forEach(c => {
@@ -654,6 +769,11 @@ function resetCreateForm() {
     $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
     $('#createBookNumberDisplay').text('-');
+    // Clear reference fields
+    $('#createRefType').val('');
+    $('#createRefSelect').prop('disabled', true).find('option:not(:first)').remove();
+    $('#btnLoadRef').prop('disabled', true);
+    clearRefLoaded();
 }
 
 function openCreateModal() {
@@ -690,8 +810,43 @@ function openEditReceiptNumber() {
     $('#editReceiptId').val(currentReceiptData.id);
     $('#editReceiptNumber').val(currentReceiptData.receipt_number);
     $('#editPayerName').val(currentReceiptData.payer_name || '');
-    $('#editPayerAddress').val(flatPayerAddress(currentReceiptData.payer_address || ''));
+    $('#editDescription').val(currentReceiptData.description || '');
+
+    // Parse payer_address into structured fields
+    let addr = {};
+    try { addr = JSON.parse(currentReceiptData.payer_address); } catch(e) {}
+    if (!addr || typeof addr !== 'object') addr = {};
+
+    let detail = addr.detail || '';
+    let no = '', moo = '', soi = '', road = '';
+    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+    no = detail.trim();
+
+    $('#editAddrNoEdit').val(no);
+    $('#editAddrMooEdit').val(moo);
+    $('#editAddrSoiEdit').val(soi);
+    $('#editAddrRoadEdit').val(road);
+    $('#editAddrSubEdit').val(addr.subdistrict || '');
+    $('#editAddrDistEdit').val(addr.district || '');
+    $('#editAddrProvEdit').val(addr.province || '');
+    $('#editAddrZipEdit').val(addr.zipcode || '');
+
     $('#editReceiptInfo').text(`เล่มที่: ${currentReceiptData.book_number} | วันที่ออก: ${App.formatDate(currentReceiptData.issued_date)}`);
+
+    // Show reference reload button if receipt has reference
+    if (currentReceiptData.reference_id && currentReceiptData.receipt_type && currentReceiptData.receipt_type !== 'other') {
+        const typeLabel = currentReceiptData.receipt_type === 'membership_fee' ? 'ค่าธรรมเนียมสมาชิก' : 'ค่าลงทะเบียนกิจกรรม';
+        $('#editRefLabel').html(`<strong>อ้างอิง:</strong> ${typeLabel} (REF #${currentReceiptData.reference_id})`);
+        $('#editRefReloadSection').show();
+    } else {
+        $('#editRefReloadSection').hide();
+    }
+
     $('#editReceiptNumModal').modal('show');
 }
 
@@ -846,10 +1001,11 @@ async function loadReceipts() {
 
     let html = '';
     result.data.forEach(r => {
+        const refBadge = r.reference_id ? `<span class="badge bg-light text-dark border" style="font-size:10px;" title="อ้างอิง #${r.reference_id}"><i class="bi bi-link-45deg"></i> REF-${r.reference_id}</span>` : '';
         html += `<tr>
             <td>${r.book_number} / ${r.receipt_number}</td>
             <td>${r.title}</td>
-            <td><span class="badge ${typeBadges[r.receipt_type] || 'bg-secondary'}">${typeLabels[r.receipt_type] || r.receipt_type}</span></td>
+            <td><span class="badge ${typeBadges[r.receipt_type] || 'bg-secondary'}">${typeLabels[r.receipt_type] || r.receipt_type}</span> ${refBadge}</td>
             <td>${App.formatCurrency(r.amount)}</td>
             <td>${App.formatDate(r.issued_date)}</td>
             <td>
@@ -885,6 +1041,13 @@ async function viewReceipt(id) {
         $('#btnEditReceiptNum').hide();
     }
 
+    // Show reference info button if receipt has reference data
+    if (r.reference_data) {
+        $('#btnRefInfo').show();
+    } else {
+        $('#btnRefInfo').hide();
+    }
+
     // Convert signature image to base64 to avoid CORS
     let signatureImgSrc = '';
     if (r.signature_mode === 'electronic' && r.signature_image) {
@@ -901,7 +1064,16 @@ async function viewReceipt(id) {
                         'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     const dateStr = `วันที่ ${issuedDate.getDate()} เดือน ${thaiMonths[issuedDate.getMonth()]} พ.ศ. ${issuedDate.getFullYear() + 543}`;
 
-    body.html(`<div id="receiptModalLoading" style="text-align:center;padding:60px 20px;">
+    body.html(`${r.reference_data ? `<div class="alert alert-info py-2 mb-2" style="font-size:13px;">
+        <i class="bi bi-link-45deg me-1"></i><strong>อ้างอิงจาก:</strong>
+        ${r.reference_data.source_label}
+        — ${App.escapeHtml(r.reference_data.full_name)}
+        ${r.reference_data.source_type === 'membership_fee' ? '(ปี ' + r.reference_data.fee_year + ')' : ''}
+        ${r.reference_data.source_type === 'activity_fee' && r.reference_data.activity_title ? '(' + App.escapeHtml(r.reference_data.activity_title) + ')' : ''}
+        <span class="badge bg-light text-dark border ms-2">REF #${r.reference_data.source_id}</span>
+        <button class="btn btn-outline-info btn-sm ms-2 py-0 px-1" onclick="showReferenceInfo()" title="ดูรายละเอียด"><i class="bi bi-info-circle"></i></button>
+    </div>` : ''}
+    <div id="receiptModalLoading" style="text-align:center;padding:60px 20px;">
         <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
         <div class="mt-3 text-muted" style="font-size:16px;">กำลังโหลดใบเสร็จ... <span id="receiptModalPercent">0</span>%</div>
     </div>
@@ -988,6 +1160,322 @@ async function downloadModalPNG() {
     } catch (err) { console.error('PNG Error:', err); App.error('เกิดข้อผิดพลาดในการสร้างรูป: ' + err.message); }
     el.style.transform = origTransform;
 }
+
+/* ══════════════════════════════════════════════
+   Reference / Source Data Functions
+   ══════════════════════════════════════════════ */
+
+// When reference type changes in create modal
+$('#createRefType').on('change', async function() {
+    const type = $(this).val();
+    const sel = $('#createRefSelect');
+    sel.find('option:not(:first)').remove();
+
+    if (!type) {
+        sel.prop('disabled', true);
+        $('#btnLoadRef').prop('disabled', true);
+        clearRefLoaded();
+        return;
+    }
+
+    sel.prop('disabled', false);
+    sel.append('<option disabled>กำลังโหลด...</option>');
+
+    const result = await API.searchReceiptReference(type);
+    sel.find('option:disabled').remove();
+
+    if (result.success && result.data) {
+        result.data.forEach(r => {
+            const hasReceipt = r.has_receipt ? ' [มีใบเสร็จแล้ว]' : '';
+            sel.append(`<option value="${r.reference_id}" data-has-receipt="${r.has_receipt ? 1 : 0}">${App.escapeHtml(r.label)}${hasReceipt}</option>`);
+        });
+    }
+});
+
+$('#createRefSelect').on('change', function() {
+    const val = $(this).val();
+    $('#btnLoadRef').prop('disabled', !val);
+    clearRefLoaded();
+});
+
+function clearRefLoaded() {
+    $('#refLoadedInfo').hide();
+    $('#refLoadedLabel').text('');
+    $('#createRefId').val('');
+}
+
+// Load reference data and auto-fill the create form
+async function loadReferenceData() {
+    const refType = $('#createRefType').val();
+    const refId   = $('#createRefSelect').val();
+    if (!refType || !refId) { App.error('กรุณาเลือกรายการอ้างอิง'); return; }
+
+    const btn = $('#btnLoadRef');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+    const result = await API.getReceiptReferenceData(refType, refId);
+    btn.prop('disabled', false).html('<i class="bi bi-download me-1"></i> โหลดข้อมูล');
+
+    if (!result.success || !result.data) {
+        App.error(result.message || 'ไม่พบข้อมูลอ้างอิง');
+        return;
+    }
+
+    const ref = result.data;
+
+    // Auto-fill create form with reference data
+    if (ref.user_id) {
+        const userOpt = $(`#createPayerSelect option[value="user_${ref.user_id}"]`);
+        if (userOpt.length) {
+            $('#createPayerSelect').val('user_' + ref.user_id).trigger('change');
+        }
+        $('#createUserId').val(ref.user_id);
+        $('#createPayerName').val(ref.full_name).prop('readonly', true);
+        $('#payerNameHint').text('โหลดจากข้อมูลอ้างอิง');
+
+        // Build address
+        const fakeMember = {
+            full_name: ref.full_name,
+            work_address: ref.work_address || '',
+            home_address: ref.home_address || '',
+            school_organization: ref.school_organization || ''
+        };
+        const addrJson = buildPayerAddress(fakeMember);
+        if (addrJson) {
+            $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
+        }
+    }
+
+    // Fill amount
+    if (ref.source_type === 'membership_fee' && ref.fee_amount) {
+        $('#createAmount').val(ref.fee_amount);
+    } else if (ref.source_type === 'activity_fee' && ref.activity_fee_amount) {
+        $('#createAmount').val(ref.activity_fee_amount);
+    }
+
+    // Fill title and description
+    if (ref.source_type === 'membership_fee') {
+        const feeLabel = ref.fee_type === 'onetime' ? 'ครั้งเดียว' : 'ปี ' + ref.fee_year;
+        const typeLabel = ref.member_type_label ? ref.member_type_label : '';
+        const title = 'ค่าธรรมเนียมสมาชิก' + (typeLabel ? typeLabel : '');
+        $('#createTitle').val(title);
+        $('#createDescription').val(title + ' (' + feeLabel + ')');
+
+        const mfCat = categoriesCache.find(c => c.name === 'ค่าธรรมเนียมสมาชิก');
+        if (mfCat) $('#createCategory').val(mfCat.id);
+    } else if (ref.source_type === 'activity_fee') {
+        const title = 'ค่าลงทะเบียนกิจกรรม';
+        const desc = ref.activity_fee_description
+            ? `ค่าลงทะเบียนเข้าร่วม "${ref.activity_title}" (${ref.activity_fee_description})`
+            : `ค่าลงทะเบียนเข้าร่วม "${ref.activity_title}"`;
+        $('#createTitle').val(title);
+        $('#createDescription').val(desc);
+
+        const afCat = categoriesCache.find(c => c.name.includes('กิจกรรม'));
+        if (afCat) $('#createCategory').val(afCat.id);
+    }
+
+    // Store reference info
+    $('#createRefId').val(refId);
+    $('#refLoadedInfo').show();
+    $('#refLoadedLabel').text(ref.source_label + ' — ' + ref.full_name);
+
+    App.success('โหลดข้อมูลจากระบบเรียบร้อย');
+}
+
+// Show reference info panel for current receipt
+async function showReferenceInfo() {
+    if (!currentReceiptData) return;
+
+    const refData = currentReceiptData.reference_data;
+    if (!refData) {
+        App.error('ไม่พบข้อมูลอ้างอิง');
+        return;
+    }
+
+    let html = '<div class="p-3">';
+    html += '<h5 class="mb-3"><i class="bi bi-link-45deg me-2"></i>ข้อมูลอ้างอิงใบเสร็จ</h5>';
+    html += '<div class="card">';
+    html += '<div class="card-body">';
+
+    const sourceBadge = refData.source_type === 'membership_fee'
+        ? '<span class="badge bg-primary">ค่าธรรมเนียมสมาชิก</span>'
+        : '<span class="badge bg-info">ค่าลงทะเบียนกิจกรรม</span>';
+    html += `<div class="mb-3">${sourceBadge} <small class="text-muted">Reference ID: ${refData.source_id}</small></div>`;
+
+    // Member info
+    html += '<div class="row mb-3">';
+    html += '<div class="col-md-2 text-center">';
+    if (refData.profile_image) {
+        const imgUrl = refData.profile_image.startsWith('http') ? refData.profile_image : (BASE_PATH + refData.profile_image);
+        html += `<img src="${imgUrl}" class="rounded-circle mb-2" style="width:60px;height:60px;object-fit:cover;">`;
+    } else {
+        html += '<i class="bi bi-person-circle" style="font-size:48px;color:#adb5bd;"></i>';
+    }
+    html += '</div>';
+    html += '<div class="col-md-10">';
+    html += `<h6 class="mb-1">${App.escapeHtml(refData.full_name)}</h6>`;
+    html += `<small class="text-muted">${App.escapeHtml(refData.email || '-')}</small>`;
+    if (refData.phone) html += `<br><small class="text-muted"><i class="bi bi-telephone me-1"></i>${App.escapeHtml(refData.phone)}</small>`;
+    if (refData.school_organization) html += `<br><small class="text-muted"><i class="bi bi-building me-1"></i>${App.escapeHtml(refData.school_organization)}</small>`;
+    if (refData.member_type_label) html += `<br><span class="badge bg-outline-secondary border">${App.escapeHtml(refData.member_type_label)}</span>`;
+    html += '</div>';
+    html += '</div>';
+
+    // Source-specific info
+    if (refData.source_type === 'membership_fee') {
+        const feeLabel = refData.fee_type === 'onetime' ? 'ครั้งเดียว' : 'ประจำปี';
+        const statusBadge = refData.fee_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>' : `<span class="badge bg-warning">${refData.fee_status}</span>`;
+        html += '<table class="table table-sm table-bordered">';
+        html += `<tr><td class="fw-bold" width="35%">ประเภทค่าธรรมเนียม</td><td>${feeLabel}</td></tr>`;
+        html += `<tr><td class="fw-bold">ปี พ.ศ.</td><td>${refData.fee_year}</td></tr>`;
+        html += `<tr><td class="fw-bold">จำนวนเงิน</td><td>${App.formatCurrency(refData.fee_amount)}</td></tr>`;
+        html += `<tr><td class="fw-bold">สถานะ</td><td>${statusBadge}</td></tr>`;
+        if (refData.paid_at) html += `<tr><td class="fw-bold">วันที่ชำระ</td><td>${App.formatDate(refData.paid_at)}</td></tr>`;
+        html += '</table>';
+
+        if (refData.payment_slip) {
+            const slipUrl = refData.payment_slip.startsWith('http') ? refData.payment_slip : (BASE_PATH + refData.payment_slip);
+            html += `<div class="text-center"><a href="${slipUrl}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a></div>`;
+        }
+    } else if (refData.source_type === 'activity_fee') {
+        const payBadge = refData.payment_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>' : `<span class="badge bg-warning">${refData.payment_status}</span>`;
+        html += '<table class="table table-sm table-bordered">';
+        html += `<tr><td class="fw-bold" width="35%">กิจกรรม</td><td>${App.escapeHtml(refData.activity_title)}</td></tr>`;
+        if (refData.activity_location) html += `<tr><td class="fw-bold">สถานที่</td><td>${App.escapeHtml(refData.activity_location)}</td></tr>`;
+        if (refData.activity_start_date) html += `<tr><td class="fw-bold">วันที่จัดกิจกรรม</td><td>${App.formatDate(refData.activity_start_date)}${refData.activity_end_date ? ' - ' + App.formatDate(refData.activity_end_date) : ''}</td></tr>`;
+        html += `<tr><td class="fw-bold">ค่าลงทะเบียน</td><td>${App.formatCurrency(refData.activity_fee_amount)}</td></tr>`;
+        html += `<tr><td class="fw-bold">สถานะการชำระ</td><td>${payBadge}</td></tr>`;
+        if (refData.registered_at) html += `<tr><td class="fw-bold">วันที่ลงทะเบียน</td><td>${App.formatDate(refData.registered_at)}</td></tr>`;
+        html += '</table>';
+
+        if (refData.payment_proof) {
+            const proofUrl = refData.payment_proof.startsWith('http') ? refData.payment_proof : (BASE_PATH + refData.payment_proof);
+            html += `<div class="text-center"><a href="${proofUrl}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a></div>`;
+        }
+    }
+
+    html += '</div></div>';
+
+    // Button to reload data into edit form (only for finance managers)
+    if (isFinanceManager) {
+        html += '<div class="text-center mt-3">';
+        html += `<button class="btn btn-warning btn-sm" onclick="reloadRefDataIntoEdit()"><i class="bi bi-arrow-repeat me-1"></i> โหลดข้อมูลซ้ำเข้าแบบแก้ไข</button>`;
+        html += '</div>';
+    }
+
+    html += '</div>';
+
+    // Show in a modal
+    if ($('#referenceInfoModal').length === 0) {
+        $('body').append(`
+            <div class="modal fade" id="referenceInfoModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title"><i class="bi bi-link-45deg me-2"></i>ข้อมูลอ้างอิงใบเสร็จ</h5>
+                            <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                        </div>
+                        <div class="modal-body" id="referenceInfoBody"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+    $('#referenceInfoBody').html(html);
+    $('#referenceInfoModal').modal('show');
+}
+
+// Reload reference data into the edit form
+async function reloadRefDataIntoEdit() {
+    if (!currentReceiptData || !currentReceiptData.reference_data) return;
+
+    const refData = currentReceiptData.reference_data;
+
+    // Close the reference info modal
+    $('#referenceInfoModal').modal('hide');
+
+    // Open edit modal with data pre-filled from reference
+    openEditReceiptNumber();
+    applyRefDataToEditForm(refData);
+
+    App.success('โหลดข้อมูลจากอ้างอิงเข้าฟอร์มแก้ไขแล้ว');
+}
+
+// Reload reference data from API directly into edit form
+async function reloadRefDataIntoEditFromAPI() {
+    if (!currentReceiptData) return;
+    const refType = currentReceiptData.receipt_type;
+    const refId   = currentReceiptData.reference_id;
+    if (!refType || !refId) { App.error('ไม่พบข้อมูลอ้างอิง'); return; }
+
+    const result = await API.getReceiptReferenceData(refType, refId);
+    if (!result.success || !result.data) {
+        App.error(result.message || 'ไม่พบข้อมูลอ้างอิง');
+        return;
+    }
+
+    applyRefDataToEditForm(result.data);
+    App.success('โหลดข้อมูลจากระบบเข้าฟอร์มแก้ไขแล้ว');
+}
+
+// Apply reference data to the edit form fields
+function applyRefDataToEditForm(refData) {
+    // Overwrite fields with reference data
+    if (refData.full_name) {
+        $('#editPayerName').val(refData.full_name);
+    }
+
+    // Fill description from reference
+    if (refData.source_type === 'membership_fee') {
+        const feeLabel = refData.fee_type === 'onetime' ? 'ครั้งเดียว' : 'ปี ' + refData.fee_year;
+        const typeLabel = refData.member_type_label || '';
+        const title = 'ค่าธรรมเนียมสมาชิก' + (typeLabel ? typeLabel : '');
+        $('#editDescription').val(title + ' (' + feeLabel + ')');
+    } else if (refData.source_type === 'activity_fee') {
+        const desc = refData.activity_fee_description
+            ? `ค่าลงทะเบียนเข้าร่วม "${refData.activity_title}" (${refData.activity_fee_description})`
+            : `ค่าลงทะเบียนเข้าร่วม "${refData.activity_title}"`;
+        $('#editDescription').val(desc);
+    }
+
+    // Build address from reference
+    const fakeMember = {
+        full_name: refData.full_name,
+        work_address: refData.work_address || '',
+        home_address: refData.home_address || '',
+        school_organization: refData.school_organization || ''
+    };
+    const addrJson = buildPayerAddress(fakeMember);
+    if (addrJson) {
+        try {
+            const addr = JSON.parse(addrJson);
+            let detail = addr.detail || '';
+            let no = '', moo = '', soi = '', road = '';
+
+            const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+            if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+            const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+            if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+            const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+            if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+            no = detail.trim();
+
+            $('#editAddrNoEdit').val(no);
+            $('#editAddrMooEdit').val(moo);
+            $('#editAddrSoiEdit').val(soi);
+            $('#editAddrRoadEdit').val(road);
+            $('#editAddrSubEdit').val(addr.subdistrict || '');
+            $('#editAddrDistEdit').val(addr.district || '');
+            $('#editAddrProvEdit').val(addr.province || '');
+            $('#editAddrZipEdit').val(addr.zipcode || '');
+        } catch(e) {}
+    }
+}
+
 </script>
 
 <?php include ROOT_PATH . 'templates/member/footer.php'; ?>
