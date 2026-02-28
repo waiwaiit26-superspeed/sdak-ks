@@ -1254,7 +1254,7 @@ $(function () {
     // โหลดสถานะการเชื่อมต่อ Telegram
     async function loadTelegramStatus() {
         try {
-            const result = await API.makeRequest('telegram-link', 'status');
+            const result = await API.get(API.apiUrl('telegram-link', 'status'));
             if (result.success) {
                 updateTelegramUI(result.data);
             }
@@ -1287,7 +1287,7 @@ $(function () {
         if (telegramLinkInProgress) return;
 
         try {
-            const result = await API.makeRequest('telegram-link', 'status');
+            const result = await API.get(API.apiUrl('telegram-link', 'status'));
             if (result.success && result.data.is_linked) {
                 // ยกเลิกการเชื่อมต่อ
                 const confirmed = await Swal.fire({
@@ -1302,7 +1302,7 @@ $(function () {
 
                 if (confirmed.isConfirmed) {
                     telegramLinkInProgress = true;
-                    const unlinkResult = await API.makeRequest('telegram-link', 'unlink', {}, 'POST');
+                    const unlinkResult = await API.post(API.apiUrl('telegram-link', 'unlink'));
                     if (unlinkResult.success) {
                         App.success('ยกเลิกการเชื่อมต่อ Telegram เรียบร้อย');
                         await loadTelegramStatus();
@@ -1315,7 +1315,7 @@ $(function () {
                 // เชื่อมต่อ Telegram
                 telegramLinkInProgress = true;
                 
-                const tokenResult = await API.makeRequest('telegram-link', 'create-token', {}, 'POST');
+                const tokenResult = await API.post(API.apiUrl('telegram-link', 'create-token'));
                 if (!tokenResult.success) {
                     App.error(tokenResult.message || 'ไม่สามารถสร้าง token ได้');
                     telegramLinkInProgress = false;
@@ -1370,7 +1370,7 @@ $(function () {
                             // ตรวจสอบสถานะทุก 3 วินาที
                             const checkInterval = setInterval(async () => {
                                 try {
-                                    const statusCheck = await API.makeRequest('telegram-link', 'status');
+                                    const statusCheck = await API.get(API.apiUrl('telegram-link', 'status'));
                                     if (statusCheck.success && statusCheck.data.is_linked) {
                                         clearInterval(checkInterval);
                                         Swal.close();

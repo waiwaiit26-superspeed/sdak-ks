@@ -14,19 +14,20 @@ namespace App\Core;
 class Router
 {
     private static array $controllerMap = [
-        'auth'      => 'AuthController',
-        'member'    => 'MemberController',
-        'news'      => 'NewsController',
-        'activity'  => 'ActivityController',
-        'dashboard' => 'DashboardController',
-        'upload'    => 'UploadController',
-        'page'      => 'PageController',
-        'nav'       => 'NavController',
-        'log'       => 'LogController',
-        'settings'  => 'SettingsController',
-        'fee'       => 'FeeController',
-        'receipt'   => 'ReceiptController',
-        'finance'   => 'FinanceController',
+        'auth'          => 'AuthController',
+        'member'        => 'MemberController',
+        'news'          => 'NewsController',
+        'activity'      => 'ActivityController',
+        'dashboard'     => 'DashboardController',
+        'upload'        => 'UploadController',
+        'page'          => 'PageController',
+        'nav'           => 'NavController',
+        'log'           => 'LogController',
+        'settings'      => 'SettingsController',
+        'fee'           => 'FeeController',
+        'receipt'       => 'ReceiptController',
+        'finance'       => 'FinanceController',
+        'telegram-link' => 'TelegramLinkController',
     ];
 
     /**
