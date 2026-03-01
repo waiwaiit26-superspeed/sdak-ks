@@ -242,25 +242,30 @@ async function loadPublicStats() {
 }
 
 async function loadLatestNews() {
-    const result = await API.getNewsList({ per_page: 4 });
+    const result = await API.getNewsList({ per_page: 3 });
     const container = $("#latest-news");
 
     if (result.success && result.data && result.data.length > 0) {
         let html = "";
         result.data.forEach(function(news) {
             const img = news.cover_image ? App.imgUrl(news.cover_image) : App.defaultImage("news");
+            const date = App.formatDate(news.published_at || news.created_at);
+            const excerpt = news.excerpt || (news.content ? news.content.substring(0, 120) + '...' : '');
+
             html += `
-            <div class="col-md-6 col-lg-3">
-                <div class="card news-card h-100">
-                    <img src="${img}" class="card-img-top" alt="${news.title}" onerror="this.src=App.defaultImage('news')">
-                    <div class="card-body d-flex flex-column">
-                        <div class="news-meta mb-2">
-                            <i class="bi bi-calendar3 me-1"></i>${App.formatDate(news.published_at || news.created_at)}
-                            <span class="ms-2"><i class="bi bi-eye me-1"></i>${news.views || 0}</span>
-                        </div>
-                        <h6 class="card-title">${news.title}</h6>
-                        <p class="card-text flex-grow-1">${App.truncate(news.excerpt, 80)}</p>
-                        <a href="./web/?page=news-detail&id=${news.id}" class="btn btn-sm btn-outline-primary mt-2">อ่านต่อ</a>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm news-card" onclick="location.href='./web/?page=news-detail&id=${news.id}'" style="cursor:pointer">
+                    <img src="${img}" class="card-img-top" style="height:200px;object-fit:cover"
+                        alt="${news.title}" onerror="App.defaultImage(this,'news')">
+                    <div class="card-body">
+                        <h5 class="card-title">${news.title}</h5>
+                        <p class="card-text text-muted small">${excerpt}</p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>${date}
+                            <i class="bi bi-eye ms-2 me-1"></i>${App.formatNumber(news.views || 0)}
+                        </small>
                     </div>
                 </div>
             </div>`;
