@@ -1092,6 +1092,11 @@ $(function () {
             if (positionVal === 'other') {
                 positionVal = $('#position_other').val().trim();
             }
+            const regPositionMap = {
+                'รองผู้อำนวยการโรงเรียน': 'รองผู้อำนวยการสถานศึกษา',
+                'ผู้อำนวยการโรงเรียน': 'ผู้อำนวยการสถานศึกษา'
+            };
+            if (regPositionMap[positionVal]) positionVal = regPositionMap[positionVal];
 
             /* ---- compose addresses ---- */
             const homeAddr = {

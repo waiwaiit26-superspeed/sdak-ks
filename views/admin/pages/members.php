@@ -673,17 +673,21 @@ async function editMember(id) {
     $('#mf_first_name').val(u.first_name || u.full_name || '');
     $('#mf_last_name').val(u.last_name || '');
     $('#mf_phone').val(u.phone || '');
-    $('#mf_position').val(u.position || '');
-    // Position: check if known or other
+    // Position: normalize old values + check if known or other
+    const mfPositionMap = {
+        'รองผู้อำนวยการโรงเรียน': 'รองผู้อำนวยการสถานศึกษา',
+        'ผู้อำนวยการโรงเรียน': 'ผู้อำนวยการสถานศึกษา'
+    };
+    const mfNormalizedPos = mfPositionMap[u.position] || u.position;
     const mfKnownPositions = ['ผู้อำนวยการสถานศึกษา', 'รองผู้อำนวยการสถานศึกษา'];
-    if (u.position && mfKnownPositions.includes(u.position)) {
-        $('#mf_position').val(u.position);
-    } else if (u.position) {
+    if (mfNormalizedPos && mfKnownPositions.includes(mfNormalizedPos)) {
+        $('#mf_position').val(mfNormalizedPos);
+    } else if (mfNormalizedPos) {
         $('#mf_position').val('other');
-        $('#mf_position_other').val(u.position);
+        $('#mf_position_other').val(mfNormalizedPos);
         $('#mf_positionOtherWrap').show();
     }
-    updateMfAcademicRank(u.position || '', u.academic_rank || '');
+    updateMfAcademicRank(mfNormalizedPos || '', u.academic_rank || '');
     $('#mf_school').val(u.school_organization || '');
     splitSchoolPrefix('#mf_school_prefix', '#mf_school', u.school_organization || '');
     $('#mf_work_phone').val(u.work_phone || '');
@@ -751,9 +755,10 @@ async function saveMember() {
         email: $('#mf_email').val().trim(),
         phone: $('#mf_phone').val().trim(),
         position: (function() {
-            const v = $('#mf_position').val();
-            if (v === 'other') return $('#mf_position_other').val().trim();
-            return v;
+            let v = $('#mf_position').val();
+            if (v === 'other') v = $('#mf_position_other').val().trim();
+            const pm = {'รองผู้อำนวยการโรงเรียน':'รองผู้อำนวยการสถานศึกษา','ผู้อำนวยการโรงเรียน':'ผู้อำนวยการสถานศึกษา'};
+            return pm[v] || v;
         })(),
         academic_rank: $('#mf_academic_rank').val() || '',
         school_organization: (function() {

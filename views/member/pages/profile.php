@@ -594,18 +594,23 @@ $(function () {
         form.find('[name=education_area]').val(u.education_area);
         form.find('[name=region]').val(u.region);
 
-        // Position
+        // Position — normalize old values
+        const positionMap = {
+            'รองผู้อำนวยการโรงเรียน': 'รองผู้อำนวยการสถานศึกษา',
+            'ผู้อำนวยการโรงเรียน': 'ผู้อำนวยการสถานศึกษา'
+        };
+        const normalizedPosition = positionMap[u.position] || u.position;
         const knownPositions = ['ผู้อำนวยการสถานศึกษา', 'รองผู้อำนวยการสถานศึกษา'];
-        if (u.position && knownPositions.includes(u.position)) {
-            $('#prof_position').val(u.position);
-        } else if (u.position) {
+        if (normalizedPosition && knownPositions.includes(normalizedPosition)) {
+            $('#prof_position').val(normalizedPosition);
+        } else if (normalizedPosition) {
             $('#prof_position').val('other');
-            $('#prof_position_other').val(u.position);
+            $('#prof_position_other').val(normalizedPosition);
             $('#positionOtherWrap').show();
         }
 
         // Academic rank
-        updateAcademicRank(u.position || '', u.academic_rank || '');
+        updateAcademicRank(normalizedPosition || '', u.academic_rank || '');
 
         // Birth date
         if (u.birth_date) {
@@ -683,11 +688,16 @@ $(function () {
             const data = {};
             $('#profileForm').serializeArray().forEach(function (f) { if (f.value) data[f.name] = f.value; });
 
-            // Position: resolve "other"
+            // Position: resolve "other" + normalize old values
             let positionVal = $('#prof_position').val();
             if (positionVal === 'other') {
                 positionVal = $('#prof_position_other').val().trim();
             }
+            const savePositionMap = {
+                'รองผู้อำนวยการโรงเรียน': 'รองผู้อำนวยการสถานศึกษา',
+                'ผู้อำนวยการโรงเรียน': 'ผู้อำนวยการสถานศึกษา'
+            };
+            if (savePositionMap[positionVal]) positionVal = savePositionMap[positionVal];
             data.position = positionVal;
             data.academic_rank = $('#prof_academic_rank').val() || '';
 
