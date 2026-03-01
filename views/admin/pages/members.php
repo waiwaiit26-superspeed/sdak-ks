@@ -81,6 +81,7 @@
                             <th>อีเมล</th>
                             <th>โทรศัพท์</th>
                             <th>ประเภท</th>
+                            <th>ตำแหน่ง/วิทยฐานะ</th>
                             <th>โรงเรียน/สังกัด</th>
                             <th>สถานะ</th>
                             <th>วันที่สมัคร</th>
@@ -539,7 +540,15 @@ function initDataTable() {
                 data: 'member_type', responsivePriority: 3,
                 render: d => d ? App.getMemberTypeBadge(d) : '<span class="text-muted">-</span>'
             },
-            { data: 'school_organization', responsivePriority: 8, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
+            {
+                data: 'position', responsivePriority: 8,
+                render: (d, t, row) => {
+                    let html = '<small>' + App.escapeHtml(d || '-') + '</small>';
+                    if (row.academic_rank) html += '<br><small class="text-primary">' + App.escapeHtml(row.academic_rank) + '</small>';
+                    return html;
+                }
+            },
+            { data: 'school_organization', responsivePriority: 9, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
             { data: 'status', responsivePriority: 2, render: d => App.getStatusBadge(d) },
             { data: 'created_at', responsivePriority: 9, render: d => '<small>' + App.formatDate(d) + '</small>' },
             {

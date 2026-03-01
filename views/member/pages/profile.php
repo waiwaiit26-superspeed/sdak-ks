@@ -49,6 +49,8 @@
                     <span id="profileStatusBadge" class="badge ms-1">-</span>
                     </div>
                     <div class="mt-3 text-muted small">
+                        <p class="mb-1" id="profilePositionLine" style="display:none"><i class="bi bi-briefcase me-1"></i> <span id="profilePosition">-</span></p>
+                        <p class="mb-1" id="profileAcademicRankLine" style="display:none"><i class="bi bi-award me-1"></i> <span id="profileAcademicRank">-</span></p>
                         <p class="mb-1"><i class="bi bi-envelope me-1"></i> <span id="profileEmail">-</span></p>
                         <p class="mb-1"><i class="bi bi-telephone me-1"></i> <span id="profilePhone">-</span></p>
                         <p class="mb-0"><i class="bi bi-calendar me-1"></i> สมาชิกตั้งแต่: <span id="profileSince">-</span></p>
@@ -561,6 +563,14 @@ $(function () {
         $('#profileEmail').text(u.email || '-');
         $('#profilePhone').text(u.phone || '-');
         $('#profileSince').text(u.approved_at ? App.formatDate(u.approved_at) : 'รออนุมัติ');
+        if (u.position) {
+            $('#profilePosition').text(u.position);
+            $('#profilePositionLine').show();
+        }
+        if (u.academic_rank) {
+            $('#profileAcademicRank').text(u.academic_rank);
+            $('#profileAcademicRankLine').show();
+        }
         $('#profileTypeBadge').html(App.getMemberTypeBadge(u.member_type));
         $('#profileStatusBadge').html(App.getStatusBadge(u.status));
         if (u.profile_image) $('#profileAvatar').attr('src', App.imgUrl(u.profile_image));
