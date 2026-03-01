@@ -261,11 +261,12 @@ async function loadLatestNews() {
                         <h5 class="card-title">${news.title}</h5>
                         <p class="card-text text-muted small">${excerpt}</p>
                     </div>
-                    <div class="card-footer bg-transparent">
+                    <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
                         <small class="text-muted">
                             <i class="bi bi-calendar me-1"></i>${date}
                             <i class="bi bi-eye ms-2 me-1"></i>${App.formatNumber(news.views || 0)}
                         </small>
+                        <span class="text-primary fw-semibold small">รายละเอียด <i class="bi bi-arrow-right"></i></span>
                     </div>
                 </div>
             </div>`;
