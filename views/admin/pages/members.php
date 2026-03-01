@@ -242,7 +242,6 @@
                                 </div>
                             </div></div>
                             <div class="col-md-3"><div class="form-group"><label>โทรศัพท์ (โรงเรียน)</label><input type="tel" class="form-control" id="mf_work_phone"></div></div>
-                            <div class="col-md-3"><div class="form-group"><label>ตำแหน่ง/หน้าที่</label><input type="text" class="form-control" id="mf_w_position" placeholder="เช่น รอง ผอ."></div></div>
                         </div>
                         <div class="row">
                             <div class="col-md-2"><div class="form-group"><label>เลขที่</label><input type="text" class="form-control" id="mf_w_no"></div></div>
@@ -754,7 +753,7 @@ async function saveMember() {
         position: (function() {
             const v = $('#mf_position').val();
             if (v === 'other') return $('#mf_position_other').val().trim();
-            return v || $('#mf_w_position').val().trim();
+            return v;
         })(),
         academic_rank: $('#mf_academic_rank').val() || '',
         school_organization: (function() {
@@ -956,6 +955,8 @@ async function approveMember(userId, action) {
                 '<table class="table table-sm table-bordered mb-0">' +
                     '<tr><td class="text-muted" width="120">ชื่อ-นามสกุล</td><td><strong>' + App.escapeHtml(displayName) + '</strong></td></tr>' +
                     '<tr><td class="text-muted">ประเภทสมาชิก</td><td>' + App.getMemberTypeBadge(u.member_type) + ' (' + (typeLabels[u.member_type] || u.member_type) + ')</td></tr>' +
+                    '<tr><td class="text-muted">ตำแหน่ง</td><td>' + App.escapeHtml(u.position || '-') + (u.academic_rank ? ' <span class="badge badge-info">' + App.escapeHtml(u.academic_rank) + '</span>' : '') + '</td></tr>' +
+                    '<tr><td class="text-muted">โรงเรียน</td><td>' + App.escapeHtml(u.school_organization || '-') + '</td></tr>' +
                     '<tr><td class="text-muted">การชำระเงิน</td><td>' + (feeLabels[f.fee_mode] || f.fee_mode) + '</td></tr>' +
                 '</table>' +
             '</div>' +
