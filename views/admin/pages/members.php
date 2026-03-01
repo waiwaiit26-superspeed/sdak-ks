@@ -182,7 +182,26 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label>ตำแหน่ง</label>
-                                    <input type="text" class="form-control" id="mf_position" placeholder="เช่น รองผู้อำนวยการ">
+                                    <select class="form-control" id="mf_position">
+                                        <option value="">-- เลือก --</option>
+                                        <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
+                                        <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
+                                        <option value="other">อื่นๆ (กรอกเอง)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="mf_positionOtherWrap" style="display:none">
+                                <div class="form-group">
+                                    <label>ระบุตำแหน่ง</label>
+                                    <input type="text" class="form-control" id="mf_position_other" placeholder="กรอกตำแหน่ง">
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="mf_academicRankWrap" style="display:none">
+                                <div class="form-group">
+                                    <label>วิทยฐานะ</label>
+                                    <select class="form-control" id="mf_academic_rank">
+                                        <option value="">-- เลือก --</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -340,7 +359,7 @@
                     <div class="tab-pane fade" id="tabPaste">
                         <div class="form-group">
                             <label>วางข้อมูลจาก Excel / Google Sheets</label>
-                            <textarea class="form-control" id="pasteArea" rows="6" placeholder="คัดลอกข้อมูลจาก Excel/Sheets แล้ววางที่นี่ (Tab-separated)&#10;&#10;หัวคอลัมน์: เลขสมาชิก, คำนำหน้า, ชื่อ, นามสกุล, ประเภทสมาชิก, เลขบัตรประชาชน, มือถือ, อีเมล, โรงเรียน, ตำแหน่ง, สังกัดเขตพื้นที่, ภาค"></textarea>
+                            <textarea class="form-control" id="pasteArea" rows="6" placeholder="คัดลอกข้อมูลจาก Excel/Sheets แล้ววางที่นี่ (Tab-separated)&#10;&#10;หัวคอลัมน์: เลขสมาชิก, คำนำหน้า, ชื่อ, นามสกุล, ประเภทสมาชิก, เลขบัตรประชาชน, มือถือ, อีเมล, โรงเรียน, ตำแหน่ง, วิทยฐานะ, สังกัดเขตพื้นที่, ภาค"></textarea>
                             <small class="form-text text-muted">คอลัมน์ต้องเรียงตาม Template (ดู<a href="javascript:void(0)" onclick="downloadTemplate()">ตัวอย่าง</a>)</small>
                         </div>
                         <button class="btn btn-info btn-sm" onclick="parsePasteData()"><i class="bi bi-table me-1"></i> แปลงข้อมูล</button>
@@ -409,13 +428,13 @@ let mfBirthFp = null;
 // CSV Template columns
 const TEMPLATE_HEADERS = [
     'เลขสมาชิก','คำนำหน้า','ชื่อ','นามสกุล','ประเภทสมาชิก','เลขบัตรประชาชน',
-    'มือถือ','อีเมล','โรงเรียน/หน่วยงาน','ตำแหน่ง',
+    'มือถือ','อีเมล','โรงเรียน/หน่วยงาน','ตำแหน่ง','วิทยฐานะ',
     'สังกัดเขตพื้นที่','ภาค',
     'ที่อยู่เลขที่','ซอย','หมู่ที่','ถนน','แขวง/ตำบล','เขต/อำเภอ','จังหวัด','รหัสไปรษณีย์'
 ];
 const FIELD_MAP = [
     'member_number','prefix','first_name','last_name','member_type','national_id',
-    'phone','email','school_organization','position',
+    'phone','email','school_organization','position','academic_rank',
     'education_area','region',
     'h_no','h_soi','h_moo','h_road','h_subdistrict','h_district','h_province','h_postal'
 ];
@@ -572,6 +591,47 @@ function splitSchoolPrefix(selectSel, inputSel, fullValue) {
 }
 
 /* =========================================================================
+   Academic Rank (วิทยฐานะ) - position-dependent options
+   ========================================================================= */
+const mfAcademicRankOptions = {
+    'รองผู้อำนวยการสถานศึกษา': [
+        'รองผู้อำนวยการชำนาญการ',
+        'รองผู้อำนวยการชำนาญการพิเศษ',
+        'รองผู้อำนวยการเชี่ยวชาญ'
+    ],
+    'ผู้อำนวยการสถานศึกษา': [
+        'ผู้อำนวยการชำนาญการ',
+        'ผู้อำนวยการชำนาญการพิเศษ',
+        'ผู้อำนวยการเชี่ยวชาญ'
+    ]
+};
+
+function updateMfAcademicRank(position, selectedValue) {
+    const $wrap = $('#mf_academicRankWrap');
+    const $select = $('#mf_academic_rank');
+    const options = mfAcademicRankOptions[position];
+    if (options) {
+        $select.html('<option value="">-- เลือก --</option>' + options.map(o => '<option value="' + o + '"' + (o === selectedValue ? ' selected' : '') + '>' + o + '</option>').join(''));
+        $wrap.slideDown(200);
+    } else {
+        $select.html('<option value="">-- เลือก --</option>');
+        $wrap.slideUp(200);
+    }
+}
+
+$('#mf_position').on('change', function () {
+    const val = $(this).val();
+    if (val === 'other') {
+        $('#mf_positionOtherWrap').slideDown(200);
+        $('#mf_position_other').focus();
+    } else {
+        $('#mf_positionOtherWrap').slideUp(200);
+        $('#mf_position_other').val('');
+    }
+    updateMfAcademicRank(val);
+});
+
+/* =========================================================================
    Add / Edit Member
    ========================================================================= */
 function openAddMember() {
@@ -579,6 +639,8 @@ function openAddMember() {
     $('#mf_user_id').val('');
     $('#mf_school_prefix').val('โรงเรียน');
     if (mfBirthFp) mfBirthFp.clear();
+    $('#mf_positionOtherWrap').hide();
+    $('#mf_academicRankWrap').hide();
     $('#memberFormTitle').text('เพิ่มสมาชิก');
     $('#accountFieldset').show();
     $('#memberFormModal').modal('show');
@@ -604,6 +666,16 @@ async function editMember(id) {
     $('#mf_last_name').val(u.last_name || '');
     $('#mf_phone').val(u.phone || '');
     $('#mf_position').val(u.position || '');
+    // Position: check if known or other
+    const mfKnownPositions = ['ผู้อำนวยการสถานศึกษา', 'รองผู้อำนวยการสถานศึกษา'];
+    if (u.position && mfKnownPositions.includes(u.position)) {
+        $('#mf_position').val(u.position);
+    } else if (u.position) {
+        $('#mf_position').val('other');
+        $('#mf_position_other').val(u.position);
+        $('#mf_positionOtherWrap').show();
+    }
+    updateMfAcademicRank(u.position || '', u.academic_rank || '');
     $('#mf_school').val(u.school_organization || '');
     splitSchoolPrefix('#mf_school_prefix', '#mf_school', u.school_organization || '');
     $('#mf_work_phone').val(u.work_phone || '');
@@ -670,7 +742,12 @@ async function saveMember() {
         national_id: $('#mf_national_id').val().trim(),
         email: $('#mf_email').val().trim(),
         phone: $('#mf_phone').val().trim(),
-        position: $('#mf_position').val().trim() || $('#mf_w_position').val().trim(),
+        position: (function() {
+            const v = $('#mf_position').val();
+            if (v === 'other') return $('#mf_position_other').val().trim();
+            return v || $('#mf_w_position').val().trim();
+        })(),
+        academic_rank: $('#mf_academic_rank').val() || '',
         school_organization: (function() {
             const p = $('#mf_school_prefix').val();
             const n = $('#mf_school').val().trim();
@@ -760,7 +837,7 @@ async function viewMember(id) {
                     '<tr><td class="text-muted" width="130">เลขสมาชิก</td><td><strong class="text-primary">' + (u.member_number || '<span class="text-muted">ยังไม่กำหนด</span>') + '</strong></td><td class="text-muted" width="130">อีเมล</td><td>' + (u.email || '-') + '</td></tr>' +
                     '<tr><td class="text-muted">ชื่อผู้ใช้</td><td>' + (u.username || '-') + '</td><td class="text-muted">เลขบัตรประชาชน</td><td>' + (u.national_id || '-') + '</td></tr>' +
                     '<tr><td class="text-muted">วันเกิด</td><td>' + (u.birth_date ? App.formatDate(u.birth_date) : '-') + '</td><td class="text-muted">มือถือ</td><td>' + (u.phone || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted"></td><td></td></tr>' +
+                    '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted">วิทยฐานะ</td><td>' + (u.academic_rank || '-') + '</td></tr>' +
                     '<tr><td class="text-muted">โรงเรียน</td><td colspan="3">' + (u.school_organization || '-') + '</td></tr>' +
                     '<tr><td class="text-muted">โทรศัพท์ (ร.ร.)</td><td>' + (u.work_phone || '-') + '</td><td class="text-muted">สังกัด</td><td>' + (u.education_area || '-') + ' ' + (u.region || '') + '</td></tr>' +
                     '<tr><th class="bg-light" colspan="4">ที่อยู่ปัจจุบัน</th></tr>' +
@@ -1091,8 +1168,8 @@ function showPreview() {
     $('#importCount').text(importData.length);
 
     // Show first 12 columns only
-    const showHeaders = TEMPLATE_HEADERS.slice(0, 12);
-    const showFields = FIELD_MAP.slice(0, 12);
+    const showHeaders = TEMPLATE_HEADERS.slice(0, 13);
+    const showFields = FIELD_MAP.slice(0, 13);
 
     let thead = '<tr>' + showHeaders.map(function(h) { return '<th class="small">' + h + '</th>'; }).join('') + '</tr>';
     let tbody = '';
@@ -1128,6 +1205,7 @@ async function doImport() {
             email: m.email,
             school_organization: m.school_organization,
             position: m.position,
+            academic_rank: m.academic_rank,
             education_area: m.education_area,
             region: m.region
         };

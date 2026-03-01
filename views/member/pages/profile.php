@@ -239,14 +239,20 @@
                                             <label class="form-label">ตำแหน่ง</label>
                                             <select class="form-control" id="prof_position" name="position">
                                                 <option value="">-- เลือก --</option>
-                                                <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
-                                                <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                                                <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
+                                                <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
                                                 <option value="other">อื่นๆ (กรอกเอง)</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4 mb-3" id="positionOtherWrap" style="display:none">
                                             <label class="form-label">ระบุตำแหน่ง</label>
                                             <input type="text" class="form-control" id="prof_position_other" placeholder="กรอกตำแหน่งของท่าน">
+                                        </div>
+                                        <div class="col-md-4 mb-3" id="academicRankWrap" style="display:none">
+                                            <label class="form-label">วิทยฐานะ</label>
+                                            <select class="form-control" id="prof_academic_rank" name="academic_rank">
+                                                <option value="">-- เลือก --</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </fieldset>
@@ -472,15 +478,44 @@ $(function () {
         }
     });
 
+    // ─── Academic rank options by position ───
+    const academicRankOptions = {
+        'รองผู้อำนวยการสถานศึกษา': [
+            'รองผู้อำนวยการชำนาญการ',
+            'รองผู้อำนวยการชำนาญการพิเศษ',
+            'รองผู้อำนวยการเชี่ยวชาญ'
+        ],
+        'ผู้อำนวยการสถานศึกษา': [
+            'ผู้อำนวยการชำนาญการ',
+            'ผู้อำนวยการชำนาญการพิเศษ',
+            'ผู้อำนวยการเชี่ยวชาญ'
+        ]
+    };
+
+    function updateAcademicRank(position, selectedValue) {
+        const $wrap = $('#academicRankWrap');
+        const $select = $('#prof_academic_rank');
+        const options = academicRankOptions[position];
+        if (options) {
+            $select.html('<option value="">-- เลือก --</option>' + options.map(o => '<option value="' + o + '"' + (o === selectedValue ? ' selected' : '') + '>' + o + '</option>').join(''));
+            $wrap.slideDown(200);
+        } else {
+            $select.html('<option value="">-- เลือก --</option>');
+            $wrap.slideUp(200);
+        }
+    }
+
     // ─── Position toggle ───
     $('#prof_position').on('change', function () {
-        if ($(this).val() === 'other') {
+        const val = $(this).val();
+        if (val === 'other') {
             $('#positionOtherWrap').slideDown(200);
             $('#prof_position_other').focus();
         } else {
             $('#positionOtherWrap').slideUp(200);
             $('#prof_position_other').val('');
         }
+        updateAcademicRank(val);
     });
 
     // ─── jquery.Thailand.js — Home Address ───
@@ -550,7 +585,7 @@ $(function () {
         form.find('[name=region]').val(u.region);
 
         // Position
-        const knownPositions = ['ผู้อำนวยการโรงเรียน', 'รองผู้อำนวยการโรงเรียน'];
+        const knownPositions = ['ผู้อำนวยการสถานศึกษา', 'รองผู้อำนวยการสถานศึกษา'];
         if (u.position && knownPositions.includes(u.position)) {
             $('#prof_position').val(u.position);
         } else if (u.position) {
@@ -558,6 +593,9 @@ $(function () {
             $('#prof_position_other').val(u.position);
             $('#positionOtherWrap').show();
         }
+
+        // Academic rank
+        updateAcademicRank(u.position || '', u.academic_rank || '');
 
         // Birth date
         if (u.birth_date) {
@@ -641,6 +679,7 @@ $(function () {
                 positionVal = $('#prof_position_other').val().trim();
             }
             data.position = positionVal;
+            data.academic_rank = $('#prof_academic_rank').val() || '';
 
             // Combine school prefix + name
             const schoolPrefix = $('#school_prefix').val() || '';

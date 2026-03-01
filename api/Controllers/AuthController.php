@@ -110,6 +110,7 @@ class AuthController extends Controller
             'birth_date'          => !empty($input['birth_date']) ? $input['birth_date'] : null,
             'school_organization' => trim($input['school_organization'] ?? ''),
             'position'            => trim($input['position'] ?? ''),
+            'academic_rank'       => trim($input['academic_rank'] ?? ''),
             'bio'                 => trim($input['bio'] ?? ''),
             'education_area'      => trim($input['education_area'] ?? ''),
             'region'              => trim($input['region'] ?? ''),

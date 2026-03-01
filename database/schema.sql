@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `users` (
     `phone` VARCHAR(20) DEFAULT NULL,
     `school_organization` VARCHAR(255) DEFAULT NULL COMMENT 'โรงเรียน/หน่วยงาน',
     `position` VARCHAR(255) DEFAULT NULL COMMENT 'ตำแหน่ง',
+    `academic_rank` VARCHAR(100) DEFAULT NULL COMMENT 'วิทยฐานะ',
     `profile_image` VARCHAR(500) DEFAULT NULL,
     `bio` TEXT DEFAULT NULL,
     `national_id` VARCHAR(20) DEFAULT NULL COMMENT 'เลขบัตรประชาชน',

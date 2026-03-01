@@ -226,8 +226,8 @@ $extraCss = '
                                 <label for="position">ตำแหน่ง <span class="text-danger">*</span></label>
                                 <select class="form-control" id="position" name="position" required>
                                     <option value="">-- เลือก --</option>
-                                    <option value="ผู้อำนวยการโรงเรียน">ผู้อำนวยการโรงเรียน</option>
-                                    <option value="รองผู้อำนวยการโรงเรียน">รองผู้อำนวยการโรงเรียน</option>
+                                    <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
+                                    <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
                                     <option value="other">อื่นๆ (กรอกเอง)</option>
                                 </select>
                             </div>
@@ -236,6 +236,14 @@ $extraCss = '
                             <div class="form-group">
                                 <label for="position_other">ระบุตำแหน่ง <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="position_other" name="position_other" placeholder="กรอกตำแหน่งของท่าน">
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="regAcademicRankWrap" style="display:none">
+                            <div class="form-group">
+                                <label>วิทยฐานะ</label>
+                                <select class="form-control" id="reg_academic_rank" name="academic_rank">
+                                    <option value="">-- เลือก --</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -939,15 +947,44 @@ $(function () {
         }
     });
 
+    // ─── Academic rank options by position ───
+    const academicRankOptions = {
+        'รองผู้อำนวยการสถานศึกษา': [
+            'รองผู้อำนวยการชำนาญการ',
+            'รองผู้อำนวยการชำนาญการพิเศษ',
+            'รองผู้อำนวยการเชี่ยวชาญ'
+        ],
+        'ผู้อำนวยการสถานศึกษา': [
+            'ผู้อำนวยการชำนาญการ',
+            'ผู้อำนวยการชำนาญการพิเศษ',
+            'ผู้อำนวยการเชี่ยวชาญ'
+        ]
+    };
+
+    function updateRegAcademicRank(position) {
+        const $wrap = $('#regAcademicRankWrap');
+        const $select = $('#reg_academic_rank');
+        const options = academicRankOptions[position];
+        if (options) {
+            $select.html('<option value="">-- เลือก --</option>' + options.map(o => '<option value="' + o + '">' + o + '</option>').join(''));
+            $wrap.slideDown(200);
+        } else {
+            $select.html('<option value="">-- เลือก --</option>');
+            $wrap.slideUp(200);
+        }
+    }
+
     // ─── Position toggle ───
     $('#position').on('change', function () {
-        if ($(this).val() === 'other') {
+        const val = $(this).val();
+        if (val === 'other') {
             $('#positionOtherWrap').slideDown(200);
             $('#position_other').prop('required', true).focus();
         } else {
             $('#positionOtherWrap').slideUp(200);
             $('#position_other').val('').prop('required', false).removeClass('is-invalid');
         }
+        updateRegAcademicRank(val);
     });
 
     // ─── jquery.Thailand.js — Home Address ───
@@ -1085,6 +1122,7 @@ $(function () {
                 phone:               $('#phone').val().trim(),
                 member_type:         $('#member_type').val(),
                 position:            positionVal,
+                academic_rank:       $('#reg_academic_rank').val() || '',
                 school_organization: (function() {
                     const p = $('#school_prefix').val();
                     const n = $('#school_organization').val().trim();

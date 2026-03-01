@@ -14,7 +14,7 @@ class MemberController extends Controller
 {
     /** All extended profile fields (full_name is auto-generated, not editable directly) */
     private const PROFILE_FIELDS = [
-        'prefix','phone','school_organization','position','bio','profile_image',
+        'prefix','phone','school_organization','position','academic_rank','bio','profile_image',
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone','member_number'
     ];
@@ -773,7 +773,7 @@ class MemberController extends Controller
 
                 // Optional fields
                 $optionalFields = [
-                    'phone','school_organization','position','national_id',
+                    'phone','school_organization','position','academic_rank','national_id',
                     'birth_date','education_area','region','work_phone'
                 ];
                 foreach ($optionalFields as $f) {
