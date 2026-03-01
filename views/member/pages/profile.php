@@ -293,14 +293,6 @@
                                             <label>โทรศัพท์ (ที่ทำงาน)</label>
                                             <input type="tel" class="form-control" name="work_phone">
                                         </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>สังกัดเขตพื้นที่</label>
-                                            <select class="form-control" name="education_area">
-                                                <option value="">-- เลือก --</option>
-                                                <option>สพป.</option><option>สพม.</option><option>สพอ.</option>
-                                                <option>สช.</option><option>อื่นๆ</option>
-                                            </select>
-                                        </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-2 mb-2"><label>เลขที่</label><input type="text" class="form-control" id="w_no"></div>
@@ -319,6 +311,14 @@
                                         <div class="col-md-3 mb-2"><label>รหัสไปรษณีย์</label><input type="text" class="form-control" id="w_postal" maxlength="5"></div>
                                     </div>
                                     <div class="row">
+                                        <div class="col-md-3 mb-2">
+                                            <label>สังกัดเขตพื้นที่</label>
+                                            <select class="form-control" name="education_area">
+                                                <option value="">-- เลือก --</option>
+                                                <option>สพป.</option><option>สพม.</option><option>สพอ.</option>
+                                                <option>สช.</option><option>อื่นๆ</option>
+                                            </select>
+                                        </div>
                                         <div class="col-md-3 mb-2">
                                             <label>ภาค</label>
                                             <select class="form-control" name="region">
