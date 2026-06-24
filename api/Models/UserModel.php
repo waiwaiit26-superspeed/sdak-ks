@@ -19,6 +19,15 @@ class UserModel extends Model
         'approved_by','approved_at','cancelled_at','cancel_reason','created_at','updated_at'
     ];
 
+    /**
+     * Fallback profile columns for older schemas that may not have newly added fields yet.
+     */
+    private const LEGACY_PROFILE_COLUMNS = [
+        'id','username','email','role','member_type','status',
+        'prefix','full_name','phone','school_organization','position',
+        'approved_at','created_at','updated_at'
+    ];
+
     /** Columns safe to return (no password / google_id) */
     public const SAFE_COLUMNS = [
         'id','username','email','role','member_type','member_number','status',
@@ -38,6 +47,29 @@ class UserModel extends Model
         'home_address','work_address','education_area','region','work_phone',
         'approved_at','created_at','updated_at'
     ];
+
+    /**
+     * Find profile by id with backward-compatible column fallback.
+     */
+    public function findProfileSafe(int $id): ?array
+    {
+        try {
+            return $this->find($id, self::PROFILE_COLUMNS);
+        } catch (\Throwable $e) {
+            $profile = $this->find($id, self::LEGACY_PROFILE_COLUMNS);
+            if ($profile) {
+                foreach ([
+                    'member_number','academic_rank','profile_image','bio','national_id','first_name','last_name',
+                    'birth_date','home_address','work_address','education_area','region','work_phone'
+                ] as $missingKey) {
+                    if (!array_key_exists($missingKey, $profile)) {
+                        $profile[$missingKey] = null;
+                    }
+                }
+            }
+            return $profile;
+        }
+    }
 
     public function findByLogin(string $login): ?array
     {

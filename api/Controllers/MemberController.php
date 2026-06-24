@@ -30,7 +30,7 @@ class MemberController extends Controller
         }
 
         $users   = $this->model('UserModel');
-        $profile = $users->find($userId, $users::PROFILE_COLUMNS);
+        $profile = $users->findProfileSafe($userId);
         if (!$profile) Response::error('ไม่พบข้อมูลผู้ใช้', 404);
 
         // Format member_number for display
