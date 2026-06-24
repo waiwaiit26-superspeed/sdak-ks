@@ -10,6 +10,15 @@ class UserModel extends Model
 {
     protected string $table = 'users';
 
+    /**
+     * Fallback columns for older schemas that may not have newly added fields yet.
+     */
+    private const LEGACY_LIST_COLUMNS = [
+        'id','username','email','role','member_type','status',
+        'prefix','full_name','phone','school_organization','position',
+        'approved_by','approved_at','cancelled_at','cancel_reason','created_at','updated_at'
+    ];
+
     /** Columns safe to return (no password / google_id) */
     public const SAFE_COLUMNS = [
         'id','username','email','role','member_type','member_number','status',
@@ -149,6 +158,12 @@ class UserModel extends Model
         }
 
         $where['ORDER'] = ['created_at' => 'DESC'];
-        return $this->paginate(self::SAFE_COLUMNS, $where, $page, $perPage);
+
+        try {
+            return $this->paginate(self::SAFE_COLUMNS, $where, $page, $perPage);
+        } catch (\Throwable $e) {
+            // Backward compatibility for sites that have not applied the latest migrations.
+            return $this->paginate(self::LEGACY_LIST_COLUMNS, $where, $page, $perPage);
+        }
     }
 }

@@ -515,6 +515,16 @@ function initDataTable() {
             if (type) params.member_type = type;
 
             API.getMembers(params).then(json => {
+                if (!json || json.success === false) {
+                    App.error((json && json.message) ? json.message : 'ไม่สามารถโหลดข้อมูลสมาชิกได้');
+                    callback({
+                        draw: data.draw,
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: []
+                    });
+                    return;
+                }
                 callback({
                     draw: data.draw,
                     recordsTotal: json.pagination ? json.pagination.total : 0,
