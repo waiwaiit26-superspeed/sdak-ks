@@ -178,6 +178,9 @@ class MemberController extends Controller
         $prefix = $settings->get('member_number_prefix', '');
         $digits = (int)$settings->get('member_number_digits', '4');
         foreach ($result['data'] as &$row) {
+            if (($row['role'] ?? '') === 'user') {
+                $row['role'] = 'member';
+            }
             if (!empty($row['member_number'])) {
                 $row['member_number'] = UserModel::formatMemberNumber($row['member_number'], $prefix, $digits);
             }

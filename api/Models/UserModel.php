@@ -128,7 +128,14 @@ class UserModel extends Model
 
         if (!empty($filters['status']))      $where['status'] = $filters['status'];
         if (!empty($filters['member_type'])) $where['member_type'] = $filters['member_type'];
-        if (!empty($filters['role']))        $where['role'] = $filters['role'];
+        if (!empty($filters['role'])) {
+            // Backward compatibility: some older records may use role='user' for members.
+            if ($filters['role'] === 'member') {
+                $where['role'] = ['member', 'user'];
+            } else {
+                $where['role'] = $filters['role'];
+            }
+        }
 
         if (!empty($filters['search'])) {
             $s = '%' . $filters['search'] . '%';

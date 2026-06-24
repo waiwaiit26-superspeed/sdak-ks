@@ -48,7 +48,7 @@
                     <div class="d-flex flex-wrap mb-1" style="gap:.4rem">
                         <select id="filterRole" class="form-control form-control-sm" style="width:auto">
                             <option value="">บทบาท: ทั้งหมด</option>
-                            <option value="member" selected>สมาชิก</option>
+                            <option value="member">สมาชิก</option>
                             <option value="admin">ผู้ดูแลระบบ</option>
                         </select>
                         <select id="filterStatus" class="form-control form-control-sm" style="width:auto">
