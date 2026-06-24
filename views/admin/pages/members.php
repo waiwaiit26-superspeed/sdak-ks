@@ -542,7 +542,13 @@ function initDataTable() {
                     return '<strong>' + name + '</strong><br><small class="text-muted">' + (row.username || '') + '</small> ' + role;
                 }
             },
-            { data: 'member_number', responsivePriority: 5, render: d => d ? '<span class="badge badge-outline-primary">' + App.escapeHtml(d) + '</span>' : '<span class="text-muted">-</span>' },
+            {
+                data: null,
+                responsivePriority: 5,
+                render: (d, t, row) => row.member_number
+                    ? '<span class="badge badge-outline-primary">' + App.escapeHtml(row.member_number) + '</span>'
+                    : '<span class="text-muted">-</span>'
+            },
             { data: 'email', responsivePriority: 7, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
             { data: 'phone', responsivePriority: 6, render: d => d || '-' },
             {
