@@ -197,14 +197,26 @@ class AuthController extends Controller
         }
 
         if ($user) {
-            // ── ผู้ใช้เดิม: ผูก Google ID (ถ้ายังไม่มี) แล้ว login ปกติ ──
-            if (empty($user['google_id'])) {
-                $users->update([
-                    'google_id'     => $gUser['sub'],
-                    'profile_image' => $gUser['picture'] ?? $user['profile_image'],
-                ], ['id' => $user['id']]);
-                $user = $users->find((int)$user['id']);
+            // ── ผู้ใช้เดิม: sync Google ID + รูปโปรไฟล์จาก Google แล้ว login ปกติ ──
+            $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
+            $syncData = [
+                'google_id' => $gUser['sub'],
+            ];
+            if ($googlePicture !== '') {
+                $syncData['profile_image'] = $googlePicture;
             }
+
+            // ไม่ block login หาก schema เก่ายังไม่มีบางคอลัมน์
+            try {
+                $users->update($syncData, ['id' => $user['id']]);
+            } catch (\Throwable $e) {
+                try {
+                    $users->update(['google_id' => $gUser['sub']], ['id' => $user['id']]);
+                } catch (\Throwable $ignore) {
+                    // ignore sync error and continue login
+                }
+            }
+            $user = $users->find((int)$user['id']);
 
             if ($user['status'] === 'suspended') Response::error('บัญชีของคุณถูกระงับ', 403);
             if ($user['status'] === 'cancelled') Response::error('บัญชีของคุณถูกยกเลิก กรุณาติดต่อผู้ดูแลระบบ', 403);
@@ -340,17 +352,27 @@ class AuthController extends Controller
 
         if ($user) {
             // มีบัญชีแล้ว → update member_type + google_id + ชื่อ (ถ้ากรอกมา)
+            $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
             $updateData = [
                 'member_type' => $memberType,
                 'google_id'   => $gUser['sub'],
             ];
+            if ($googlePicture !== '') {
+                $updateData['profile_image'] = $googlePicture;
+            }
             if ($inputFirstName !== '') {
                 $updateData['prefix']     = $inputPrefix;
                 $updateData['first_name'] = $inputFirstName;
                 $updateData['last_name']  = $inputLastName;
                 $updateData['full_name']  = self::buildFullName($inputPrefix, $inputFirstName, $inputLastName);
             }
-            $users->update($updateData, ['id' => $user['id']]);
+            // ไม่ block register หาก schema เก่ายังไม่มี profile_image
+            try {
+                $users->update($updateData, ['id' => $user['id']]);
+            } catch (\Throwable $e) {
+                unset($updateData['profile_image']);
+                $users->update($updateData, ['id' => $user['id']]);
+            }
             $userId = (int)$user['id'];
         } else {
             // ── สร้าง user ใหม่พร้อม member_type ──
@@ -368,6 +390,7 @@ class AuthController extends Controller
                 $gFullName  = self::buildFullName('', $gFirstName, $gLastName);
             }
 
+            $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
             $userId = (int)$users->create([
                 'username'      => $uname,
                 'email'         => $gUser['email'],
@@ -379,7 +402,7 @@ class AuthController extends Controller
                 'full_name'     => $gFullName,
                 'first_name'    => $gFirstName,
                 'last_name'     => $gLastName,
-                'profile_image' => $gUser['picture'] ?? null,
+                'profile_image' => $googlePicture !== '' ? $googlePicture : null,
             ]);
             $auth->logAction($userId, 'registered', null, null, "สมัครผ่าน Google ประเภท: {$memberType}");
             Auth::logActivity($userId, 'register', 'auth', "สมัครสมาชิกใหม่ผ่าน Google ประเภท: {$memberType}", $userId, 'user');
@@ -759,5 +782,21 @@ class AuthController extends Controller
         if ($clientId && ($d['aud'] ?? '') !== $clientId) return null;
 
         return $d;
+    }
+
+    /**
+     * Validate and normalize Google picture URL before saving.
+     */
+    private function sanitizeGooglePictureUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') return '';
+        if (!filter_var($url, FILTER_VALIDATE_URL)) return '';
+
+        $parts = parse_url($url);
+        $scheme = strtolower($parts['scheme'] ?? '');
+        if (!in_array($scheme, ['http', 'https'], true)) return '';
+
+        return $url;
     }
 }
