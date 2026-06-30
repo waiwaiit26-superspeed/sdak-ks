@@ -56,17 +56,18 @@ class MemberController extends Controller
      */
     public function update(): void
     {
-        $this->requirePost();
-        $input  = $this->input();
-        $auth   = new Auth();
-        $users  = $this->model('UserModel');
-        $userId = (int)$this->currentUser['id'];
+        try {
+            $this->requirePost();
+            $input  = $this->input();
+            $auth   = new Auth();
+            $users  = $this->model('UserModel');
+            $userId = (int)$this->currentUser['id'];
 
-        if (isset($input['user_id']) && $this->currentUser['role'] === 'admin') {
-            $userId = (int)$input['user_id'];
-        }
+            if (isset($input['user_id']) && $this->currentUser['role'] === 'admin') {
+                $userId = (int)$input['user_id'];
+            }
 
-        $data = [];
+            $data = [];
         foreach (self::PROFILE_FIELDS as $f) {
             if (isset($input[$f])) {
                 $val = $input[$f];
@@ -136,7 +137,7 @@ class MemberController extends Controller
         }
 
         $users->update($data, ['id' => $userId]);
-        $auth->logAction($userId, 'profile_updated', null, json_encode(array_keys($data)), null, (int)$this->currentUser['id']);
+        $auth->logAction($userId, 'profile_updated', null, json_encode(array_keys($data), JSON_UNESCAPED_UNICODE), null, (int)$this->currentUser['id']);
 
         $changedFields = implode(', ', array_keys($data));
         $targetUser = $users->find($userId, ['full_name']);
@@ -158,6 +159,10 @@ class MemberController extends Controller
             $updated['member_number'] = UserModel::formatMemberNumber($updated['member_number'], $pfx, $dgt);
         }
         Response::success($updated, 'อัปเดตข้อมูลสำเร็จ');
+        } catch (\Throwable $e) {
+            error_log('MemberController update error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            Response::error('เกิดข้อผิดพลาดในการอัปเดตข้อมูลโปรไฟล์', 500);
+        }
     }
 
     /**

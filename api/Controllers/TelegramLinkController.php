@@ -71,7 +71,12 @@ class TelegramLinkController extends Controller {
 
         $userId = $this->currentUser['id'];
         $model = $this->model('TelegramLinkModel');
-        $telegramInfo = $model->getTelegramInfo($userId);
+        try {
+            $telegramInfo = $model->getTelegramInfo($userId);
+        } catch (\Throwable $e) {
+            error_log('TelegramLinkController status error: ' . $e->getMessage());
+            $telegramInfo = ['telegram_chat_id' => null, 'telegram_linked_at' => null];
+        }
 
         $isLinked = !empty($telegramInfo['telegram_chat_id']);
 
@@ -84,7 +89,12 @@ class TelegramLinkController extends Controller {
         // ดึงข้อมูล Bot จาก Telegram API (cache ได้)
         $botInfo = null;
         if (!empty($botToken)) {
-            $botInfo = $this->getBotInfo($botToken);
+            try {
+                $botInfo = $this->getBotInfo($botToken);
+            } catch (\Throwable $e) {
+                error_log('TelegramLinkController getBotInfo failed: ' . $e->getMessage());
+                $botInfo = null;
+            }
         }
 
         Response::success([

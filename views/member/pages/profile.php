@@ -32,7 +32,7 @@
             <div class="card shadow-sm">
                 <div class="card-body text-center">
                     <div class="position-relative d-inline-block mb-3">
-                        <img id="profileAvatar" src="./assets/images/default-avatar.png"
+                        <img id="profileAvatar" src="<?php echo $basePath; ?>assets/images/default-avatar.png"
                             class="rounded-circle border" width="120" height="120"
                             style="object-fit:cover; cursor:pointer" alt="avatar"
                             onclick="$('#avatarOptionsModal').modal('show')" title="คลิกเพื่อเปลี่ยนรูป">
