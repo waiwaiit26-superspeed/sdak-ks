@@ -32,9 +32,11 @@
             <div class="card shadow-sm">
                 <div class="card-body text-center">
                     <div class="position-relative d-inline-block mb-3">
-                        <img id="profileAvatar" src="<?php echo $basePath; ?>assets/images/default-avatar.png"
+                        <img id="profileAvatar" src="<?php echo ($basePath ?? './'); ?>assets/images/default-avatar.png"
+                            data-default-avatar="<?php echo ($basePath ?? './'); ?>assets/images/default-avatar.png"
                             class="rounded-circle border" width="120" height="120"
                             style="object-fit:cover; cursor:pointer" alt="avatar"
+                            onerror="this.onerror=null;this.src='<?php echo ($basePath ?? './'); ?>assets/images/default-avatar.png'"
                             onclick="$('#avatarOptionsModal').modal('show')" title="คลิกเพื่อเปลี่ยนรูป">
                         <span class="btn btn-sm btn-primary position-absolute rounded-circle"
                             style="width:32px;height:32px;padding:4px;bottom:0;right:0;cursor:pointer"
@@ -573,7 +575,8 @@ $(function () {
         }
         $('#profileTypeBadge').html(App.getMemberTypeBadge(u.member_type));
         $('#profileStatusBadge').html(App.getStatusBadge(u.status));
-        if (u.profile_image) $('#profileAvatar').attr('src', App.imgUrl(u.profile_image));
+        const defaultAvatar = (typeof BASE_PATH !== 'undefined' ? BASE_PATH : './') + 'assets/images/default-avatar.png';
+        $('#profileAvatar').attr('src', u.profile_image ? App.imgUrl(u.profile_image) : defaultAvatar);
 
         // Fill form
         const form = $('#profileForm');

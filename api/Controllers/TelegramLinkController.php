@@ -65,51 +65,67 @@ class TelegramLinkController extends Controller {
      * GET /api?controller=telegram-link&action=status
      */
     public function status() {
-        if (!$this->currentUser) {
-            Response::unauthorized('กรุณาล็อกอินก่อน');
-        }
-
-        $userId = $this->currentUser['id'];
-        $model = $this->model('TelegramLinkModel');
         try {
-            $telegramInfo = $model->getTelegramInfo($userId);
-        } catch (\Throwable $e) {
-            error_log('TelegramLinkController status error: ' . $e->getMessage());
-            $telegramInfo = ['telegram_chat_id' => null, 'telegram_linked_at' => null];
-        }
-
-        $isLinked = !empty($telegramInfo['telegram_chat_id']);
-
-        // ดึงข้อมูล Bot จาก settings
-        $settings = $this->model('SettingsModel');
-        $botToken = $settings->get('member_bot_token', '');
-        $botUsername = $settings->get('member_bot_username', '');
-        $botEnabled = $settings->get('member_bot_enabled', '0');
-
-        // ดึงข้อมูล Bot จาก Telegram API (cache ได้)
-        $botInfo = null;
-        if (!empty($botToken)) {
-            try {
-                $botInfo = $this->getBotInfo($botToken);
-            } catch (\Throwable $e) {
-                error_log('TelegramLinkController getBotInfo failed: ' . $e->getMessage());
-                $botInfo = null;
+            if (!$this->currentUser) {
+                Response::unauthorized('กรุณาล็อกอินก่อน');
             }
-        }
 
-        Response::success([
-            'is_linked' => $isLinked,
-            'chat_id' => $isLinked ? $telegramInfo['telegram_chat_id'] : null,
-            'linked_at' => $telegramInfo['telegram_linked_at'] ?? null,
-            'linked_at_thai' => !empty($telegramInfo['telegram_linked_at']) ? 
-                $this->formatThaiDate($telegramInfo['telegram_linked_at']) : null,
-            'bot' => $botInfo ? [
-                'name' => $botInfo['first_name'] ?? '',
-                'username' => $botInfo['username'] ?? $botUsername,
-                'photo_url' => $botInfo['photo_url'] ?? null,
-                'enabled' => $botEnabled === '1',
-            ] : null
-        ]);
+            $userId = $this->currentUser['id'];
+            $model = $this->model('TelegramLinkModel');
+            $telegramInfo = null;
+            try {
+                $telegramInfo = $model->getTelegramInfo($userId);
+            } catch (\Throwable $e) {
+                error_log('TelegramLinkController getTelegramInfo failed: ' . $e->getMessage());
+                $telegramInfo = ['telegram_chat_id' => null, 'telegram_linked_at' => null];
+            }
+
+            if (!is_array($telegramInfo)) {
+                $telegramInfo = ['telegram_chat_id' => null, 'telegram_linked_at' => null];
+            }
+
+            $isLinked = !empty($telegramInfo['telegram_chat_id']);
+
+            // ดึงข้อมูล Bot จาก settings
+            $settings = $this->model('SettingsModel');
+            $botToken = $settings->get('member_bot_token', '');
+            $botUsername = $settings->get('member_bot_username', '');
+            $botEnabled = $settings->get('member_bot_enabled', '0');
+
+            // ดึงข้อมูล Bot จาก Telegram API (cache ได้)
+            $botInfo = null;
+            if (!empty($botToken)) {
+                try {
+                    $botInfo = $this->getBotInfo($botToken);
+                } catch (\Throwable $e) {
+                    error_log('TelegramLinkController getBotInfo failed: ' . $e->getMessage());
+                    $botInfo = null;
+                }
+            }
+
+            Response::success([
+                'is_linked' => $isLinked,
+                'chat_id' => $isLinked ? $telegramInfo['telegram_chat_id'] : null,
+                'linked_at' => $telegramInfo['telegram_linked_at'] ?? null,
+                'linked_at_thai' => !empty($telegramInfo['telegram_linked_at']) ? 
+                    $this->formatThaiDate($telegramInfo['telegram_linked_at']) : null,
+                'bot' => $botInfo ? [
+                    'name' => $botInfo['first_name'] ?? '',
+                    'username' => $botInfo['username'] ?? $botUsername,
+                    'photo_url' => $botInfo['photo_url'] ?? null,
+                    'enabled' => $botEnabled === '1',
+                ] : null
+            ]);
+        } catch (\Throwable $e) {
+            error_log('TelegramLinkController status error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            Response::success([
+                'is_linked' => false,
+                'chat_id' => null,
+                'linked_at' => null,
+                'linked_at_thai' => null,
+                'bot' => null
+            ]);
+        }
     }
 
     /**
