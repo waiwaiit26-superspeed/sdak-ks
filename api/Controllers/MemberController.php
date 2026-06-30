@@ -14,7 +14,7 @@ class MemberController extends Controller
 {
     /** All extended profile fields (full_name is auto-generated, not editable directly) */
     private const PROFILE_FIELDS = [
-        'prefix','phone','school_organization','position','academic_rank','bio','profile_image',
+        'prefix','phone','school_organization','position','academic_rank','bio','profile_image','email',
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone','member_number'
     ];
@@ -149,7 +149,7 @@ class MemberController extends Controller
             $userId, 'user'
         );
 
-        $updated = $users->find($userId, $users::PROFILE_COLUMNS);
+        $updated = $users->findProfileSafe($userId);
         // Format member_number for display
         if (!empty($updated['member_number'])) {
             if (!isset($settings)) $settings = $this->model('SettingsModel');
