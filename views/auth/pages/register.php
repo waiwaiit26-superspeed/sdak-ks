@@ -1,5 +1,12 @@
 <?php $pageTitle = 'สมัครสมาชิก'; $authBodyClass = 'register-page'; ?>
 <?php
+// ── Feature flag: ปิด/เปิด การสมัครด้วยฟอร์ม ──
+// กำหนดใน config/sites/xxx.php → define('FORM_REGISTRATION_ENABLED', false/true);
+// false = Google เป็นหลัก, ฟอร์มซ่อนไว้ (กดเปิดได้)
+// true  = แสดงฟอร์มปกติ (พฤติกรรมเดิม)
+$formRegEnabled = defined('FORM_REGISTRATION_ENABLED') ? FORM_REGISTRATION_ENABLED : true;
+?>
+<?php
 $extraCss = '
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
@@ -75,6 +82,32 @@ $extraCss = '
     .bank-info-box .bi { color: #0284c7; margin-right: 6px; }
     .bank-info-box strong { color: #0c4a6e; }
     .bank-info-box .bank-row { margin-bottom: 4px; font-size: .92rem; }
+
+    /* ─── Google Primary Mode ─── */
+    .reg-google-primary { padding: 8px 0 4px; }
+    .reg-google-badge {
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        font-size: .82rem; color: #6b7280; margin-bottom: 12px;
+    }
+    .reg-google-btn-primary {
+        display: flex !important; align-items: center; justify-content: center;
+        gap: 10px; padding: 13px 20px !important; font-size: 1rem !important;
+        font-weight: 600 !important; border-radius: 10px !important;
+        border: 2px solid #dadce0 !important; background: #fff !important;
+        color: #3c4043 !important; transition: box-shadow .2s, border-color .2s !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08) !important;
+    }
+    .reg-google-btn-primary:hover {
+        border-color: #4285F4 !important; box-shadow: 0 2px 8px rgba(66,133,244,.2) !important;
+        background: #f8fbff !important;
+    }
+    .reg-form-toggle-wrap { padding: 4px 0; }
+    #btnShowFormReg {
+        color: #9ca3af; text-decoration: none; font-size: .82rem;
+        border: 1px dashed #d1d5db; border-radius: 8px;
+        padding: 7px 18px; transition: all .2s;
+    }
+    #btnShowFormReg:hover { color: #374151; border-color: #9ca3af; background: #f9fafb; text-decoration: none; }
 
     /* ─── Setup Modal Form Styles (AdminLTE-like) ─── */
     .setup-modal .setup-form-group {
@@ -152,6 +185,33 @@ $extraCss = '
             <p class="text-muted mb-0" id="regSubtitle"></p>
         </div>
         <div class="card-body register-card-body">
+            <?php if (!$formRegEnabled): ?>
+            <!-- ── Google Primary Section (FORM_REGISTRATION_ENABLED = false) ── -->
+            <div id="googleRegBtnWrap" style="display:none;">
+                <div class="reg-google-primary">
+                    <div class="reg-google-badge">
+                        <i class="bi bi-shield-check" style="color:#34A853;font-size:1rem;"></i>
+                        แนะนำ: สมัครด้วยบัญชี Google เพื่อความสะดวกและปลอดภัย
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-block reg-google-btn-primary" id="btnGoogleReg">
+                        <svg viewBox="0 0 24 24" style="width:22px;height:22px;flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        สมัครด้วย Google
+                    </button>
+                </div>
+            </div>
+            <div class="text-center mt-3 reg-form-toggle-wrap" id="formRegToggleWrap">
+                <small class="text-muted d-block mb-2">หรือ</small>
+                <button type="button" class="btn" id="btnShowFormReg">
+                    <i class="fas fa-keyboard mr-1"></i> สมัครด้วยการกรอกฟอร์ม
+                </button>
+            </div>
+            <div id="formRegSection" style="display:none;">
+                <hr class="mt-3 mb-3">
+            <?php else: ?>
+            <!-- ── Form Primary Section (FORM_REGISTRATION_ENABLED = true) ── -->
+            <div id="formRegSection">
+            <?php endif; ?>
+
             <form id="registerForm" novalidate>
                 <!-- ข้อมูลทั่วไป -->
                 <fieldset class="border rounded p-3 mb-3">
@@ -398,6 +458,9 @@ $extraCss = '
                 </div>
             </form>
 
+            </div><!-- /#formRegSection -->
+
+            <?php if ($formRegEnabled): ?>
             <div id="googleRegBtnWrap" style="display:none;">
                 <div class="text-center my-2"><small class="text-muted">หรือ</small></div>
                 <button type="button" class="btn btn-outline-secondary btn-block" id="btnGoogleReg" style="display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -405,6 +468,7 @@ $extraCss = '
                     สมัครด้วย Google
                 </button>
             </div>
+            <?php endif; ?>
 
             <p class="mt-3 mb-0 text-center">
                 <a href="<?php echo $basePath; ?>"><i class="bi bi-house-door"></i> หน้าหลัก</a>
@@ -590,7 +654,11 @@ $(function () {
                         });
                     }
                     initGSI();
-                }
+                }<?php if (!$formRegEnabled): ?> else {
+                    // ไม่มี Google Client ID — แสดงฟอร์มโดยตรง
+                    $('#formRegToggleWrap').hide();
+                    $('#formRegSection').show();
+                }<?php endif; ?>
             }
         } catch (e) { /* ignore */ }
     })();
@@ -613,6 +681,17 @@ $(function () {
 
     // ─── Google Sign-In handler ───
     let _setupData = null;
+
+<?php if (!$formRegEnabled): ?>
+    // ─── Form Registration Toggle (FORM_REGISTRATION_ENABLED = false) ───
+    $('#btnShowFormReg').on('click', function() {
+        $('#formRegToggleWrap').slideUp(200, function() {
+            $('#formRegSection').slideDown(300);
+            $('html, body').animate({ scrollTop: $('#formRegSection').offset().top - 20 }, 300);
+        });
+    });
+<?php endif; ?>
+
     let _selectedMemberType = null;
     let _uploadedSlipUrl = null;
     let _googleToken = null;
