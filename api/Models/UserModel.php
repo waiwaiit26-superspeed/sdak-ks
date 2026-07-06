@@ -32,7 +32,7 @@ class UserModel extends Model
     public const SAFE_COLUMNS = [
         'id','username','email','role','member_type','member_number','status',
         'prefix','full_name','phone','school_organization','position','academic_rank',
-        'profile_image','bio',
+        'profile_image','google_picture','bio',
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone',
         'approved_by','approved_at','cancelled_at',
@@ -42,7 +42,7 @@ class UserModel extends Model
     public const PROFILE_COLUMNS = [
         'id','username','email','role','member_type','member_number','status',
         'prefix','full_name','phone','school_organization','position','academic_rank',
-        'profile_image','bio',
+        'profile_image','google_picture','bio',
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone',
         'approved_at','created_at','updated_at'

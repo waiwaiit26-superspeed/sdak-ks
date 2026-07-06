@@ -575,8 +575,7 @@ $(function () {
         }
         $('#profileTypeBadge').html(App.getMemberTypeBadge(u.member_type));
         $('#profileStatusBadge').html(App.getStatusBadge(u.status));
-        const defaultAvatar = (typeof BASE_PATH !== 'undefined' ? BASE_PATH : './') + 'assets/images/default-avatar.png';
-        $('#profileAvatar').attr('src', u.profile_image ? App.imgUrl(u.profile_image) : defaultAvatar);
+        $('#profileAvatar').attr('src', App.getProfileImage(u, true));
 
         // Fill form
         const form = $('#profileForm');
@@ -736,8 +735,16 @@ $(function () {
                     if (result.success) {
                         App.success('บันทึกข้อมูลสำเร็จ');
                         const user = API.getUser();
-                        Object.assign(user, data);
-                        localStorage.setItem('sdak_user', JSON.stringify(user));
+                        if (user) {
+                            Object.assign(user, data);
+                            if (result.data && typeof result.data === 'object' && result.data.profile_image !== undefined) {
+                                user.profile_image = result.data.profile_image;
+                            }
+                            localStorage.setItem('sdak_user', JSON.stringify(user));
+                        }
+                        if (result.data && result.data.profile_image) {
+                            $('#profileAvatar').attr('src', App.imgUrl(result.data.profile_image, true));
+                        }
                         App.updateNavbar();
                     } else {
                         App.error(result.message);
@@ -850,14 +857,18 @@ $(function () {
             const result = await response.json();
             if (result.success) {
                 const url = result.data.url;
-                $('#profileAvatar').attr('src', App.imgUrl(url));
-                await API.updateProfile({ profile_image: url });
-                // Update local storage
-                const user = API.getUser();
-                if (user) { user.profile_image = url; localStorage.setItem('sdak_user', JSON.stringify(user)); }
-                App.updateNavbar();
-                $('#avatarCropperModal').modal('hide');
-                App.success('อัปโหลดรูปโปรไฟล์สำเร็จ');
+                const updateResult = await API.updateProfile({ profile_image: url });
+                if (updateResult.success) {
+                    const savedUrl = updateResult.data?.profile_image || url;
+                    $('#profileAvatar').attr('src', App.imgUrl(savedUrl, true));
+                    const user = API.getUser();
+                    if (user) { user.profile_image = savedUrl; localStorage.setItem('sdak_user', JSON.stringify(user)); }
+                    App.updateNavbar();
+                    $('#avatarCropperModal').modal('hide');
+                    App.success('อัปโหลดรูปโปรไฟล์สำเร็จ');
+                } else {
+                    App.error(updateResult.message || 'เกิดข้อผิดพลาดในการบันทึกรูปโปรไฟล์');
+                }
             } else {
                 App.error(result.message);
             }
@@ -883,9 +894,10 @@ $(function () {
         if (!url) { App.error('กรุณากรอก URL รูปภาพ'); return; }
         const result = await API.updateProfile({ profile_image: url });
         if (result.success) {
-            $('#profileAvatar').attr('src', url);
+            const savedUrl = result.data?.profile_image || url;
+            $('#profileAvatar').attr('src', App.imgUrl(savedUrl, true));
             const user = API.getUser();
-            if (user) { user.profile_image = url; localStorage.setItem('sdak_user', JSON.stringify(user)); }
+            if (user) { user.profile_image = savedUrl; localStorage.setItem('sdak_user', JSON.stringify(user)); }
             App.updateNavbar();
             $('#avatarOptionsModal').modal('hide');
             App.success('บันทึกรูปโปรไฟล์สำเร็จ');

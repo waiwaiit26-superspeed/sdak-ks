@@ -855,7 +855,7 @@ async function viewMember(id) {
     body.html(
         '<div class="row">' +
             '<div class="col-md-4 text-center mb-3">' +
-                '<img src="' + (u.profile_image ? App.imgUrl(u.profile_image) : '../assets/images/default-avatar.png') + '" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover">' +
+                '<img src="' + App.getProfileImage(u) + '" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover">' +
                 '<h5>' + App.escapeHtml(displayName) + '</h5>' +
                 App.getRoleBadge(u.role) + ' ' + (u.member_type ? App.getMemberTypeBadge(u.member_type) : '') + ' ' + App.getStatusBadge(u.status) +
                 '<div class="mt-2"><button class="btn btn-sm btn-outline-primary" onclick="$(\'#memberViewModal\').modal(\'hide\');editMember(' + u.id + ')"><i class="bi bi-pencil"></i> แก้ไข</button></div>' +

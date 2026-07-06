@@ -200,9 +200,11 @@ class AuthController extends Controller
             // ── ผู้ใช้เดิม: sync Google ID + รูปโปรไฟล์จาก Google แล้ว login ปกติ ──
             $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
             $syncData = [
-                'google_id' => $gUser['sub'],
+                'google_id'      => $gUser['sub'],
+                'google_picture' => $googlePicture ?: null,  // sync Google pic เสมอ
             ];
-            if ($googlePicture !== '') {
+            // ตั้ง profile_image จาก Google เฉพาะเมื่อ user ยังไม่มีรูปของตัวเอง
+            if ($googlePicture !== '' && empty($user['profile_image'])) {
                 $syncData['profile_image'] = $googlePicture;
             }
 
@@ -354,10 +356,12 @@ class AuthController extends Controller
             // มีบัญชีแล้ว → update member_type + google_id + ชื่อ (ถ้ากรอกมา)
             $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
             $updateData = [
-                'member_type' => $memberType,
-                'google_id'   => $gUser['sub'],
+                'member_type'    => $memberType,
+                'google_id'      => $gUser['sub'],
+                'google_picture' => $googlePicture ?: null,
             ];
-            if ($googlePicture !== '') {
+            // ตั้ง profile_image จาก Google เฉพาะเมื่อ user ยังไม่มีรูปของตัวเอง
+            if ($googlePicture !== '' && empty($user['profile_image'])) {
                 $updateData['profile_image'] = $googlePicture;
             }
             if ($inputFirstName !== '') {
@@ -370,7 +374,7 @@ class AuthController extends Controller
             try {
                 $users->update($updateData, ['id' => $user['id']]);
             } catch (\Throwable $e) {
-                unset($updateData['profile_image']);
+                unset($updateData['profile_image'], $updateData['google_picture']);
                 $users->update($updateData, ['id' => $user['id']]);
             }
             $userId = (int)$user['id'];
@@ -392,17 +396,18 @@ class AuthController extends Controller
 
             $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
             $userId = (int)$users->create([
-                'username'      => $uname,
-                'email'         => $gUser['email'],
-                'google_id'     => $gUser['sub'],
-                'role'          => 'member',
-                'member_type'   => $memberType,
-                'status'        => 'pending',
-                'prefix'        => $inputPrefix,
-                'full_name'     => $gFullName,
-                'first_name'    => $gFirstName,
-                'last_name'     => $gLastName,
-                'profile_image' => $googlePicture !== '' ? $googlePicture : null,
+                'username'       => $uname,
+                'email'          => $gUser['email'],
+                'google_id'      => $gUser['sub'],
+                'role'           => 'member',
+                'member_type'    => $memberType,
+                'status'         => 'pending',
+                'prefix'         => $inputPrefix,
+                'full_name'      => $gFullName,
+                'first_name'     => $gFirstName,
+                'last_name'      => $gLastName,
+                'google_picture' => $googlePicture ?: null,
+                // profile_image starts as null — frontend resolves google_picture as fallback
             ]);
             $auth->logAction($userId, 'registered', null, null, "สมัครผ่าน Google ประเภท: {$memberType}");
             Auth::logActivity($userId, 'register', 'auth', "สมัครสมาชิกใหม่ผ่าน Google ประเภท: {$memberType}", $userId, 'user');

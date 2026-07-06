@@ -4,11 +4,31 @@
 const App = {
     /**
      * Resolve image URL — external URLs pass through, relative paths get BASE_PATH prepended
+     * Set bustCache=true to force the browser to reload the image after an update.
      */
-    imgUrl(url) {
+    imgUrl(url, bustCache = false) {
         if (!url) return '';
-        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
-        return (typeof BASE_PATH !== 'undefined' ? BASE_PATH : './') + url;
+        let resolved = url;
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+            resolved = url;
+        } else {
+            const base = (typeof BASE_PATH !== 'undefined' ? BASE_PATH : './');
+            resolved = url.startsWith('/') ? (base + url.slice(1)) : (base + url);
+        }
+        if (bustCache && !resolved.startsWith('data:')) {
+            const sep = resolved.includes('?') ? '&' : '?';
+            return resolved + sep + 't=' + Date.now();
+        }
+        return resolved;
+    },
+
+    /**
+     * Get the best available profile image for a user.
+     * Priority: profile_image (user-uploaded) → google_picture (Google sync) → default avatar.
+     */
+    getProfileImage(user, bustCache = false) {
+        const url = (user && (user.profile_image || user.google_picture) || '').trim();
+        return url ? App.imgUrl(url, bustCache) : App.imgUrl('assets/images/default-avatar.png', bustCache);
     },
 
     /**
@@ -234,9 +254,8 @@ const App = {
             $authNav.hide();
             $userNav.show();
             $('#nav-username').text(user.full_name || user.username);
-            if (user.profile_image) {
-                $('#nav-avatar').attr('src', App.imgUrl(user.profile_image));
-            }
+            const avatarSrc = App.getProfileImage(user, true);
+            $('#nav-avatar').attr('src', avatarSrc);
             if (user.role === 'admin') {
                 $('#nav-admin-link').show();
                 $('#nav-finance-link').show();

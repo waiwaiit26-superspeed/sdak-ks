@@ -239,7 +239,7 @@ function paRenderTable(data) {
             actions = '<span class="text-muted">-</span>';
         }
 
-        var avatarUrl = r.profile_image ? (r.profile_image.startsWith('http') ? r.profile_image : BASE_PATH + r.profile_image) : BASE_PATH + 'assets/images/default-avatar.png';
+        var avatarUrl = App.getProfileImage(r);
 
         html += '<tr>' +
             '<td>' + (i + 1) + '</td>' +

@@ -1306,9 +1306,8 @@ async function showReferenceInfo() {
     // Member info
     html += '<div class="row mb-3">';
     html += '<div class="col-md-2 text-center">';
-    if (refData.profile_image) {
-        const imgUrl = refData.profile_image.startsWith('http') ? refData.profile_image : (BASE_PATH + refData.profile_image);
-        html += `<img src="${imgUrl}" class="rounded-circle mb-2" style="width:60px;height:60px;object-fit:cover;">`;
+    if (refData.profile_image || refData.google_picture) {
+        html += `<img src="${App.getProfileImage(refData)}" class="rounded-circle mb-2" style="width:60px;height:60px;object-fit:cover;">`;
     } else {
         html += '<i class="bi bi-person-circle" style="font-size:48px;color:#adb5bd;"></i>';
     }
