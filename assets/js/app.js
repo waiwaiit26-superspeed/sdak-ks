@@ -492,6 +492,7 @@ const App = {
      * Get member type label (full). Synchronous — requires loadMemberTypes() called beforehand.
      */
     getMemberTypeLabel(type) {
+        if (!type) return '';
         const labels = this._memberTypeLabels || {
             'ordinary': 'สมาชิกสามัญ',
             'associate': 'สมาชิกวิสามัญ',
@@ -505,6 +506,7 @@ const App = {
      * Get member type label (short)
      */
     getMemberTypeLabelShort(type) {
+        if (!type) return '';
         const labels = this._memberTypeLabelsShort || {
             'ordinary': 'สามัญ',
             'associate': 'วิสามัญ',
@@ -518,6 +520,7 @@ const App = {
      * Get member type badge
      */
     getMemberTypeBadge(type) {
+        if (!type) return '';
         return `<span class="badge badge-${type}">${this.getMemberTypeLabel(type)}</span>`;
     },
 
@@ -543,6 +546,7 @@ const App = {
      * Get role badge
      */
     getRoleBadge(role) {
+        if (!role) return '';
         const map = {
             'admin': { label: 'ผู้ดูแลระบบ', color: 'danger' },
             'member': { label: 'สมาชิก', color: 'info' }
