@@ -111,6 +111,47 @@ class UserModel extends Model
         return $this->has($where);
     }
 
+    public function getColumns(): array
+    {
+        static $columnsCache = [];
+        if (!isset($columnsCache[$this->table])) {
+            $stmt = $this->db->query("SHOW COLUMNS FROM `{$this->table}`");
+            $columnsCache[$this->table] = $stmt ? $stmt->fetchAll(\PDO::FETCH_COLUMN) : [];
+        }
+        return $columnsCache[$this->table] ?: [];
+    }
+
+    public function hasColumn(string $column): bool
+    {
+        return in_array($column, $this->getColumns(), true);
+    }
+
+    public function filterColumns(array $data): array
+    {
+        $available = array_flip($this->getColumns());
+        return array_intersect_key($data, $available);
+    }
+
+    /**
+     * Override create to filter out columns that don't exist in DB yet.
+     * Prevents INSERT failures when new columns from pending migrations are passed.
+     */
+    public function create(array $data)
+    {
+        $filtered = $this->filterColumns($data);
+        $this->db->insert($this->table, $filtered);
+        return $this->db->id();
+    }
+
+    /**
+     * Override update to filter out columns that don't exist in DB yet.
+     */
+    public function update(array $data, array $where): \PDOStatement
+    {
+        $filtered = $this->filterColumns($data);
+        return $this->db->update($this->table, $filtered, $where);
+    }
+
     /**
      * Get next available member number (numeric part only)
      * Respects member_start_number setting
