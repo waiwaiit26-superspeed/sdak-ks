@@ -573,7 +573,9 @@ $(function () {
             $('#profileAcademicRank').text(u.academic_rank);
             $('#profileAcademicRankLine').show();
         }
-        $('#profileTypeBadge').html(App.getMemberTypeBadge(u.member_type));
+        $('#profileTypeBadge').html(
+            u.role === 'admin' ? App.getRoleBadge(u.role) : App.getMemberTypeBadge(u.member_type)
+        );
         $('#profileStatusBadge').html(App.getStatusBadge(u.status));
         $('#profileAvatar').attr('src', App.getProfileImage(u, true));
 
