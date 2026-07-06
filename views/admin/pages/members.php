@@ -539,7 +539,8 @@ function initDataTable() {
                 render: (d, t, row) => {
                     const name = App.escapeHtml(d);
                     const role = App.getRoleBadge(row.role);
-                    return '<strong>' + name + '</strong><br><small class="text-muted">' + (row.username || '') + '</small> ' + role;
+                    const avatar = '<img src="' + App.getProfileImage(row) + '" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;">';
+                    return '<div class="d-flex align-items-center">' + avatar + '<div><strong>' + name + '</strong><br><small class="text-muted">' + (row.username || '') + '</small> ' + role + '</div></div>';
                 }
             },
             {
