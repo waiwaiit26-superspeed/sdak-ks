@@ -274,17 +274,17 @@ $extraCss = '
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="birth_date">วันเกิด <span class="text-danger">*</span></label>
+                                <label for="birth_date">วันเกิด</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="birth_date" name="birth_date" placeholder="เลือกวันเกิด" readonly required>
+                                    <input type="text" class="form-control" id="birth_date" name="birth_date" placeholder="เลือกวันเกิด" readonly>
                                     <div class="input-group-append"><div class="input-group-text"><i class="fas fa-calendar-alt"></i></div></div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="position">ตำแหน่ง <span class="text-danger">*</span></label>
-                                <select class="form-control" id="position" name="position" required>
+                                <label for="position">ตำแหน่ง</label>
+                                <select class="form-control" id="position" name="position">
                                     <option value="">-- เลือก --</option>
                                     <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
                                     <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
@@ -311,7 +311,7 @@ $extraCss = '
 
                 <!-- ที่อยู่ปัจจุบัน -->
                 <fieldset class="border rounded p-3 mb-3">
-                    <legend class="w-auto px-2 small font-weight-bold text-primary">ที่อยู่ปัจจุบัน <span class="text-danger">*</span></legend>
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">ที่อยู่ปัจจุบัน</legend>
                     <div class="row">
                         <div class="col-md-2"><div class="form-group"><label>เลขที่</label><input type="text" class="form-control" id="h_no"></div></div>
                         <div class="col-md-2"><div class="form-group"><label>ซอย</label><input type="text" class="form-control" id="h_soi" placeholder="ไม่มีให้กรอก -"></div></div>
@@ -325,20 +325,20 @@ $extraCss = '
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_subdistrict" name="h_subdistrict" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_district" name="h_district" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>จังหวัด <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_province" name="h_province" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์ <span class="text-danger">*</span></label><input type="text" class="form-control" id="h_postal" name="h_postal" maxlength="5" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล</label><input type="text" class="form-control" id="h_subdistrict" name="h_subdistrict"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ</label><input type="text" class="form-control" id="h_district" name="h_district"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>จังหวัด</label><input type="text" class="form-control" id="h_province" name="h_province"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์</label><input type="text" class="form-control" id="h_postal" name="h_postal" maxlength="5"></div></div>
                     </div>
                 </fieldset>
 
                 <!-- สถานที่ทำงาน -->
                 <fieldset class="border rounded p-3 mb-3">
-                    <legend class="w-auto px-2 small font-weight-bold text-primary">สถานที่ทำงาน <span class="text-danger">*</span></legend>
+                    <legend class="w-auto px-2 small font-weight-bold text-primary">สถานที่ทำงาน</legend>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="school_organization">โรงเรียน/หน่วยงาน <span class="text-danger">*</span></label>
+                                <label for="school_organization">โรงเรียน/หน่วยงาน</label>
                                 <div class="input-group">
                                     <select class="form-control" id="school_prefix" style="max-width:160px">
                                         <option value="โรงเรียน">โรงเรียน</option>
@@ -347,7 +347,7 @@ $extraCss = '
                                         <option value="สำนักงาน">สำนักงาน</option>
                                         <option value="">อื่นๆ (ไม่มีคำนำหน้า)</option>
                                     </select>
-                                    <input type="text" class="form-control" id="school_organization" name="school_organization" placeholder="ชื่อโรงเรียน/หน่วยงาน" required>
+                                    <input type="text" class="form-control" id="school_organization" name="school_organization" placeholder="ชื่อโรงเรียน/หน่วยงาน">
                                 </div>
                             </div>
                         </div>
@@ -381,10 +381,10 @@ $extraCss = '
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_subdistrict" name="w_subdistrict" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_district" name="w_district" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>จังหวัด <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_province" name="w_province" required></div></div>
-                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์ <span class="text-danger">*</span></label><input type="text" class="form-control" id="w_postal" name="w_postal" maxlength="5" required></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>แขวง/ตำบล</label><input type="text" class="form-control" id="w_subdistrict" name="w_subdistrict"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>เขต/อำเภอ</label><input type="text" class="form-control" id="w_district" name="w_district"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>จังหวัด</label><input type="text" class="form-control" id="w_province" name="w_province"></div></div>
+                        <div class="col-md-3"><div class="form-group"><label>รหัสไปรษณีย์</label><input type="text" class="form-control" id="w_postal" name="w_postal" maxlength="5"></div></div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>ภาค</label>
@@ -414,9 +414,9 @@ $extraCss = '
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="email">อีเมล <span class="text-danger">*</span></label>
+                                <label for="email">อีเมล</label>
                                 <div class="input-group">
-                                    <input type="email" class="form-control" id="email" name="email" required>
+                                    <input type="email" class="form-control" id="email" name="email">
                                     <div class="input-group-append"><div class="input-group-text"><span class="fas fa-envelope"></span></div></div>
                                 </div>
                             </div>
@@ -1101,49 +1101,40 @@ $(function () {
             first_name:       { required: true, minlength: 2 },
             last_name:        { required: true, minlength: 2 },
             username:         { required: true, minlength: 4 },
-            email:            { required: true, email: true },
+            email:            { email: true },
             password:         { required: true, minlength: 6 },
             password_confirm: { required: true, equalTo: '#reg_password' },
             member_type:      { required: true },
             phone:            { required: true },
             prefix:           { required: true },
             national_id:      { required: true, minlength: 13, maxlength: 13, digits: true },
-            birth_date:       { required: true },
-            position:         { required: true },
+            birth_date:       { },
+            position:         { },
             position_other:   { required: { depends: function() { return $('#position').val() === 'other'; } }, minlength: 2 },
-            school_organization: { required: true },
-            h_subdistrict:    { required: true },
-            h_district:       { required: true },
-            h_province:       { required: true },
-            h_postal:         { required: true, minlength: 5, maxlength: 5, digits: true },
-            w_subdistrict:    { required: true },
-            w_district:       { required: true },
-            w_province:       { required: true },
-            w_postal:         { required: true, minlength: 5, maxlength: 5, digits: true }
+            school_organization: { },
+            h_subdistrict:    { },
+            h_district:       { },
+            h_province:       { },
+            h_postal:         { minlength: 5, maxlength: 5, digits: true },
+            w_subdistrict:    { },
+            w_district:       { },
+            w_province:       { },
+            w_postal:         { minlength: 5, maxlength: 5, digits: true }
         },
         messages: {
             first_name:       { required: 'กรุณากรอกชื่อ', minlength: 'อย่างน้อย 2 ตัวอักษร' },
             last_name:        { required: 'กรุณากรอกนามสกุล', minlength: 'อย่างน้อย 2 ตัวอักษร' },
             username:         { required: 'กรุณากรอกชื่อผู้ใช้', minlength: 'อย่างน้อย 4 ตัวอักษร' },
-            email:            { required: 'กรุณากรอกอีเมล', email: 'รูปแบบอีเมลไม่ถูกต้อง' },
+            email:            { email: 'รูปแบบอีเมลไม่ถูกต้อง' },
             password:         { required: 'กรุณากรอกรหัสผ่าน', minlength: 'อย่างน้อย 6 ตัวอักษร' },
             password_confirm: { required: 'กรุณายืนยันรหัสผ่าน', equalTo: 'รหัสผ่านไม่ตรงกัน' },
             member_type:      { required: 'กรุณาเลือกประเภทสมาชิก' },
             phone:            { required: 'กรุณากรอกเบอร์มือถือ' },
             prefix:           { required: 'กรุณาเลือกคำนำหน้า' },
             national_id:      { required: 'กรุณากรอกเลขบัตรประชาชน', minlength: 'ต้อง 13 หลัก', maxlength: 'ต้อง 13 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
-            birth_date:       { required: 'กรุณาเลือกวันเกิด' },
-            position:         { required: 'กรุณาเลือกตำแหน่ง' },
             position_other:   { required: 'กรุณาระบุตำแหน่ง', minlength: 'อย่างน้อย 2 ตัวอักษร' },
-            school_organization: { required: 'กรุณากรอกชื่อโรงเรียน/หน่วยงาน' },
-            h_subdistrict:    { required: 'กรุณากรอกตำบล' },
-            h_district:       { required: 'กรุณากรอกอำเภอ' },
-            h_province:       { required: 'กรุณากรอกจังหวัด' },
-            h_postal:         { required: 'กรุณากรอกรหัสไปรษณีย์', minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
-            w_subdistrict:    { required: 'กรุณากรอกตำบล' },
-            w_district:       { required: 'กรุณากรอกอำเภอ' },
-            w_province:       { required: 'กรุณากรอกจังหวัด' },
-            w_postal:         { required: 'กรุณากรอกรหัสไปรษณีย์', minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' }
+            h_postal:         { minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
+            w_postal:         { minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' }
         },
         errorClass: 'is-invalid',
         validClass: 'is-valid',

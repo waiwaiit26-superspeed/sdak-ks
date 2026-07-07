@@ -68,7 +68,7 @@ class AuthController extends Controller
         }
 
         // validate
-        $required = ['username','email','password','first_name','member_type'];
+        $required = ['username','password','first_name','member_type'];
         $errors = [];
         foreach ($required as $f) {
             if (empty(trim($input[$f] ?? ''))) $errors[$f] = "กรุณากรอก {$f}";
@@ -80,14 +80,14 @@ class AuthController extends Controller
         $password   = $input['password'];
         $memberType = $input['member_type'];
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL))          Response::error('รูปแบบอีเมลไม่ถูกต้อง');
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) Response::error('รูปแบบอีเมลไม่ถูกต้อง');
         if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $username))   Response::error('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษ ตัวเลข หรือ _ ยาว 3-50 ตัวอักษร');
         if (strlen($password) < 6)                                Response::error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
         if (!in_array($memberType, ['ordinary','associate','affiliate'])) Response::error('ประเภทสมาชิกไม่ถูกต้อง');
 
         $users = $this->model('UserModel');
         if ($users->usernameExists($username)) Response::error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
-        if ($users->emailExists($email))       Response::error('อีเมลนี้ถูกใช้แล้ว');
+        if ($email !== '' && $users->emailExists($email)) Response::error('อีเมลนี้ถูกใช้แล้ว');
 
         $prefix    = trim($input['prefix'] ?? '');
         $firstName = trim($input['first_name'] ?? '');
