@@ -1488,6 +1488,13 @@ function applyRefDataToEditForm(refData) {
     }
 }
 
+// Auto-open receipt from URL param: ?page=receipts&receipt_id=X
+$(function () {
+    const params = new URLSearchParams(window.location.search);
+    const rid = parseInt(params.get('receipt_id'));
+    if (rid) viewReceipt(rid);
+});
+
 </script>
 
 <?php include ROOT_PATH . 'templates/admin/footer.php'; ?>

@@ -257,7 +257,78 @@ class FeeController extends Controller
             $this->getPerPage(30)
         );
 
+        // Attach receipt info for each fee row (book_number, receipt_number, receipt_id)
+        if (!empty($result['data'])) {
+            $feeIds = array_column($result['data'], 'id');
+            $receipts = $this->model('ReceiptModel');
+            $receiptRows = $receipts->all(
+                ['id', 'reference_id', 'book_number', 'receipt_number'],
+                ['receipt_type' => 'membership_fee', 'reference_id' => $feeIds]
+            );
+
+            // Build lookup map: reference_id => receipt info
+            $receiptMap = [];
+            foreach ($receiptRows as $r) {
+                $receiptMap[(int)$r['reference_id']] = $r;
+            }
+            foreach ($result['data'] as &$fee) {
+                $rec = $receiptMap[(int)$fee['id']] ?? null;
+                $fee['receipt_id']     = $rec ? (int)$rec['id'] : null;
+                $fee['receipt_book']   = $rec['book_number'] ?? null;
+                $fee['receipt_number'] = $rec ? (int)$rec['receipt_number'] : null;
+            }
+            unset($fee);
+        }
+
         Response::paginated($result['data'], $result['total'], $result['page'], $result['per_page']);
+    }
+
+    /**
+     * POST  ?controller=fee&action=issue-receipt
+     * Admin: ออกใบเสร็จสำหรับรายการค่าธรรมเนียมที่อนุมัติแล้ว
+     */
+    public function issueReceipt(): void
+    {
+        $this->requirePost();
+        $input = $this->input();
+        $feeId = (int)($input['fee_id'] ?? 0);
+        if (!$feeId) Response::error('กรุณาระบุ fee_id');
+
+        $fees = $this->model('MembershipFeeModel');
+        $fee  = $fees->find($feeId);
+        if (!$fee) Response::error('ไม่พบรายการค่าธรรมเนียม', 404);
+        if ($fee['status'] !== 'paid') Response::error('ออกใบเสร็จได้เฉพาะรายการที่ชำระแล้ว');
+
+        $receipts = $this->model('ReceiptModel');
+        $existing = $receipts->findByReference('membership_fee', $feeId);
+        if ($existing) {
+            Response::success([
+                'receipt_id'     => (int)$existing['id'],
+                'receipt_book'   => $existing['book_number'],
+                'receipt_number' => (int)$existing['receipt_number'],
+            ], 'มีใบเสร็จสำหรับรายการนี้แล้ว');
+            return;
+        }
+
+        $users  = $this->model('UserModel');
+        $member = $users->find((int)$fee['user_id'], ['full_name', 'member_type', 'school_organization', 'work_address', 'home_address']);
+        if (!$member) Response::error('ไม่พบข้อมูลสมาชิก', 404);
+
+        $this->generateFeeReceipt($fee, $member, $fee['received_date'] ?? $fee['approved_at'] ?? null);
+
+        $newReceipt = $receipts->findByReference('membership_fee', $feeId);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'issue_receipt', 'fee',
+            "ออกใบเสร็จค่าธรรมเนียม: {$member['full_name']} ปี {$fee['year']}",
+            $feeId, 'fee'
+        );
+
+        Response::success([
+            'receipt_id'     => $newReceipt ? (int)$newReceipt['id'] : null,
+            'receipt_book'   => $newReceipt['book_number'] ?? null,
+            'receipt_number' => $newReceipt ? (int)$newReceipt['receipt_number'] : null,
+        ], 'ออกใบเสร็จสำเร็จ');
     }
 
     /**

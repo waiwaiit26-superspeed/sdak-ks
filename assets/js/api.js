@@ -495,6 +495,10 @@ const API = {
         return this.post(this.apiUrl('fee', 'approve'), { fee_id: feeId, action, note, received_date: receivedDate });
     },
 
+    async issueReceipt(feeId) {
+        return this.post(this.apiUrl('fee', 'issue-receipt'), { fee_id: feeId });
+    },
+
     async getMyFees() {
         return this.get(this.apiUrl('fee', 'my-fees'));
     },

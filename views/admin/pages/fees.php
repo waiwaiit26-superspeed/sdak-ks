@@ -99,21 +99,22 @@
                         <table class="table table-hover table-striped mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th width="5%">#</th>
-                                    <th width="16%">สมาชิก</th>
-                                    <th width="8%">ประเภท</th>
-                                    <th width="7%">รูปแบบ</th>
-                                    <th width="7%">ปี พ.ศ.</th>
-                                    <th width="8%" class="text-right">จำนวน (บาท)</th>
-                                    <th width="8%">สถานะ</th>
-                                    <th width="6%">หลักฐาน</th>
-                                    <th width="9%">วันรับเงิน</th>
-                                    <th width="10%">อนุมัติโดย</th>
+                                    <th width="4%">#</th>
+                                    <th width="14%">สมาชิก</th>
+                                    <th width="7%">ประเภท</th>
+                                    <th width="6%">รูปแบบ</th>
+                                    <th width="6%">ปี พ.ศ.</th>
+                                    <th width="7%" class="text-right">จำนวน (บาท)</th>
+                                    <th width="7%">สถานะ</th>
+                                    <th width="5%">หลักฐาน</th>
+                                    <th width="8%">วันรับเงิน</th>
+                                    <th width="9%">อนุมัติโดย</th>
+                                    <th width="12%">ใบเสร็จ</th>
                                     <th width="10%">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="feesTableBody">
-                                <tr><td colspan="11" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
+                                <tr><td colspan="12" class="text-center py-4 text-muted">กำลังโหลด...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -266,12 +267,12 @@ async function loadFees(page = 1) {
     const tbody = $('#feesTableBody');
 
     if (!result.success) {
-        tbody.html(`<tr><td colspan="11" class="text-center text-danger py-3">${result.message}</td></tr>`);
+        tbody.html(`<tr><td colspan="12" class="text-center text-danger py-3">${result.message}</td></tr>`);
         return;
     }
 
     if (!result.data || result.data.length === 0) {
-        tbody.html('<tr><td colspan="11" class="text-center text-muted py-4">ไม่พบรายการค่าธรรมเนียม</td></tr>');
+        tbody.html('<tr><td colspan="12" class="text-center text-muted py-4">ไม่พบรายการค่าธรรมเนียม</td></tr>');
         $('#feesPagination').empty();
         return;
     }
@@ -299,6 +300,18 @@ async function loadFees(page = 1) {
 
         const receivedDate = fee.received_date ? App.formatDate(fee.received_date) : '<span class="text-muted small">-</span>';
 
+        // Receipt column
+        let receiptCell = '<span class="text-muted small">-</span>';
+        if (fee.receipt_id) {
+            receiptCell = `<a href="./?page=receipts&receipt_id=${fee.receipt_id}" class="btn btn-xs btn-outline-success" title="ดูใบเสร็จ">
+                <i class="bi bi-receipt me-1"></i><small>เล่ม ${fee.receipt_book || ''} / ${fee.receipt_number}</small>
+            </a>`;
+        } else if (fee.status === 'paid') {
+            receiptCell = `<button class="btn btn-xs btn-outline-primary" id="btnReceipt_${fee.id}" onclick="issueReceipt(${fee.id})">
+                <i class="bi bi-receipt me-1"></i>สร้างใบเสร็จ
+            </button>`;
+        }
+
         html += `<tr>
             <td>${startNum + i + 1}</td>
             <td>
@@ -313,6 +326,7 @@ async function loadFees(page = 1) {
             <td>${slipBtn}</td>
             <td><small>${receivedDate}</small></td>
             <td>${approvedBy}</td>
+            <td>${receiptCell}</td>
             <td>${actions}</td>
         </tr>`;
     });
@@ -393,6 +407,30 @@ function feeAction(feeId, action, memberName) {
     }
     $('#btnDoAction').attr('class', 'btn ' + (btnClasses[action] || 'btn-primary')).text('ยืนยัน');
     $('#actionModal').modal('show');
+}
+
+async function issueReceipt(feeId) {
+    const btn = $(`#btnReceipt_${feeId}`);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+    const result = await API.issueReceipt(feeId);
+    if (result.success) {
+        App.success(result.message);
+        // Replace button with receipt link
+        const receiptId = result.data?.receipt_id;
+        const book = result.data?.receipt_book || '';
+        const num  = result.data?.receipt_number || '';
+        if (receiptId) {
+            btn.replaceWith(`<a href="./?page=receipts&receipt_id=${receiptId}" class="btn btn-xs btn-outline-success" title="ดูใบเสร็จ">
+                <i class="bi bi-receipt me-1"></i><small>เล่ม ${book} / ${num}</small>
+            </a>`);
+        } else {
+            loadFees();
+        }
+    } else {
+        App.error(result.message);
+        btn.prop('disabled', false).html('<i class="bi bi-receipt me-1"></i>สร้างใบเสร็จ');
+    }
 }
 
 $('#btnDoAction').on('click', async function () {

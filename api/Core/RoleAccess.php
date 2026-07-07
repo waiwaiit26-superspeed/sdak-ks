@@ -115,6 +115,7 @@ class RoleAccess
             'summary'       => ['admin'],
             'generate'      => ['admin'],
             'approve'       => ['admin'],
+            'issue-receipt' => ['admin'],
             'my-fees'       => ['member', 'admin'],
             'my-current'    => ['member', 'admin'],
             'upload-slip'   => ['member', 'admin'],
