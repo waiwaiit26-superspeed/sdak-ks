@@ -687,7 +687,7 @@ $(function () {
     $('#btnShowFormReg').on('click', function() {
         $('#formRegToggleWrap').slideUp(200, function() {
             $('#formRegSection').slideDown(300);
-            $('html, body').animate({ scrollTop: $('#formRegSection').offset().top - 20 }, 300);
+            $('html, body').animate({ scrollTop: $('.register-box').offset().top - 20 }, 300);
         });
     });
 <?php endif; ?>
