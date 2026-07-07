@@ -409,6 +409,28 @@
     </div>
 </div>
 
+<!-- Slip Lightbox Modal -->
+<div class="modal fade" id="memberSlipModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:min(92vw,640px)">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0"><i class="bi bi-image me-2"></i>หลักฐานการชำระ</h6>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body text-center p-2">
+                <img id="memberSlipImg" src="" class="img-fluid rounded" style="max-height:75vh;cursor:zoom-in" alt="slip"
+                     onclick="window.open(this.src,'_blank')" title="คลิกเปิดภาพเต็มขนาด">
+            </div>
+            <div class="modal-footer py-2">
+                <a id="memberSlipDownloadBtn" href="#" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>เปิดในแท็บใหม่
+                </a>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
 
 <!-- Flatpickr -->
@@ -580,7 +602,7 @@ function initDataTable() {
                     const badge = feeStatusMap[row.fee_status] || '<span class="badge badge-light">' + row.fee_status + '</span>';
                     const year  = row.fee_year ? '<br><small class="text-muted">ปี ' + row.fee_year + '</small>' : '';
                     const slip  = row.fee_payment_slip
-                        ? '<br><a href="' + App.imgUrl(row.fee_payment_slip) + '" target="_blank" class="small text-info"><i class="bi bi-image me-1"></i>ดูสลิป</a>'
+                        ? '<br><a href="#" onclick="previewMemberSlip(\'' + App.imgUrl(row.fee_payment_slip) + '\'); return false;" class="small text-info"><i class="bi bi-image me-1"></i>ดูสลิป</a>'
                         : '';
                     return badge + year + slip;
                 }
@@ -622,6 +644,12 @@ function clearFilters() {
     $('#filterStatus').val('');
     $('#filterType').val('');
     membersTable.search('').ajax.reload();
+}
+
+function previewMemberSlip(url) {
+    $('#memberSlipImg').attr('src', url);
+    $('#memberSlipDownloadBtn').attr('href', url);
+    $('#memberSlipModal').modal('show');
 }
 
 function splitSchoolPrefix(selectSel, inputSel, fullValue) {
@@ -959,7 +987,7 @@ async function approveMember(userId, action) {
                     ? (f.fee_status === 'paid' ? '<span class="badge badge-info">ชำระแล้ว รออนุมัติ</span>' : '<span class="badge badge-warning">รอชำระ</span>')
                     : '<span class="badge badge-secondary">ยังไม่มีรายการ</span>';
                 const slipHtml = f.fee_payment_slip
-                    ? '<br><a href="' + App.imgUrl(f.fee_payment_slip) + '" target="_blank" class="text-primary"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a>'
+                    ? '<br><a href="#" onclick="previewMemberSlip(\'' + App.imgUrl(f.fee_payment_slip) + '\'); return false;" class="text-primary"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a>'
                     : '';
 
                 feeStatusHtml = '<div class="card border-warning mb-3">' +
