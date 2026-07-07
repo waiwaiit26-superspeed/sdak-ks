@@ -259,25 +259,36 @@ class FeeController extends Controller
 
         // Attach receipt info for each fee row (book_number, receipt_number, receipt_id)
         if (!empty($result['data'])) {
-            $feeIds = array_column($result['data'], 'id');
-            $receipts = $this->model('ReceiptModel');
-            $receiptRows = $receipts->all(
-                ['id', 'reference_id', 'book_number', 'receipt_number'],
-                ['receipt_type' => 'membership_fee', 'reference_id' => $feeIds]
-            );
+            try {
+                $feeIds = array_column($result['data'], 'id');
+                $receipts = $this->model('ReceiptModel');
+                $receiptRows = $receipts->getDB()->select('receipts',
+                    ['id', 'reference_id', 'book_number', 'receipt_number'],
+                    ['receipt_type' => 'membership_fee', 'reference_id' => $feeIds]
+                ) ?: [];
 
-            // Build lookup map: reference_id => receipt info
-            $receiptMap = [];
-            foreach ($receiptRows as $r) {
-                $receiptMap[(int)$r['reference_id']] = $r;
+                // Build lookup map: reference_id => receipt info
+                $receiptMap = [];
+                foreach ($receiptRows as $r) {
+                    $receiptMap[(int)$r['reference_id']] = $r;
+                }
+                foreach ($result['data'] as &$fee) {
+                    $rec = $receiptMap[(int)$fee['id']] ?? null;
+                    $fee['receipt_id']     = $rec ? (int)$rec['id'] : null;
+                    $fee['receipt_book']   = $rec['book_number'] ?? null;
+                    $fee['receipt_number'] = $rec ? (int)$rec['receipt_number'] : null;
+                }
+                unset($fee);
+            } catch (\Throwable $e) {
+                error_log("FeeController::list receipt join failed: " . $e->getMessage());
+                // Continue without receipt info — don't break the list
+                foreach ($result['data'] as &$fee) {
+                    $fee['receipt_id'] = null;
+                    $fee['receipt_book'] = null;
+                    $fee['receipt_number'] = null;
+                }
+                unset($fee);
             }
-            foreach ($result['data'] as &$fee) {
-                $rec = $receiptMap[(int)$fee['id']] ?? null;
-                $fee['receipt_id']     = $rec ? (int)$rec['id'] : null;
-                $fee['receipt_book']   = $rec['book_number'] ?? null;
-                $fee['receipt_number'] = $rec ? (int)$rec['receipt_number'] : null;
-            }
-            unset($fee);
         }
 
         Response::paginated($result['data'], $result['total'], $result['page'], $result['per_page']);
