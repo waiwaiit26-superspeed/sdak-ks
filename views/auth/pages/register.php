@@ -219,8 +219,8 @@ $extraCss = '
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="member_type">ประเภทสมาชิก <span class="text-danger">*</span></label>
-                                <select class="form-control" id="member_type" name="member_type" required>
+                                <label for="member_type">ประเภทสมาชิก</label>
+                                <select class="form-control" id="member_type" name="member_type">
                                     <option value="">-- เลือก --</option>
                                     <option value="ordinary">สมาชิกสามัญ</option>
                                     <option value="associate">สมาชิกวิสามัญ</option>
@@ -231,22 +231,22 @@ $extraCss = '
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="national_id">เลขบัตรประชาชน <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="national_id" name="national_id" maxlength="13" required>
+                                <label for="national_id">เลขบัตรประชาชน</label>
+                                <input type="text" class="form-control" id="national_id" name="national_id" maxlength="13">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="phone">มือถือ <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="0812345678" required>
+                                <label for="phone">มือถือ</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="0812345678">
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label for="prefix">คำนำหน้า <span class="text-danger">*</span></label>
-                                <select class="form-control" id="prefix" name="prefix" required>
+                                <label for="prefix">คำนำหน้า</label>
+                                <select class="form-control" id="prefix" name="prefix">
                                     <option value="">-- เลือก --</option>
                                     <option value="นาย">นาย</option>
                                     <option value="นาง">นาง</option>
@@ -260,14 +260,14 @@ $extraCss = '
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label for="first_name">ชื่อ <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="กรุณากรอกคำนำหน้า" required>
+                                <label for="first_name">ชื่อ</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" placeholder="กรุณากรอกคำนำหน้า">
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="form-group">
-                                <label for="last_name">นามสกุล <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                                <label for="last_name">นามสกุล</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name">
                             </div>
                         </div>
                     </div>
@@ -1098,16 +1098,16 @@ $(function () {
 
     $('#registerForm').validate({
         rules: {
-            first_name:       { required: true, minlength: 2 },
-            last_name:        { required: true, minlength: 2 },
+            first_name:       { minlength: 2 },
+            last_name:        { minlength: 2 },
             username:         { required: true, minlength: 4 },
             email:            { email: true },
             password:         { required: true, minlength: 6 },
             password_confirm: { required: true, equalTo: '#reg_password' },
-            member_type:      { required: true },
-            phone:            { required: true },
-            prefix:           { required: true },
-            national_id:      { required: true, minlength: 13, maxlength: 13, digits: true },
+            member_type:      { },
+            phone:            { },
+            prefix:           { },
+            national_id:      { minlength: 13, maxlength: 13, digits: true },
             birth_date:       { },
             position:         { },
             position_other:   { required: { depends: function() { return $('#position').val() === 'other'; } }, minlength: 2 },
@@ -1122,16 +1122,13 @@ $(function () {
             w_postal:         { minlength: 5, maxlength: 5, digits: true }
         },
         messages: {
-            first_name:       { required: 'กรุณากรอกชื่อ', minlength: 'อย่างน้อย 2 ตัวอักษร' },
-            last_name:        { required: 'กรุณากรอกนามสกุล', minlength: 'อย่างน้อย 2 ตัวอักษร' },
+            first_name:       { minlength: 'อย่างน้อย 2 ตัวอักษร' },
+            last_name:        { minlength: 'อย่างน้อย 2 ตัวอักษร' },
             username:         { required: 'กรุณากรอกชื่อผู้ใช้', minlength: 'อย่างน้อย 4 ตัวอักษร' },
             email:            { email: 'รูปแบบอีเมลไม่ถูกต้อง' },
             password:         { required: 'กรุณากรอกรหัสผ่าน', minlength: 'อย่างน้อย 6 ตัวอักษร' },
             password_confirm: { required: 'กรุณายืนยันรหัสผ่าน', equalTo: 'รหัสผ่านไม่ตรงกัน' },
-            member_type:      { required: 'กรุณาเลือกประเภทสมาชิก' },
-            phone:            { required: 'กรุณากรอกเบอร์มือถือ' },
-            prefix:           { required: 'กรุณาเลือกคำนำหน้า' },
-            national_id:      { required: 'กรุณากรอกเลขบัตรประชาชน', minlength: 'ต้อง 13 หลัก', maxlength: 'ต้อง 13 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
+            national_id:      { minlength: 'ต้อง 13 หลัก', maxlength: 'ต้อง 13 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
             position_other:   { required: 'กรุณาระบุตำแหน่ง', minlength: 'อย่างน้อย 2 ตัวอักษร' },
             h_postal:         { minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' },
             w_postal:         { minlength: 'ต้อง 5 หลัก', maxlength: 'ต้อง 5 หลัก', digits: 'กรอกเฉพาะตัวเลข' }
