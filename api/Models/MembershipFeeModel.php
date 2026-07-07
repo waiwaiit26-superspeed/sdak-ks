@@ -68,6 +68,41 @@ class MembershipFeeModel extends Model
     }
 
     /**
+     * Get most-relevant fee info for a batch of users (for member list view).
+     * Priority per user: current-year annual fee > onetime fee.
+     * Returns array keyed by user_id.
+     * @param int[] $userIds
+     * @return array  [user_id => ['status'=>..., 'payment_slip'=>..., 'year'=>..., 'fee_type'=>..., 'received_date'=>..., 'approved_at'=>...]]
+     */
+    public function getFeeMapForUsers(array $userIds, int $currentYear): array
+    {
+        if (empty($userIds)) return [];
+
+        $pdo = $this->db->pdo;
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $stmt = $pdo->prepare(
+            "SELECT user_id, id, status, payment_slip, year, fee_type, received_date, approved_at
+               FROM membership_fees
+              WHERE user_id IN ({$placeholders})
+              ORDER BY user_id,
+                        (fee_type = 'annual' AND year = {$currentYear}) DESC,
+                        year DESC"
+        );
+        $stmt->execute(array_values($userIds));
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Take first (highest-priority) row per user
+        $map = [];
+        foreach ($rows as $r) {
+            $uid = (int)$r['user_id'];
+            if (!isset($map[$uid])) {
+                $map[$uid] = $r;
+            }
+        }
+        return $map;
+    }
+
+    /**
      * Create or update fee record for a user/year
      */
     public function upsertFee(int $userId, int $year, float $amount, string $feeType = 'annual'): int

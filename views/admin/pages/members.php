@@ -84,6 +84,7 @@
                             <th>ตำแหน่ง/วิทยฐานะ</th>
                             <th>โรงเรียน/สังกัด</th>
                             <th>สถานะ</th>
+                            <th>ค่าธรรมเนียม</th>
                             <th>วันที่สมัคร</th>
                             <th>จัดการ</th>
                         </tr>
@@ -566,6 +567,24 @@ function initDataTable() {
             },
             { data: 'school_organization', responsivePriority: 9, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
             { data: 'status', responsivePriority: 2, render: d => App.getStatusBadge(d) },
+            {
+                data: null, responsivePriority: 4,
+                render: (d, t, row) => {
+                    const feeStatusMap = {
+                        'paid':    '<span class="badge badge-success"><i class="bi bi-check-circle me-1"></i>ชำระแล้ว</span>',
+                        'pending': '<span class="badge badge-warning"><i class="bi bi-hourglass-split me-1"></i>รอชำระ</span>',
+                        'overdue': '<span class="badge badge-danger"><i class="bi bi-exclamation-triangle me-1"></i>ค้างชำระ</span>',
+                        'waived':  '<span class="badge badge-secondary"><i class="bi bi-dash-circle me-1"></i>ยกเว้น</span>',
+                    };
+                    if (!row.fee_status) return '<span class="text-muted small">-</span>';
+                    const badge = feeStatusMap[row.fee_status] || '<span class="badge badge-light">' + row.fee_status + '</span>';
+                    const year  = row.fee_year ? '<br><small class="text-muted">ปี ' + row.fee_year + '</small>' : '';
+                    const slip  = row.fee_payment_slip
+                        ? '<br><a href="' + App.imgUrl(row.fee_payment_slip) + '" target="_blank" class="small text-info"><i class="bi bi-image me-1"></i>ดูสลิป</a>'
+                        : '';
+                    return badge + year + slip;
+                }
+            },
             { data: 'created_at', responsivePriority: 9, render: d => '<small>' + App.formatDate(d) + '</small>' },
             {
                 data: 'id', responsivePriority: 1,

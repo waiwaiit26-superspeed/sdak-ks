@@ -107,11 +107,22 @@ class MemberController extends Controller
 
         // Auto-generate full_name จาก prefix + first_name + last_name
         if (isset($data['first_name']) || isset($data['last_name']) || isset($data['prefix'])) {
-            $existing = $users->find($userId, ['prefix', 'first_name', 'last_name']);
+            $existingColumns = [];
+            foreach (['prefix', 'first_name', 'last_name'] as $col) {
+                if ($users->hasColumn($col)) {
+                    $existingColumns[] = $col;
+                }
+            }
+            $existing = $existingColumns ? $users->find($userId, $existingColumns) : [];
             $prefix    = $data['prefix']     ?? $existing['prefix']     ?? '';
             $firstName = $data['first_name'] ?? $existing['first_name'] ?? '';
             $lastName  = $data['last_name']  ?? $existing['last_name']  ?? '';
             $data['full_name'] = AuthController::buildFullName($prefix, $firstName, $lastName);
+
+            // Legacy schema may not yet have first_name/last_name columns.
+            if (!$users->hasColumn('first_name') || !$users->hasColumn('last_name')) {
+                unset($data['first_name'], $data['last_name']);
+            }
         }
 
         // Google users cannot change email (unless admin is editing)
@@ -136,17 +147,21 @@ class MemberController extends Controller
             }
         }
 
+        $data = $users->filterColumns($data);
+        if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
         $users->update($data, ['id' => $userId]);
         $auth->logAction($userId, 'profile_updated', null, json_encode(array_keys($data), JSON_UNESCAPED_UNICODE), null, (int)$this->currentUser['id']);
 
         $changedFields = implode(', ', array_keys($data));
-        $targetUser = $users->find($userId, ['full_name']);
+        $targetUser = $users->findProfileSafe($userId);
+        $targetName = $targetUser['full_name'] ?? $targetUser['username'] ?? 'ผู้ใช้';
         $isAdminEdit = $userId !== (int)$this->currentUser['id'];
         Auth::logActivity(
             (int)$this->currentUser['id'],
             $isAdminEdit ? 'update_member' : 'update_profile',
             'member',
-            ($isAdminEdit ? "แก้ไขข้อมูลสมาชิก: {$targetUser['full_name']}" : 'แก้ไขโปรไฟล์') . " ({$changedFields})",
+            ($isAdminEdit ? "แก้ไขข้อมูลสมาชิก: {$targetName}" : 'แก้ไขโปรไฟล์') . " ({$changedFields})",
             $userId, 'user'
         );
 
@@ -160,7 +175,14 @@ class MemberController extends Controller
         }
         Response::success($updated, 'อัปเดตข้อมูลสำเร็จ');
         } catch (\Throwable $e) {
-            error_log('MemberController update error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            $debugInput = '';
+            try {
+                $debugInput = json_encode($input, JSON_UNESCAPED_UNICODE);
+            } catch (\Throwable $jsonEx) {
+                $debugInput = 'could not encode input';
+            }
+            error_log('MemberController update error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . ' | input=' . $debugInput);
+            error_log($e->getTraceAsString());
             Response::error('เกิดข้อผิดพลาดในการอัปเดตข้อมูลโปรไฟล์', 500);
         }
     }
@@ -191,6 +213,28 @@ class MemberController extends Controller
             }
         }
         unset($row);
+
+        // Attach current-year fee info for each member
+        if (!empty($result['data'])) {
+            try {
+                $buddhistYear = (int)date('Y') + 543;
+                $userIds = array_column($result['data'], 'id');
+                $fees = $this->model('MembershipFeeModel');
+                $feeMap = $fees->getFeeMapForUsers($userIds, $buddhistYear);
+
+                foreach ($result['data'] as &$row) {
+                    $f = $feeMap[(int)$row['id']] ?? null;
+                    $row['fee_status']       = $f['status'] ?? null;
+                    $row['fee_payment_slip'] = $f['payment_slip'] ?? null;
+                    $row['fee_year']         = $f ? (int)$f['year'] : null;
+                    $row['fee_approved_at']  = $f['approved_at'] ?? null;
+                    $row['fee_received_date']= $f['received_date'] ?? null;
+                }
+                unset($row);
+            } catch (\Throwable $e) {
+                error_log("MemberController::list fee join failed: " . $e->getMessage());
+            }
+        }
 
         Response::paginated($result['data'], $result['total'], $result['page'], $result['per_page']);
     }
