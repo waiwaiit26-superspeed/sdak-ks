@@ -130,6 +130,35 @@ class ReceiptModel extends Model
     }
 
     /**
+     * Get minimal receipt info for a list of fee IDs (used in fee list view).
+     * Returns array keyed by reference_id.
+     * @param int[] $feeIds
+     * @return array  [reference_id => ['id'=>..., 'book_number'=>..., 'receipt_number'=>...]]
+     */
+    public function getReceiptMapForFees(array $feeIds): array
+    {
+        if (empty($feeIds)) return [];
+
+        // Use raw PDO to avoid any Medoo version quirks with IN + array
+        $pdo  = $this->db->pdo;
+        $placeholders = implode(',', array_fill(0, count($feeIds), '?'));
+        $stmt = $pdo->prepare(
+            "SELECT id, reference_id, book_number, receipt_number
+               FROM receipts
+              WHERE receipt_type = 'membership_fee'
+                AND reference_id IN ({$placeholders})"
+        );
+        $stmt->execute(array_values($feeIds));
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int)$r['reference_id']] = $r;
+        }
+        return $map;
+    }
+
+    /**
      * Load reference/source data for a receipt.
      * Returns enriched info about what this receipt was generated from.
      *
@@ -171,7 +200,7 @@ class ReceiptModel extends Model
                 'work_address' => $row['work_address'] ?? '',
                 'home_address' => $row['home_address'] ?? '',
                 'profile_image'  => $row['profile_image'] ?? '',
-                'google_picture' => $row['google_picture'] ?? '',,
+                'google_picture' => $row['google_picture'] ?? '',
                 'fee_year'     => (int)$row['year'],
                 'fee_type'     => $row['fee_type'] ?? 'annual',
                 'fee_amount'   => (float)$row['amount'],
@@ -200,7 +229,7 @@ class ReceiptModel extends Model
                 'users.member_type', 'users.school_organization',
                 'users.work_address', 'users.home_address',
                 'users.profile_image', 'users.google_picture',
-                'activities.title(activity_title)',,
+                'activities.title(activity_title)',
                 'activities.fee_amount(activity_fee_amount)',
                 'activities.fee_description(activity_fee_description)',
                 'activities.start_date(activity_start_date)',

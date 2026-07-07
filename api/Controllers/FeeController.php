@@ -262,16 +262,8 @@ class FeeController extends Controller
             try {
                 $feeIds = array_column($result['data'], 'id');
                 $receipts = $this->model('ReceiptModel');
-                $receiptRows = $receipts->getDB()->select('receipts',
-                    ['id', 'reference_id', 'book_number', 'receipt_number'],
-                    ['receipt_type' => 'membership_fee', 'reference_id' => $feeIds]
-                ) ?: [];
+                $receiptMap = $receipts->getReceiptMapForFees($feeIds);
 
-                // Build lookup map: reference_id => receipt info
-                $receiptMap = [];
-                foreach ($receiptRows as $r) {
-                    $receiptMap[(int)$r['reference_id']] = $r;
-                }
                 foreach ($result['data'] as &$fee) {
                     $rec = $receiptMap[(int)$fee['id']] ?? null;
                     $fee['receipt_id']     = $rec ? (int)$rec['id'] : null;
@@ -281,11 +273,8 @@ class FeeController extends Controller
                 unset($fee);
             } catch (\Throwable $e) {
                 error_log("FeeController::list receipt join failed: " . $e->getMessage());
-                // Continue without receipt info — don't break the list
                 foreach ($result['data'] as &$fee) {
-                    $fee['receipt_id'] = null;
-                    $fee['receipt_book'] = null;
-                    $fee['receipt_number'] = null;
+                    $fee['receipt_id'] = $fee['receipt_book'] = $fee['receipt_number'] = null;
                 }
                 unset($fee);
             }
