@@ -318,6 +318,14 @@ body.adminlte-body {
     background: var(--gradient-auth, linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a78bfa 100%));
     min-height: 100vh;
 }
+
+/* Fix AdminLTE register-page centering: tall forms get clipped at the top */
+body.register-page {
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    padding: 30px 0 40px !important;
+}
 .card-outline.card-primary {
     border-top-color: var(--adminlte-primary) !important;
 }
