@@ -335,10 +335,18 @@ class FeeController extends Controller
                 $fees->approve($feeId, (int)$this->currentUser['id'], $note, $receivedDate);
 
                 // Auto-generate receipt (use received_date as issued_date)
-                $this->generateFeeReceipt($fee, $member, $receivedDate);
+                try {
+                    $this->generateFeeReceipt($fee, $member, $receivedDate);
+                } catch (\Throwable $e) {
+                    error_log("generateFeeReceipt failed for fee #{$feeId}: " . $e->getMessage());
+                }
 
                 // Auto-create finance transaction for the approved fee
-                $this->generateFeeTransaction($fee, $member, $receivedDate);
+                try {
+                    $this->generateFeeTransaction($fee, $member, $receivedDate);
+                } catch (\Throwable $e) {
+                    error_log("generateFeeTransaction failed for fee #{$feeId}: " . $e->getMessage());
+                }
 
                 Auth::logActivity(
                     (int)$this->currentUser['id'], 'approve_fee', 'fee',
