@@ -107,38 +107,44 @@
 
 <script>
 let canEdit = false;
+let canViewFull = false;
 
 $(async function () {
     App.requireLogin();
 
-    // Check if feature is enabled
-    const sRes = await API.getSettings();
-    if (sRes.success && sRes.data && sRes.data.member_directory_enabled === '0') {
+    const _u = API.getUser();
+    const isAdmin = _u?.role === 'admin';
+
+    // Run ALL initialization calls in parallel (settings + types + permissions)
+    const initCalls = [API.getSettings(), API.getMemberTypes()];
+    if (!isAdmin) initCalls.push(API.getMySubAdminPermissions());
+
+    const [sRes, typesRes, _pRes] = await Promise.all(initCalls);
+
+    // Feature enabled check
+    if (sRes.success && sRes.data?.member_directory_enabled === '0') {
         $('#dirTableBody').html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-lock" style="font-size:2rem;"></i><br>ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ</td></tr>');
         return;
     }
 
-    // Check edit permission (admin or sub-admin with members.edit)
-    const _u = API.getUser();
-    if (_u && _u.role === 'admin') {
+    // Set permission flags
+    if (isAdmin) {
         canEdit = true;
-    } else {
-        try {
-            const _pRes = await API.getMySubAdminPermissions();
-            if (_pRes.success && _pRes.data?.areas?.members?.includes('edit')) canEdit = true;
-        } catch (e) {}
+        canViewFull = true;
+    } else if (_pRes?.success) {
+        if (_pRes.data?.areas?.members?.includes('edit')) canEdit = true;
+        if (_pRes.data?.areas?.members?.includes('view')) canViewFull = true;
     }
     if (canEdit) $('#dirActionHeader').show();
 
     // Populate member type filter
-    API.getMemberTypes().then(res => {
-        if (!res.success || !res.data) return;
+    if (typesRes.success && typesRes.data) {
         let opts = '<option value="">ทุกประเภท</option>';
-        res.data.forEach(t => {
+        typesRes.data.forEach(t => {
             opts += `<option value="${t.type_key}">${App.escapeHtml(t.label)}</option>`;
         });
         $('#dirType').html(opts);
-    });
+    }
 
     loadDirectory(1);
 
@@ -172,6 +178,7 @@ $(async function () {
         );
     });
 });
+
 
 async function exportDirectory() {
     const btn = $('#btnExportDir');
@@ -607,47 +614,69 @@ async function viewDirMember(id) {
         return;
     }
     const u = result.data;
-    let ha = u.home_address || {};
-    if (typeof ha === 'string') { try { ha = JSON.parse(ha); } catch(e) { ha = {}; } }
-    let wa = u.work_address || {};
-    if (typeof wa === 'string') { try { wa = JSON.parse(wa); } catch(e) { wa = {}; } }
-
-    const formatAddr = (a) => {
-        if (!a || !Object.values(a).some(v => v)) return '-';
-        return [a.no ? 'เลขที่ ' + a.no : '', a.soi && a.soi !== '-' ? 'ซอย ' + a.soi : '',
-                a.moo ? 'หมู่ ' + a.moo : '', a.road && a.road !== '-' ? 'ถ.' + a.road : '',
-                a.subdistrict ? 'ต.' + a.subdistrict : '', a.district ? 'อ.' + a.district : '',
-                a.province ? 'จ.' + a.province : '', a.postal_code || ''].filter(Boolean).join(' ');
-    };
-
     const displayName = (u.prefix || '') + (u.first_name && u.last_name ? u.first_name + ' ' + u.last_name : u.full_name);
 
-    body.html(
-        '<div class="row">' +
-            '<div class="col-md-4 text-center mb-3">' +
-                '<img src="' + App.getProfileImage(u) + '" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover">' +
-                '<h5>' + App.escapeHtml(displayName) + '</h5>' +
-                App.getRoleBadge(u.role) + ' ' + (u.member_type ? App.getMemberTypeBadge(u.member_type) : '') + ' ' + App.getStatusBadge(u.status) +
-            '</div>' +
-            '<div class="col-md-8">' +
-                '<table class="table table-sm table-bordered mb-2">' +
-                    '<tr><th class="bg-light" colspan="4">ข้อมูลทั่วไป</th></tr>' +
-                    '<tr><td class="text-muted" width="130">เลขสมาชิก</td><td><strong class="text-primary">' + (u.member_number || '<span class="text-muted">ยังไม่กำหนด</span>') + '</strong></td><td class="text-muted" width="130">อีเมล</td><td>' + (u.email || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">ชื่อผู้ใช้</td><td>' + (u.username || '-') + '</td><td class="text-muted">เลขบัตรประชาชน</td><td>' + (u.national_id || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">วันเกิด</td><td>' + (u.birth_date ? App.formatDate(u.birth_date) : '-') + '</td><td class="text-muted">มือถือ</td><td>' + (u.phone || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted">วิทยฐานะ</td><td>' + (u.academic_rank || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">โรงเรียน</td><td colspan="3">' + (u.school_organization || '-') + '</td></tr>' +
-                    '<tr><td class="text-muted">โทรศัพท์ (ร.ร.)</td><td>' + (u.work_phone || '-') + '</td><td class="text-muted">สังกัด</td><td>' + (u.education_area || '-') + ' ' + (u.region || '') + '</td></tr>' +
-                    '<tr><th class="bg-light" colspan="4">ที่อยู่ปัจจุบัน</th></tr>' +
-                    '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(ha) + '</td></tr>' +
-                    '<tr><th class="bg-light" colspan="4">ที่อยู่สถานที่ทำงาน</th></tr>' +
-                    '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(wa) + '</td></tr>' +
-                    '<tr><td class="text-muted">วันที่สมัคร</td><td colspan="3">' + App.formatDateTime(u.created_at) + '</td></tr>' +
-                    '<tr><td class="text-muted">วันเริ่มเป็นสมาชิก</td><td colspan="3">' + (u.approved_at ? App.formatDateTime(u.approved_at) : '<span class="text-muted">รออนุมัติ</span>') + '</td></tr>' +
-                '</table>' +
-            '</div>' +
-        '</div>'
-    );
+    if (canViewFull) {
+        // === Full view for admin / sub-admin with view permission ===
+        let ha = u.home_address || {};
+        if (typeof ha === 'string') { try { ha = JSON.parse(ha); } catch(e) { ha = {}; } }
+        let wa = u.work_address || {};
+        if (typeof wa === 'string') { try { wa = JSON.parse(wa); } catch(e) { wa = {}; } }
+        const formatAddr = (a) => {
+            if (!a || !Object.values(a).some(v => v)) return '-';
+            return [a.no ? 'เลขที่ ' + a.no : '', a.soi && a.soi !== '-' ? 'ซอย ' + a.soi : '',
+                    a.moo ? 'หมู่ ' + a.moo : '', a.road && a.road !== '-' ? 'ถ.' + a.road : '',
+                    a.subdistrict ? 'ต.' + a.subdistrict : '', a.district ? 'อ.' + a.district : '',
+                    a.province ? 'จ.' + a.province : '', a.postal_code || ''].filter(Boolean).join(' ');
+        };
+        body.html(
+            '<div class="row">' +
+                '<div class="col-md-4 text-center mb-3">' +
+                    '<img src="' + App.getProfileImage(u) + '" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover">' +
+                    '<h5>' + App.escapeHtml(displayName) + '</h5>' +
+                    App.getRoleBadge(u.role) + ' ' + (u.member_type ? App.getMemberTypeBadge(u.member_type) : '') + ' ' + App.getStatusBadge(u.status) +
+                '</div>' +
+                '<div class="col-md-8">' +
+                    '<table class="table table-sm table-bordered mb-2">' +
+                        '<tr><th class="bg-light" colspan="4">ข้อมูลทั่วไป</th></tr>' +
+                        '<tr><td class="text-muted" width="130">เลขสมาชิก</td><td><strong class="text-primary">' + (u.member_number || '<span class="text-muted">ยังไม่กำหนด</span>') + '</strong></td><td class="text-muted" width="130">อีเมล</td><td>' + (u.email || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">ชื่อผู้ใช้</td><td>' + (u.username || '-') + '</td><td class="text-muted">เลขบัตรประชาชน</td><td>' + (u.national_id || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">วันเกิด</td><td>' + (u.birth_date ? App.formatDate(u.birth_date) : '-') + '</td><td class="text-muted">มือถือ</td><td>' + (u.phone || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted">วิทยฐานะ</td><td>' + (u.academic_rank || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">โรงเรียน</td><td colspan="3">' + (u.school_organization || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">โทรศัพท์ (ร.ร.)</td><td>' + (u.work_phone || '-') + '</td><td class="text-muted">สังกัด</td><td>' + (u.education_area || '-') + ' ' + (u.region || '') + '</td></tr>' +
+                        '<tr><th class="bg-light" colspan="4">ที่อยู่ปัจจุบัน</th></tr>' +
+                        '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(ha) + '</td></tr>' +
+                        '<tr><th class="bg-light" colspan="4">ที่อยู่สถานที่ทำงาน</th></tr>' +
+                        '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(wa) + '</td></tr>' +
+                        '<tr><td class="text-muted">วันที่สมัคร</td><td colspan="3">' + App.formatDateTime(u.created_at) + '</td></tr>' +
+                        '<tr><td class="text-muted">วันเริ่มเป็นสมาชิก</td><td colspan="3">' + (u.approved_at ? App.formatDateTime(u.approved_at) : '<span class="text-muted">รออนุมัติ</span>') + '</td></tr>' +
+                    '</table>' +
+                '</div>' +
+            '</div>'
+        );
+    } else {
+        // === Limited view for regular members (public info only) ===
+        body.html(
+            '<div class="row">' +
+                '<div class="col-md-4 text-center mb-3">' +
+                    '<img src="' + App.getProfileImage(u) + '" class="rounded-circle mb-3" width="110" height="110" style="object-fit:cover;border:3px solid #dee2e6;">' +
+                    '<h5 class="mb-1">' + App.escapeHtml(displayName) + '</h5>' +
+                    '<div class="mt-1">' + (u.member_type ? App.getMemberTypeBadge(u.member_type) : '') + '</div>' +
+                '</div>' +
+                '<div class="col-md-8">' +
+                    '<table class="table table-sm table-bordered mb-2">' +
+                        '<tr><th class="bg-light" colspan="4">ข้อมูลสมาชิก</th></tr>' +
+                        '<tr><td class="text-muted" width="140">เลขสมาชิก</td><td colspan="3"><strong class="text-primary">' + (u.member_number || '<span class="text-muted">-</span>') + '</strong></td></tr>' +
+                        '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted">วิทยฐานะ</td><td>' + (u.academic_rank || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">โรงเรียน / หน่วยงาน</td><td colspan="3">' + (u.school_organization || '-') + '</td></tr>' +
+                        '<tr><td class="text-muted">โทรศัพท์ (ร.ร.)</td><td>' + (u.work_phone || '-') + '</td><td class="text-muted">สังกัด</td><td>' + ((u.education_area || '') + ' ' + (u.region || '')).trim() + '</td></tr>' +
+                        '<tr><td class="text-muted">วันเริ่มเป็นสมาชิก</td><td colspan="3">' + (u.approved_at ? App.formatDate(u.approved_at) : '-') + '</td></tr>' +
+                    '</table>' +
+                '</div>' +
+            '</div>'
+        );
+    }
 }
 </script>
 

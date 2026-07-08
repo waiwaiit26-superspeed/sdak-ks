@@ -63,6 +63,15 @@ class MemberController extends Controller
         $profile = $users->findProfileSafe($userId);
         if (!$profile) Response::error('ไม่พบข้อมูลผู้ใช้', 404);
 
+        // If a regular member views another member, return public fields only
+        if ($userId !== (int)$this->currentUser['id'] && $this->currentUser['role'] === 'member') {
+            $publicFields = ['id', 'full_name', 'prefix', 'first_name', 'last_name',
+                'member_number', 'member_type', 'status', 'position', 'academic_rank',
+                'school_organization', 'work_phone', 'education_area', 'region',
+                'approved_at', 'profile_image', 'google_picture'];
+            $profile = array_intersect_key($profile, array_flip($publicFields));
+        }
+
         // Format member_number for display
         if (!empty($profile['member_number'])) {
             $settings = $this->model('SettingsModel');
