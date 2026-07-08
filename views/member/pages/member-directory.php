@@ -450,9 +450,7 @@ function updateDirEditSummary() {
     $('#dirEditSummary').html(html);
 }
 
-$('#dirEditPrefix, #dirEditFullName, #dirEditPrefixOther,
-  #dirEditPosition, #dirEditAcademicRank, #dirEditPositionOther, #dirEditAcademicRankOther')
-    .on('input change', updateDirEditSummary);
+$('#dirEditPrefix, #dirEditFullName, #dirEditPrefixOther, #dirEditPosition, #dirEditAcademicRank, #dirEditPositionOther, #dirEditAcademicRankOther').on('input change', updateDirEditSummary);
 
 $('#dirEditPrefix').on('change', function () {
     if ($(this).val() === 'other') {
