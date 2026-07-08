@@ -146,9 +146,10 @@ class UserModel extends Model
     /**
      * Override update to filter out columns that don't exist in DB yet.
      */
-    public function update(array $data, array $where): \PDOStatement
+    public function update(array $data, array $where): ?\PDOStatement
     {
         $filtered = $this->filterColumns($data);
+        if (empty($filtered)) return null;
         return $this->db->update($this->table, $filtered, $where);
     }
 

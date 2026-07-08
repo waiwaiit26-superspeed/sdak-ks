@@ -40,7 +40,7 @@ abstract class Model
         return $this->db->id();
     }
 
-    public function update(array $data, array $where): \PDOStatement
+    public function update(array $data, array $where): ?\PDOStatement
     {
         return $this->db->update($this->table, $data, $where);
     }

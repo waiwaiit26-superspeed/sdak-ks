@@ -312,9 +312,11 @@ class MemberController extends Controller
             $data['prefix'] = trim((string)$input['prefix']);
         }
 
-        // full_name — direct override
+        // full_name — ผสม prefix + ชื่อ เพื่อเก็บชื่อเต็มใน DB (เช่น "นายเอนก อันพาพรม")
         if (array_key_exists('full_name', $input) && trim((string)$input['full_name']) !== '') {
-            $data['full_name'] = trim((string)$input['full_name']);
+            $prefixVal = $data['prefix'] ?? trim((string)($input['prefix'] ?? ''));
+            $nameVal   = trim((string)$input['full_name']);
+            $data['full_name'] = $prefixVal . $nameVal;
         }
 
         // position — direct override
@@ -330,6 +332,7 @@ class MemberController extends Controller
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
         $filtered = $users->filterColumns($data);
+        if (empty($filtered)) Response::error('ข้อมูลไม่ถูกต้อง กรุณาลองใหม่');
         $users->update($filtered, ['id' => $userId]);
 
         Auth::logActivity(
@@ -350,7 +353,14 @@ class MemberController extends Controller
                 : '';
         }
         if (isset($data['prefix']))        $result['prefix']        = $data['prefix'];
-        if (isset($data['full_name']))      $result['full_name']     = $data['full_name'];
+        if (isset($data['full_name'])) {
+            // Return name WITHOUT prefix for frontend in-place update (JS combines prefix + name)
+            $pfx  = $result['prefix'] ?? ($data['prefix'] ?? '');
+            $full = $data['full_name'];
+            $result['full_name'] = ($pfx !== '' && str_starts_with($full, $pfx))
+                ? ltrim(substr($full, strlen($pfx)))
+                : $full;
+        }
         if (isset($data['position']))       $result['position']      = $data['position'];
         if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
 
