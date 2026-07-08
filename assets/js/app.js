@@ -274,6 +274,13 @@ const App = {
                         }).catch(() => {});
                     }
                 }).catch(() => {});
+
+                // Check sub-admin permissions — show admin link if applicable
+                API.getMySubAdminPermissions().then(res => {
+                    if (res.success && res.data && res.data.is_sub_admin) {
+                        $('#nav-admin-link').show();
+                    }
+                }).catch(() => {});
             }
             // Load notification badges
             this.loadNotifications();

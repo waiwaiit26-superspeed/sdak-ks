@@ -69,6 +69,7 @@ $controllerMap = [
     'fee'           => 'FeeController',
     'receipt'       => 'ReceiptController',
     'finance'       => 'FinanceController',
+    'sub-admin'     => 'SubAdminController',
     'telegram-link' => 'TelegramLinkController',
     'telegram-message' => 'TelegramMessageController',
 ];

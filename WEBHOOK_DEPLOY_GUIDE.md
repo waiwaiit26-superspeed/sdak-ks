@@ -61,6 +61,43 @@ deploy-log.txt
 → server ดึงโค้ด + backup DB + migrate DB
 ```
 
+### 0.3 lftp Deploy (Git diff + commit baseline)
+
+สำหรับ deploy ด้วย FTP โดยใช้ `lftp` และเฉพาะไฟล์ที่เปลี่ยนจาก git commit:
+
+1. สร้างไฟล์ config deploy
+
+```bash
+cp .deploy.env.example .deploy.env
+```
+
+2. แก้ค่าใน `.deploy.env`
+- `FTP_HOST` และ `FTP_PORT`
+- `FTP_USER` และ `FTP_PASS`
+- `REMOTE_DIR` = path บน FTP ที่เป็น web root หรือโฟลเดอร์ deploy
+- `SITE_URL` = URL เว็บไซต์
+- `DEPLOY_SECRET` = secret เดียวกับ `webhook-secret.php` และ `backup-db.php`/`migrate.php`
+
+3. สร้าง baseline commit ของ production
+
+```bash
+git rev-parse HEAD > .deploy.git_hash
+```
+
+4. ใช้ `deploy-lftp.sh` เพื่อ deploy
+
+```bash
+./deploy-lftp.sh
+```
+
+5. ถ้ามีไฟล์ใน `migrations/` ที่เปลี่ยนแปลง
+- สคริปต์จะเรียก `backup-db.php` ก่อน
+- แล้วเรียก `migrate.php`
+
+6. ถ้าต้องการตรวจ remote state ก่อน deploy
+- ตั้ง `REMOTE_STATE_URL` เป็น URL ที่ตอบค่าธรรมดา เช่น `deploy-state.php`
+- สคริปต์จะตรวจว่า `remote hash == .deploy.git_hash`
+
 ---
 
 ## ส่วนที่ 1: GitHub Webhook Auto-Deploy

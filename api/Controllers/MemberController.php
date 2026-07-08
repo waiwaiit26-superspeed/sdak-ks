@@ -18,6 +18,23 @@ class MemberController extends Controller
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone','member_number'
     ];
+
+    // ── Sub-admin helper ─────────────────────────────────────────────────
+
+    private function isAdminOrSubAdmin(string $permission): bool
+    {
+        if (!$this->currentUser) return false;
+        if ($this->currentUser['role'] === 'admin') return true;
+        $sa = $this->model('SubAdminModel');
+        return $sa->hasPermission((int)$this->currentUser['id'], 'members', $permission);
+    }
+
+    private function requireMembersAccess(string $permission): void
+    {
+        if (!$this->isAdminOrSubAdmin($permission)) {
+            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
+        }
+    }
     /**
      * GET  ?controller=member&action=profile[&id=X]
      */
@@ -25,7 +42,10 @@ class MemberController extends Controller
     {
         $userId = (int)($this->query('id') ?: $this->currentUser['id']);
 
-        if ($userId !== (int)$this->currentUser['id'] && $this->currentUser['role'] !== 'admin') {
+        // Allow admin, sub-admin with view, or the user themselves
+        if ($userId !== (int)$this->currentUser['id']
+            && $this->currentUser['role'] !== 'admin'
+            && !$this->isAdminOrSubAdmin('view')) {
             Response::error('คุณไม่มีสิทธิ์ดูข้อมูลผู้ใช้อื่น', 403);
         }
 
@@ -63,7 +83,7 @@ class MemberController extends Controller
             $users  = $this->model('UserModel');
             $userId = (int)$this->currentUser['id'];
 
-            if (isset($input['user_id']) && $this->currentUser['role'] === 'admin') {
+            if (isset($input['user_id']) && ($this->currentUser['role'] === 'admin' || $this->isAdminOrSubAdmin('edit'))) {
                 $userId = (int)$input['user_id'];
             }
 
@@ -192,6 +212,7 @@ class MemberController extends Controller
      */
     public function list(): void
     {
+        $this->requireMembersAccess('view');
         $users  = $this->model('UserModel');
         $result = $users->getFilteredList([
             'status'      => $this->query('status'),
@@ -246,6 +267,7 @@ class MemberController extends Controller
     public function approve(): void
     {
         $this->requirePost();
+        $this->requireMembersAccess('approve');
         $input  = $this->input();
         $userId = (int)($input['user_id'] ?? 0);
         $act    = $input['action'] ?? '';
@@ -566,7 +588,7 @@ class MemberController extends Controller
     public function create(): void
     {
         $this->requirePost();
-        if ($this->currentUser['role'] !== 'admin') Response::error('ไม่มีสิทธิ์', 403);
+        $this->requireMembersAccess('create');
 
         $input = $this->input();
         $users = $this->model('UserModel');
@@ -864,6 +886,7 @@ class MemberController extends Controller
      */
     public function statistics(): void
     {
+        $this->requireMembersAccess('view');
         $users = $this->model('UserModel');
         $stats = $this->model('MemberStatisticModel');
 

@@ -11,6 +11,18 @@ use App\Core\Response;
  */
 class NewsController extends Controller
 {
+    // ── Sub-admin helper ─────────────────────────────────────────────────
+
+    private function requireNewsAccess(string $permission): void
+    {
+        if (!$this->currentUser) Response::error('กรุณาเข้าสู่ระบบ', 401);
+        if ($this->currentUser['role'] === 'admin') return;
+        $sa = $this->model('SubAdminModel');
+        if (!$sa->hasPermission((int)$this->currentUser['id'], 'news', $permission)) {
+            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
+        }
+    }
+
     /**
      * GET  ?controller=news&action=list
      */
@@ -56,6 +68,7 @@ class NewsController extends Controller
     public function create(): void
     {
         $this->requirePost();
+        $this->requireNewsAccess('create');
         $input = $this->input();
 
         if (empty(trim($input['title'] ?? '')))   Response::error('กรุณากรอกหัวข้อข่าว');
@@ -84,6 +97,7 @@ class NewsController extends Controller
     public function update(): void
     {
         $this->requirePost();
+        $this->requireNewsAccess('edit');
         $input = $this->input();
         $id = (int)($input['id'] ?? 0);
         if (!$id) Response::error('กรุณาระบุ id ข่าว');
@@ -113,6 +127,7 @@ class NewsController extends Controller
     public function delete(): void
     {
         $this->requirePost();
+        $this->requireNewsAccess('delete');
         $id = (int)($this->input()['id'] ?? 0);
         if (!$id) Response::error('กรุณาระบุ id ข่าว');
 

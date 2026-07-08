@@ -97,6 +97,12 @@ $page = $page ?? '';
                         <p>บริหารการเงิน</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="./?page=sub-admins" class="nav-link <?= $page === 'sub-admins' ? 'active' : '' ?>">
+                        <i class="nav-icon bi bi-person-gear"></i>
+                        <p>จัดการสิทธิ์ผู้ดูแล</p>
+                    </a>
+                </li>
 
                 <li class="nav-header">Telegram</li>
                 <li class="nav-item">

@@ -643,5 +643,32 @@ const API = {
     },
     async getLinkedMembers(search = '', page = 1, limit = 20) {
         return this.get(this.apiUrl('telegram-link', 'linked-members') + `&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`);
-    }
+    },
+
+    // ── SUB-ADMIN ─────────────────────────────────────────────────────
+    async getSubAdmins(area = null) {
+        const params = area ? { area } : {};
+        return this.get(this.apiUrl('sub-admin', 'list'), params);
+    },
+    async getSubAdminAvailableMembers(area) {
+        return this.get(this.apiUrl('sub-admin', 'available-members'), { area });
+    },
+    async assignSubAdmin(userId, area, permissions, note = '') {
+        return this.post(this.apiUrl('sub-admin', 'assign'), { user_id: userId, area, permissions, note });
+    },
+    async revokeSubAdmin(userId, area) {
+        return this.post(this.apiUrl('sub-admin', 'revoke'), { user_id: userId, area });
+    },
+    async toggleSubAdmin(userId, area) {
+        return this.post(this.apiUrl('sub-admin', 'toggle'), { user_id: userId, area });
+    },
+    async deleteSubAdminRecord(id) {
+        return this.post(this.apiUrl('sub-admin', 'delete-record'), { id });
+    },
+    async updateSubAdminPermissions(userId, area, permissions) {
+        return this.post(this.apiUrl('sub-admin', 'update-permissions'), { user_id: userId, area, permissions });
+    },
+    async getMySubAdminPermissions() {
+        return this.get(this.apiUrl('sub-admin', 'my-permissions'));
+    },
 };

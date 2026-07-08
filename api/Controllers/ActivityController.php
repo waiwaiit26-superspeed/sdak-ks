@@ -11,6 +11,18 @@ use App\Core\Response;
  */
 class ActivityController extends Controller
 {
+    // ── Sub-admin helper ─────────────────────────────────────────────────
+
+    private function requireActivitiesAccess(string $permission): void
+    {
+        if (!$this->currentUser) Response::error('กรุณาเข้าสู่ระบบ', 401);
+        if ($this->currentUser['role'] === 'admin') return;
+        $sa = $this->model('SubAdminModel');
+        if (!$sa->hasPermission((int)$this->currentUser['id'], 'activities', $permission)) {
+            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
+        }
+    }
+
     /* ------------------------------------------------------------------ */
     /*  PUBLIC                                                             */
     /* ------------------------------------------------------------------ */
@@ -112,6 +124,7 @@ class ActivityController extends Controller
     public function create(): void
     {
         $this->requirePost();
+        $this->requireActivitiesAccess('create');
         $input = $this->input();
 
         if (empty(trim($input['title'] ?? '')))      Response::error('กรุณากรอกชื่อกิจกรรม');
@@ -151,6 +164,7 @@ class ActivityController extends Controller
     public function update(): void
     {
         $this->requirePost();
+        $this->requireActivitiesAccess('edit');
         $input = $this->input();
         $id = (int)($input['id'] ?? 0);
         if (!$id) Response::error('กรุณาระบุ id กิจกรรม');
@@ -208,6 +222,7 @@ class ActivityController extends Controller
     public function delete(): void
     {
         $this->requirePost();
+        $this->requireActivitiesAccess('delete');
         $id = (int)($this->input()['id'] ?? 0);
         if (!$id) Response::error('กรุณาระบุ id กิจกรรม');
 

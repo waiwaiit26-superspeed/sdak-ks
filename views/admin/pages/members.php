@@ -76,6 +76,7 @@
                 <table id="membersDataTable" class="table table-hover table-striped" style="width:100%">
                     <thead class="table-light">
                         <tr>
+                            <th>#</th>
                             <th>ชื่อ-นามสกุล</th>
                             <th>เลขสมาชิก</th>
                             <th>อีเมล</th>
@@ -557,6 +558,10 @@ function initDataTable() {
             }).catch(() => callback({ draw: data.draw, recordsTotal: 0, recordsFiltered: 0, data: [] }));
         },
         columns: [
+            {
+                data: null, orderable: false, searchable: false, responsivePriority: 1,
+                render: (d, t, row, meta) => meta.row + meta.settings._iDisplayStart + 1
+            },
             {
                 data: 'full_name', responsivePriority: 1,
                 render: (d, t, row) => {

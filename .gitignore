@@ -39,6 +39,8 @@ Thumbs.db
 # Secrets — ห้าม push ขึ้น GitHub
 .env
 webhook-secret.php
+.deploy.env
+.deploy.git_hash
 
 # Site-specific configs (มี DB credentials)
 config/sites/localhost.php

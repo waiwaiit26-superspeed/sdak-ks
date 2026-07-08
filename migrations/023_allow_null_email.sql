@@ -12,6 +12,7 @@ UPDATE `users` SET `email` = NULL WHERE `email` = '';
 
 -- 3. Remove test users created during debugging (pending, no real data)
 DELETE FROM `users`
-WHERE `username` = 'testdebug_uniqueemail'
+WHERE `username` IN ('testdebug_uniqueemail', 'testverify_noemail', 'testdebug999', 'testuser123')
   AND `status` = 'pending'
   AND `role` = 'member';
+

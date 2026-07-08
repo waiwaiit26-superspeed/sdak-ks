@@ -25,7 +25,8 @@ $allowed = [
     'logo',
     'finance',
     'member-types',
-    'telegram-send'
+    'telegram-send',
+    'sub-admins',
 ];
 
 if (in_array($page, $allowed)) {
