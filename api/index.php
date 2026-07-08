@@ -118,7 +118,7 @@ if (!\App\Core\RoleAccess::canAccessApi($controller, $action, $currentUser)) {
 if ($currentUser && $currentUser['status'] !== 'active') {
     $allowedForPending = ['auth', 'upload'];
     $allowedActions = [
-        'settings' => ['list'],
+        'settings' => ['list', 'member-types'],
         'nav'      => ['tree'],
         'member'   => ['profile', 'update', 'notifications'],
         'fee'      => ['my-fees', 'my-current', 'upload-slip', 'create-my-fee'],
