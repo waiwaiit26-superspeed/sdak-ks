@@ -40,6 +40,7 @@ class RoleAccess
             'directory'           => ['member', 'admin'],
             'directory-export'    => ['member', 'admin'],
             'directory-edit'     => ['member', 'admin'],
+            'directory-confirm-number' => ['member', 'admin'],
             'approve'             => ['member', 'admin'],
             'create'              => ['member', 'admin'],
             'delete'              => ['admin'],

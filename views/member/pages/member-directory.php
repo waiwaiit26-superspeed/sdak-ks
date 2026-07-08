@@ -180,6 +180,24 @@ $(async function () {
 });
 
 
+async function toggleConfirmNumber(el) {
+    const $el = $(el);
+    const userId = $el.data('id');
+    const $icon  = $el.find('i');
+    $icon.css('opacity', '0.4');
+
+    const res = await API.directoryConfirmNumber({ user_id: userId });
+    $icon.css('opacity', '');
+
+    if (!res.success) { App.error(res.message || 'เกิดข้อผิดพลาด'); return; }
+
+    const newConfirmed = res.data.member_number_confirmed;
+    $el.data('confirmed', newConfirmed);
+    $el.attr('title', newConfirmed ? 'ยืนยันเลขสมาชิกแล้ว' : 'ยังไม่ยืนยันเลขสมาชิก');
+    $icon.attr('class', newConfirmed ? 'bi bi-check-circle-fill text-success' : 'bi bi-circle text-secondary');
+    App.toast(res.message, newConfirmed ? 'success' : 'info');
+}
+
 async function exportDirectory() {
     const btn = $('#btnExportDir');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังส่งออก...');
@@ -270,6 +288,12 @@ async function loadDirectory(page = 1) {
         const pos     = m.position ? App.escapeHtml(m.position) : '<span class="text-muted">-</span>';
         const school  = m.school_organization ? App.escapeHtml(m.school_organization) : '<span class="text-muted">-</span>';
         const memNum  = m.member_number ? `<span class="badge badge-light border">${App.escapeHtml(m.member_number)}</span>` : '<span class="text-muted small">-</span>';
+        const confirmed = m.member_number_confirmed ? 1 : 0;
+        const confirmIconClass = confirmed ? 'bi-check-circle-fill text-success' : 'bi-circle text-secondary';
+        const confirmTitle     = confirmed ? 'ยืนยันเลขสมาชิกแล้ว' : 'ยังไม่ยืนยันเลขสมาชิก';
+        const confirmEl = canEdit
+            ? `<span class="dir-confirm-badge" data-id="${m.id}" data-confirmed="${confirmed}" style="cursor:pointer;" title="${confirmTitle}" onclick="toggleConfirmNumber(this)"><i class="bi ${confirmIconClass}" style="font-size:.8rem;"></i></span>`
+            : `<span title="${confirmTitle}"><i class="bi ${confirmIconClass}" style="font-size:.8rem;"></i></span>`;
         const nameWithoutPrefix = (m.prefix && m.full_name && m.full_name.startsWith(m.prefix))
             ? m.full_name.slice(m.prefix.length).trim()
             : (m.full_name || '');
@@ -287,7 +311,7 @@ async function loadDirectory(page = 1) {
         const avatar = `<img src="${App.getProfileImage(m)}" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;" alt="">`;
         html += `<tr data-member-id="${m.id}" data-prefix="${App.escapeHtml(m.prefix || '')}">
             <td>${startNum + i + 1}</td>
-            <td class="dir-num-cell">${memNum}</td>
+            <td class="dir-num-cell"><div class="d-flex align-items-center gap-1">${memNum} ${confirmEl}</div></td>
             <td class="dir-name-cell" style="cursor:pointer;" onclick="viewDirMember(${m.id})">
                 <div class="d-flex align-items-center">${avatar}<strong class="text-primary">${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong></div>
             </td>

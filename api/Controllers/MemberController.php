@@ -272,6 +272,7 @@ class MemberController extends Controller
                 'school_organization'=> $row['school_organization'] ?? '',
                 'profile_image'      => $row['profile_image'] ?? '',
                 'google_picture'     => $row['google_picture'] ?? '',
+                'member_number_confirmed' => (int)($row['member_number_confirmed'] ?? 0),
             ];
         }
 
@@ -354,6 +355,39 @@ class MemberController extends Controller
         if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
 
         Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=member&action=directory-confirm-number
+     * Admin/sub-admin ที่มีสิทธิ์ edit: toggle ยืนยัน/ไม่ยืนยันเลขสมาชิก
+     */
+    public function directoryConfirmNumber(): void
+    {
+        if (!$this->isAdminOrSubAdmin('edit')) {
+            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
+        }
+        $this->requirePost();
+        $input  = $this->input();
+        $userId = (int)($input['user_id'] ?? 0);
+        if (!$userId) Response::error('กรุณาระบุ user_id');
+
+        $users = $this->model('UserModel');
+        $user  = $users->find($userId);
+        if (!$user) Response::error('ไม่พบสมาชิก', 404);
+
+        $newConfirmed = ($user['member_number_confirmed'] ?? 0) ? 0 : 1;
+        $users->update(['member_number_confirmed' => $newConfirmed], ['id' => $userId]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'confirm_member_number', 'member',
+            ($newConfirmed ? 'ยืนยัน' : 'ยกเลิกยืนยัน') . 'เลขสมาชิก: ' . ($user['full_name'] ?? '') . " (id={$userId})",
+            $userId, 'user'
+        );
+
+        Response::success(
+            ['user_id' => $userId, 'member_number_confirmed' => $newConfirmed],
+            $newConfirmed ? 'ยืนยันเลขสมาชิกแล้ว' : 'ยกเลิกการยืนยันเลขสมาชิก'
+        );
     }
 
     /**
