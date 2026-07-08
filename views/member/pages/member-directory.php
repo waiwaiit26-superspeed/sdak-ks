@@ -962,16 +962,9 @@ async function saveAddMember() {
 
     const u = res.data?.username || '';
     const p = res.data?.password_plain || '';
+    const displayName = prefix + firstName;
     $('#credResultTitle').html('<i class="bi bi-person-check-fill me-1 text-success"></i> เพิ่มสมาชิกสำเร็จ');
-    $('#credResultBody').html(
-        '<div class="alert alert-success py-2 mb-2">เพิ่มสมาชิก <strong>' + App.escapeHtml(prefix + firstName) + '</strong> สำเร็จ</div>' +
-        '<table class="table table-sm table-bordered mb-2">' +
-            '<tr><td class="text-muted" width="100">Username</td><td><strong class="text-primary">' + App.escapeHtml(u) + '</strong></td></tr>' +
-            '<tr><td class="text-muted">Password</td><td><strong class="text-danger">' + App.escapeHtml(p) + '</strong></td></tr>' +
-        '</table>' +
-        '<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>'
-    );
-    $('#modalDirCredResult').modal('show');
+    showCredModal(displayName, u, p);
 }
 
 // ── Reset Password ──────────────────────────────────────────────────────
@@ -1001,16 +994,53 @@ async function doResetPassword() {
 
     const u = res.data?.username || '';
     const p = res.data?.password_plain || '';
+    const n = res.data?.full_name || '';
     $('#credResultTitle').html('<i class="bi bi-key-fill me-1 text-warning"></i> รีเซ็ตรหัสผ่านสำเร็จ');
+    showCredModal(n, u, p);
+    _resetPwdUserId = null;
+}
+
+function showCredModal(fullName, username, password) {
     $('#credResultBody').html(
         '<table class="table table-sm table-bordered mb-2">' +
-            '<tr><td class="text-muted" width="100">Username</td><td><strong class="text-primary">' + App.escapeHtml(u) + '</strong></td></tr>' +
-            '<tr><td class="text-muted">Password ใหม่</td><td><strong class="text-danger">' + App.escapeHtml(p) + '</strong></td></tr>' +
+            '<tr><td class="text-muted" style="width:100px">ชื่อ-สกุล</td><td><strong>' + App.escapeHtml(fullName) + '</strong></td></tr>' +
+            '<tr><td class="text-muted">Username</td><td><strong class="text-primary">' + App.escapeHtml(username) + '</strong></td></tr>' +
+            '<tr><td class="text-muted">Password</td><td><strong class="text-danger">' + App.escapeHtml(password) + '</strong></td></tr>' +
         '</table>' +
-        '<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>'
+        '<small class="text-danger d-block mb-2"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>' +
+        '<button class="btn btn-sm btn-outline-secondary" id="btnCopyCred" onclick="copyCredentials(' +
+            JSON.stringify(fullName) + ',' + JSON.stringify(username) + ',' + JSON.stringify(password) +
+        ')">' +
+        '<i class="bi bi-clipboard me-1"></i>คัดลอก</button>'
     );
     $('#modalDirCredResult').modal('show');
-    _resetPwdUserId = null;
+}
+
+function copyCredentials(fullName, username, password) {
+    const text = 'ชื่อ-สกุล: ' + fullName + '\nUsername: ' + username + '\nPassword: ' + password;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('btnCopyCred');
+            if (btn) { btn.innerHTML = '<i class="bi bi-clipboard-check me-1"></i>คัดลอกแล้ว!'; btn.classList.add('btn-success'); btn.classList.remove('btn-outline-secondary'); }
+        }).catch(() => _copyFallback(text));
+    } else {
+        _copyFallback(text);
+    }
+}
+
+function _copyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        const btn = document.getElementById('btnCopyCred');
+        if (btn) { btn.innerHTML = '<i class="bi bi-clipboard-check me-1"></i>คัดลอกแล้ว!'; btn.classList.add('btn-success'); btn.classList.remove('btn-outline-secondary'); }
+    } catch(e) { App.error('ไม่สามารถคัดลอกได้'); }
+    document.body.removeChild(ta);
 }
 </script>
 

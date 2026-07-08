@@ -49,7 +49,7 @@ class RoleAccess
             'next-member-number'      => ['member', 'admin'],
             'check-fee-status'        => ['member', 'admin'],
             'confirm-fee-payment'     => ['admin'],
-            'admin-reset-password'    => ['admin'],
+            'admin-reset-password'    => ['member', 'admin'],
         ],
         'news' => [
             'list'   => ['*'],

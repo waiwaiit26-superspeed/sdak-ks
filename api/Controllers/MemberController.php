@@ -997,6 +997,7 @@ class MemberController extends Controller
         );
 
         Response::success([
+            'full_name'      => $target['full_name'] ?? ($target['username'] ?? ''),
             'username'       => $target['username'],
             'password_plain' => $passwordPlain,
         ], 'รีเซ็ตรหัสผ่านสำเร็จ');
