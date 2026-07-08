@@ -177,7 +177,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label>มือถือ <span class="text-danger">*</span></label>
+                                    <label>มือถือ</label>
                                     <input type="tel" class="form-control" id="mf_phone" placeholder="0812345678">
                                 </div>
                             </div>

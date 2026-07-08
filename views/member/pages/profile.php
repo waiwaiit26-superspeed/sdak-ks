@@ -236,8 +236,8 @@
                                             </div>
                                         </div>
                                         <div class="col-md-4 mb-3">
-                                            <label class="form-label">อีเมล <span class="text-danger">*</span></label>
-                                            <input type="email" class="form-control" name="email" required>
+                                            <label class="form-label">อีเมล</label>
+                                            <input type="email" class="form-control" name="email">
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label class="form-label">ตำแหน่ง</label>
@@ -680,7 +680,7 @@ $(function () {
     $('#profileForm').validate({
         rules: {
             first_name: { required: true },
-            email:      { required: true, email: true }
+            email:      { required: false, email: true }
         },
         errorClass: 'is-invalid', validClass: 'is-valid',
         errorPlacement(e, el) { e.addClass('invalid-feedback').insertAfter(el); },
