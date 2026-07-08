@@ -30,7 +30,7 @@ class UserModel extends Model
 
     /** Columns safe to return (no password / google_id) */
     public const SAFE_COLUMNS = [
-        'id','username','email','role','member_type','member_number','status',
+        'id','username','email','role','member_type','member_number','member_number_confirmed','status',
         'prefix','full_name','phone','school_organization','position','academic_rank',
         'profile_image','google_picture','bio',
         'national_id','first_name','last_name','birth_date',

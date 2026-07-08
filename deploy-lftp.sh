@@ -165,10 +165,17 @@ if [[ "$DB_CHANGED" -eq 1 ]]; then
     cat /tmp/backup-db-result.txt
   fi
   if [[ -n "$MIGRATE_URL" ]]; then
-    echo "Running migrate..."
+    echo "Running migrate (site 1)..."
     curl -fsS "${MIGRATE_URL}?key=${DEPLOY_SECRET}" -o /tmp/migrate-result.txt
-    echo "Migrate result:"
+    echo "Migrate result (site 1):"
     cat /tmp/migrate-result.txt
+  fi
+  if [[ -n "${MIGRATE_URL_2:-}" ]]; then
+    echo "Running migrate (site 2)..."
+    _secret2="${DEPLOY_SECRET_2:-${DEPLOY_SECRET}}"
+    curl -fsS "${MIGRATE_URL_2}?key=${_secret2}" -o /tmp/migrate-result-2.txt
+    echo "Migrate result (site 2):"
+    cat /tmp/migrate-result-2.txt
   fi
 fi
 
