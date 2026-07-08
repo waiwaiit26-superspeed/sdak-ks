@@ -104,14 +104,12 @@ $(async function () {
     const user = API.getUser();
     if (user) $('#adminWelcome').text('สวัสดี, ' + user.full_name);
 
-    if (API.isAdmin()) {
-        // Full admin: show all stats
-        loadDashboard();
-        loadStatistics();
-    } else {
-        // Sub-admin: hide admin-only sections, show quick links
-        $('#dashboardAdminStats').hide();
-        $('#dashboardCharts').hide();
+    // Load stats for everyone (admin + sub-admin)
+    loadDashboard();
+    loadStatistics();
+
+    // Sub-admin: also show quick-link shortcuts
+    if (!API.isAdmin()) {
         loadSubAdminView();
     }
 

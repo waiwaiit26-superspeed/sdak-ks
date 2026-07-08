@@ -72,8 +72,8 @@ class RoleAccess
             'verify-payment'      => ['admin', 'member'],
         ],
         'dashboard' => [
-            'index'        => ['admin'],
-            'statistics'   => ['admin'],
+            'index'        => ['member', 'admin'],
+            'statistics'   => ['member', 'admin'],
             'public_stats' => ['*'],
         ],
         'upload' => [
@@ -97,7 +97,7 @@ class RoleAccess
         ],
         'log' => [
             'list'   => ['admin'],
-            'recent' => ['admin'],
+            'recent' => ['member', 'admin'],
         ],
         'settings' => [
             'list'               => ['*'],
