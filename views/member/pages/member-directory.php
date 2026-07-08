@@ -277,11 +277,12 @@ async function loadDirectory(page = 1) {
                     <i class="bi bi-pencil"></i></button>`
             : '';
 
+        const avatar = `<img src="${App.getProfileImage(m)}" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;" alt="">`;
         html += `<tr data-member-id="${m.id}" data-prefix="${App.escapeHtml(m.prefix || '')}">
             <td>${startNum + i + 1}</td>
             <td class="dir-num-cell">${memNum}</td>
             <td class="dir-name-cell">
-                <strong>${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong>
+                <div class="d-flex align-items-center">${avatar}<strong>${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong></div>
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td class="dir-pos-cell">${pos}${rank}</td>

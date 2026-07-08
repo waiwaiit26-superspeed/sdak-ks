@@ -251,6 +251,8 @@ class MemberController extends Controller
                 'academic_rank'      => $row['academic_rank'] ?? '',
                 'position'           => $row['position'] ?? '',
                 'school_organization'=> $row['school_organization'] ?? '',
+                'profile_image'      => $row['profile_image'] ?? '',
+                'google_picture'     => $row['google_picture'] ?? '',
             ];
         }
 
