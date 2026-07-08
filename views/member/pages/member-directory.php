@@ -62,6 +62,9 @@
                             <span class="text-muted small" id="dirResultInfo"></span>
                         </div>
                         <div class="col-auto">
+                            <button class="btn btn-success btn-sm mr-2" id="btnAddMember" style="display:none;" onclick="openAddMemberModal()">
+                                <i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก
+                            </button>
                             <button class="btn btn-outline-success btn-sm" id="btnExportDir" onclick="exportDirectory()">
                                 <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel
                             </button>
@@ -83,7 +86,7 @@
                                     <th width="12%" data-sort="member_type" style="cursor:pointer;white-space:nowrap;">ประเภท <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th width="15%" data-sort="position" style="cursor:pointer;white-space:nowrap;">ตำแหน่ง / วิทยฐานะ <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th data-sort="school_organization" style="cursor:pointer;white-space:nowrap;">โรงเรียน / หน่วยงาน <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
-                                    <th id="dirActionHeader" width="6%" style="display:none;"></th>
+                                    <th id="dirActionHeader" width="9%" style="display:none;"></th>
                                 </tr>
                             </thead>
                             <tbody id="dirTableBody">
@@ -108,6 +111,8 @@
 <script>
 let canEdit = false;
 let canViewFull = false;
+let canCreate = false;
+let _memberTypesList = [];
 
 $(async function () {
     App.requireLogin();
@@ -131,14 +136,18 @@ $(async function () {
     if (isAdmin) {
         canEdit = true;
         canViewFull = true;
+        canCreate = true;
     } else if (_pRes?.success) {
         if (_pRes.data?.areas?.members?.includes('edit')) canEdit = true;
         if (_pRes.data?.areas?.members?.includes('view')) canViewFull = true;
+        if (_pRes.data?.areas?.members?.includes('create')) canCreate = true;
     }
     if (canEdit) $('#dirActionHeader').show();
+    if (canCreate) $('#btnAddMember').show();
 
     // Populate member type filter
     if (typesRes.success && typesRes.data) {
+        _memberTypesList = typesRes.data;
         let opts = '<option value="">ทุกประเภท</option>';
         typesRes.data.forEach(t => {
             opts += `<option value="${t.type_key}">${App.escapeHtml(t.label)}</option>`;
@@ -176,6 +185,11 @@ $(async function () {
             $b.data('position'),
             $b.data('rank')
         );
+    });
+
+    $(document).on('click', '.dir-reset-btn', function () {
+        const $b = $(this);
+        openResetPasswordModal($b.data('id'), $b.data('name'));
     });
 });
 
@@ -310,7 +324,10 @@ async function loadDirectory(page = 1) {
                     data-fullname="${App.escapeHtml(nameWithoutPrefix)}"
                     data-position="${App.escapeHtml(m.position || '')}"
                     data-rank="${App.escapeHtml(m.academic_rank || '')}">
-                    <i class="bi bi-pencil"></i></button>`
+                    <i class="bi bi-pencil"></i></button>
+               <button class="btn btn-xs btn-outline-warning dir-reset-btn" title="รีเซ็ตรหัสผ่าน"
+                    data-id="${m.id}" data-name="${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}">
+                    <i class="bi bi-key"></i></button>`
             : '';
 
         const avatar = `<img src="${App.getProfileImage(m)}" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;" alt="">`;
@@ -709,6 +726,291 @@ async function viewDirMember(id) {
             '</div>'
         );
     }
+}
+</script>
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="modalDirAdd" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิกใหม่</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="font-weight-bold">รหัสสมาชิก</label>
+                    <input type="number" min="1" class="form-control" id="dirAddMemberNumber" placeholder="เช่น 1, 50, 100">
+                    <small class="text-muted">ใส่ตัวเลขเท่านั้น — ระบบจัดรูปแบบตามการตั้งค่าอัตโนมัติ</small>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">ประเภทสมาชิก <span class="text-danger">*</span></label>
+                    <select class="form-control" id="dirAddMemberType"></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label class="font-weight-bold">คำนำหน้า</label>
+                        <select class="form-control" id="dirAddPrefix">
+                            <option value="">— ไม่ระบุ —</option>
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                            <option value="ดร.">ดร.</option>
+                            <option value="ผศ.ดร.">ผศ.ดร.</option>
+                            <option value="รศ.ดร.">รศ.ดร.</option>
+                            <option value="ศ.ดร.">ศ.ดร.</option>
+                            <option value="ผศ.">ผศ.</option>
+                            <option value="รศ.">รศ.</option>
+                            <option value="ศ.">ศ.</option>
+                            <option value="พันตำรวจเอก">พันตำรวจเอก</option>
+                            <option value="พันตำรวจโท">พันตำรวจโท</option>
+                            <option value="พันตำรวจตรี">พันตำรวจตรี</option>
+                            <option value="ว่าที่ร้อยตรี">ว่าที่ร้อยตรี</option>
+                            <option value="other">อื่นๆ (กรอกเอง)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label class="font-weight-bold">ชื่อ-นามสกุล <small class="text-muted font-weight-normal">(ไม่รวมคำนำหน้า)</small> <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="dirAddFullName" placeholder="ชื่อ-นามสกุล">
+                    </div>
+                </div>
+                <div id="dirAddPrefixOtherWrap" style="display:none;" class="form-group">
+                    <label class="font-weight-bold">คำนำหน้า (ระบุเอง)</label>
+                    <input type="text" class="form-control" id="dirAddPrefixOther" placeholder="เช่น พ.ต.อ., เด็กชาย">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">ตำแหน่ง</label>
+                        <select class="form-control" id="dirAddPosition">
+                            <option value="">— ไม่ระบุ —</option>
+                            <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
+                            <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
+                            <option value="other">อื่นๆ (กรอกเอง)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6" id="dirAddAcademicRankWrap" style="display:none;">
+                        <label class="font-weight-bold">วิทยฐานะ</label>
+                        <select class="form-control" id="dirAddAcademicRank">
+                            <option value="">— ไม่ระบุ —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" id="dirAddPositionOtherRow" style="display:none;">
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">ระบุตำแหน่ง</label>
+                        <input type="text" class="form-control" id="dirAddPositionOther" placeholder="เช่น ครู, ผู้ช่วยผู้อำนวยการ">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">วิทยฐานะ <small class="text-muted font-weight-normal">(ถ้ามี)</small></label>
+                        <input type="text" class="form-control" id="dirAddAcademicRankOther" placeholder="เช่น ครูชำนาญการพิเศษ">
+                    </div>
+                </div>
+                <div class="callout callout-info py-2 px-3 mb-0">
+                    <small class="text-muted"><i class="bi bi-key me-1"></i>Username และ Password จะถูกสร้างอัตโนมัติ และแสดงให้ครั้งเดียวหลังบันทึก</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-success" id="btnSaveDirAdd" onclick="saveAddMember()">
+                    <i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="modalDirResetPwd" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-key me-1"></i> รีเซ็ตรหัสผ่าน</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="resetPwdInfo" class="alert alert-warning mb-3"></div>
+                <div class="form-group mb-0">
+                    <label class="font-weight-bold">รหัสผ่านใหม่ <small class="text-muted font-weight-normal">(เว้นว่างเพื่อสุ่มอัตโนมัติ)</small></label>
+                    <input type="text" class="form-control" id="resetPwdInput" placeholder="ปล่อยว่างเพื่อสุ่มรหัสผ่าน">
+                    <small class="text-muted">อย่างน้อย 6 ตัวอักษร หากระบุ</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-warning" id="btnDoResetPwd" onclick="doResetPassword()">
+                    <i class="bi bi-key me-1"></i> รีเซ็ต
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Credentials Result Modal (shown after add / reset) -->
+<div class="modal fade" id="modalDirCredResult" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="credResultTitle">ข้อมูลเข้าสู่ระบบ</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="credResultBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Add Member ──────────────────────────────────────────────────────────
+function openAddMemberModal() {
+    if (_memberTypesList.length) {
+        let opts = '';
+        _memberTypesList.forEach(t => {
+            opts += `<option value="${t.type_key}">${App.escapeHtml(t.label)}</option>`;
+        });
+        $('#dirAddMemberType').html(opts);
+    }
+    $('#dirAddMemberNumber, #dirAddFullName, #dirAddPrefixOther, #dirAddPositionOther, #dirAddAcademicRankOther').val('');
+    $('#dirAddPrefix, #dirAddPosition').val('');
+    $('#dirAddPrefixOtherWrap, #dirAddPositionOtherRow, #dirAddAcademicRankWrap').hide();
+    $('#btnSaveDirAdd').prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');
+    $('#modalDirAdd').modal('show');
+}
+
+$('#dirAddPrefix').on('change', function () {
+    if ($(this).val() === 'other') {
+        $('#dirAddPrefixOtherWrap').slideDown(150);
+        $('#dirAddPrefixOther').focus();
+    } else {
+        $('#dirAddPrefixOtherWrap').slideUp(150);
+        $('#dirAddPrefixOther').val('');
+    }
+});
+
+$('#dirAddPosition').on('change', function () {
+    const pos = $(this).val();
+    if (pos === 'other') {
+        $('#dirAddPositionOtherRow').slideDown(150);
+        $('#dirAddAcademicRankWrap').slideUp(150);
+        $('#dirAddPositionOther').focus();
+    } else {
+        $('#dirAddPositionOtherRow').slideUp(150);
+        $('#dirAddPositionOther').val('');
+        $('#dirAddAcademicRankOther').val('');
+        _updateAddRankDropdown(pos, '');
+    }
+});
+
+function _updateAddRankDropdown(position, selectedRank) {
+    const opts = _dirEditRankOpts[position];
+    if (opts) {
+        $('#dirAddAcademicRank').html(
+            '<option value="">— ไม่ระบุ —</option>' +
+            opts.map(o => `<option value="${o}"${o === selectedRank ? ' selected' : ''}>${o}</option>`).join('')
+        );
+        $('#dirAddAcademicRankWrap').slideDown(150);
+    } else {
+        $('#dirAddAcademicRank').html('<option value="">— ไม่ระบุ —</option>');
+        $('#dirAddAcademicRankWrap').slideUp(150);
+    }
+}
+
+function _getAddPrefix() {
+    const sel = $('#dirAddPrefix').val();
+    return sel === 'other' ? $('#dirAddPrefixOther').val().trim() : (sel || '');
+}
+function _getAddPosition() {
+    const sel = $('#dirAddPosition').val();
+    return sel === 'other' ? $('#dirAddPositionOther').val().trim() : (sel || '');
+}
+function _getAddAcademicRank() {
+    return $('#dirAddPosition').val() === 'other'
+        ? $('#dirAddAcademicRankOther').val().trim()
+        : ($('#dirAddAcademicRank').val() || '');
+}
+
+async function saveAddMember() {
+    const memberNumber = $('#dirAddMemberNumber').val().trim();
+    const memberType   = $('#dirAddMemberType').val();
+    const prefix       = _getAddPrefix();
+    const firstName    = $('#dirAddFullName').val().trim();
+    const position     = _getAddPosition();
+    const academicRank = _getAddAcademicRank();
+
+    if (!firstName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
+    if (!memberType) { App.error('กรุณาเลือกประเภทสมาชิก'); return; }
+
+    const btn = $('#btnSaveDirAdd');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
+
+    const res = await API.createMember({
+        member_number: memberNumber,
+        member_type:   memberType,
+        prefix:        prefix,
+        first_name:    firstName,
+        last_name:     '',
+        position:      position,
+        academic_rank: academicRank,
+    });
+
+    btn.prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');
+    if (!res.success) { App.error(res.message || 'เพิ่มสมาชิกล้มเหลว'); return; }
+
+    $('#modalDirAdd').modal('hide');
+    loadDirectory(1);
+
+    const u = res.data?.username || '';
+    const p = res.data?.password_plain || '';
+    $('#credResultTitle').html('<i class="bi bi-person-check-fill me-1 text-success"></i> เพิ่มสมาชิกสำเร็จ');
+    $('#credResultBody').html(
+        '<div class="alert alert-success py-2 mb-2">เพิ่มสมาชิก <strong>' + App.escapeHtml(prefix + firstName) + '</strong> สำเร็จ</div>' +
+        '<table class="table table-sm table-bordered mb-2">' +
+            '<tr><td class="text-muted" width="100">Username</td><td><strong class="text-primary">' + App.escapeHtml(u) + '</strong></td></tr>' +
+            '<tr><td class="text-muted">Password</td><td><strong class="text-danger">' + App.escapeHtml(p) + '</strong></td></tr>' +
+        '</table>' +
+        '<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>'
+    );
+    $('#modalDirCredResult').modal('show');
+}
+
+// ── Reset Password ──────────────────────────────────────────────────────
+let _resetPwdUserId = null;
+
+function openResetPasswordModal(userId, memberName) {
+    _resetPwdUserId = userId;
+    $('#resetPwdInfo').html('<i class="bi bi-person me-1"></i> รีเซ็ตรหัสผ่านของ <strong>' + App.escapeHtml(memberName) + '</strong>');
+    $('#resetPwdInput').val('');
+    $('#btnDoResetPwd').prop('disabled', false).html('<i class="bi bi-key me-1"></i> รีเซ็ต');
+    $('#modalDirResetPwd').modal('show');
+}
+
+async function doResetPassword() {
+    if (!_resetPwdUserId) return;
+    const pwd = $('#resetPwdInput').val().trim();
+    if (pwd && pwd.length < 6) { App.error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+
+    const btn = $('#btnDoResetPwd');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังรีเซ็ต...');
+
+    const res = await API.adminResetPassword(_resetPwdUserId, pwd);
+    btn.prop('disabled', false).html('<i class="bi bi-key me-1"></i> รีเซ็ต');
+    if (!res.success) { App.error(res.message || 'รีเซ็ตรหัสผ่านล้มเหลว'); return; }
+
+    $('#modalDirResetPwd').modal('hide');
+
+    const u = res.data?.username || '';
+    const p = res.data?.password_plain || '';
+    $('#credResultTitle').html('<i class="bi bi-key-fill me-1 text-warning"></i> รีเซ็ตรหัสผ่านสำเร็จ');
+    $('#credResultBody').html(
+        '<table class="table table-sm table-bordered mb-2">' +
+            '<tr><td class="text-muted" width="100">Username</td><td><strong class="text-primary">' + App.escapeHtml(u) + '</strong></td></tr>' +
+            '<tr><td class="text-muted">Password ใหม่</td><td><strong class="text-danger">' + App.escapeHtml(p) + '</strong></td></tr>' +
+        '</table>' +
+        '<small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>'
+    );
+    $('#modalDirCredResult').modal('show');
+    _resetPwdUserId = null;
 }
 </script>
 

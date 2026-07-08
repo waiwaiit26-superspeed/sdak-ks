@@ -837,17 +837,14 @@ class MemberController extends Controller
         if (!$firstName) Response::error('กรุณากรอกชื่อ');
         $fullName = AuthController::buildFullName($prefix, $firstName, $lastName);
 
-        // Auto-generate username if not provided
-        $username = trim($input['username'] ?? '');
-        if (!$username) {
-            $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $fullName));
-            if (strlen($base) < 3) $base = 'member';
-            $username = $base . rand(100, 9999);
-            while ($users->usernameExists($username)) {
-                $username = $base . rand(100, 9999);
-            }
+        // Username: if provided explicitly, validate & use; otherwise generate domain-prefix + userId after insert
+        $providedUsername = trim($input['username'] ?? '');
+        if ($providedUsername) {
+            if ($users->usernameExists($providedUsername)) Response::error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
+            $username = $providedUsername;
         } else {
-            if ($users->usernameExists($username)) Response::error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
+            // Temp unique placeholder; replaced after insert with sitePrefix+userId
+            $username = 'tmp_' . uniqid('', true);
         }
 
         // Email — optional for admin-created
@@ -862,13 +859,18 @@ class MemberController extends Controller
             }
         }
 
-        $memberType = $input['member_type'] ?? 'ordinary';
-        if (!in_array($memberType, ['ordinary', 'associate', 'affiliate', 'honorary'])) {
-            $memberType = 'ordinary';
-        }
+        $memberType = trim($input['member_type'] ?? 'ordinary') ?: 'ordinary';
 
-        $password = trim($input['password'] ?? '');
-        $hashedPw = Auth::hashPassword($password ?: 'sdak' . rand(1000, 9999));
+        // Generate random password if not explicitly provided
+        $passwordPlain = trim($input['password'] ?? '');
+        if (!$passwordPlain) {
+            $chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            $passwordPlain = '';
+            for ($i = 0; $i < 10; $i++) {
+                $passwordPlain .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        }
+        $hashedPw = Auth::hashPassword($passwordPlain);
 
         $data = [
             'username'    => $username,
@@ -883,15 +885,12 @@ class MemberController extends Controller
             'approved_at' => date('Y-m-d H:i:s'),
         ];
 
-        // Member number — normalize to numeric-only
+        // Member number — normalize to numeric-only (duplicates allowed)
         $memberNumber = trim($input['member_number'] ?? '');
         if ($memberNumber) {
             $settings = $this->model('SettingsModel');
             $mnDigits = (int)$settings->get('member_number_digits', '4');
             $memberNumber = UserModel::normalizeMemberNumber($memberNumber, $mnDigits);
-            if ($memberNumber && $users->memberNumberExists($memberNumber)) {
-                Response::error('เลขสมาชิก "' . $memberNumber . '" ถูกใช้แล้ว');
-            }
             if ($memberNumber) $data['member_number'] = $memberNumber;
         }
 
@@ -908,14 +907,26 @@ class MemberController extends Controller
             }
         }
 
-        $userId = $users->create($data);
-        $auth = new Auth();
+        $userId = (int)$users->create($data);
+
+        // Finalize username: domain-prefix + userId (if not explicitly provided)
+        if (!$providedUsername) {
+            $sitePrefix = (defined('SITE_DOMAIN') && stripos(SITE_DOMAIN, 'saak') !== false) ? 'saak' : 'sdak';
+            $finalUsername = $sitePrefix . $userId;
+            $users->update(['username' => $finalUsername], ['id' => $userId]);
+            $username = $finalUsername;
+        }
+
         Auth::logActivity(
             (int)$this->currentUser['id'], 'create_member', 'member',
-            "เพิ่มสมาชิก: {$fullName}", (int)$userId, 'user'
+            "เพิ่มสมาชิก: {$fullName} (username: {$username})", $userId, 'user'
         );
 
-        Response::success(['user_id' => $userId], 'เพิ่มสมาชิกสำเร็จ', 201);
+        Response::success([
+            'user_id'        => $userId,
+            'username'       => $username,
+            'password_plain' => $passwordPlain,
+        ], 'เพิ่มสมาชิกสำเร็จ', 201);
     }
 
     /**
@@ -954,21 +965,29 @@ class MemberController extends Controller
     public function adminResetPassword(): void
     {
         $this->requirePost();
-        if ($this->currentUser['role'] !== 'admin') Response::error('ไม่มีสิทธิ์', 403);
+        if (!$this->isAdminOrSubAdmin('edit')) Response::error('ไม่มีสิทธิ์', 403);
 
-        $input    = $this->input();
-        $userId   = (int)($input['user_id'] ?? 0);
-        $password = $input['password'] ?? '';
-
+        $input  = $this->input();
+        $userId = (int)($input['user_id'] ?? 0);
         if (!$userId) Response::error('กรุณาระบุ user_id');
-        if (strlen($password) < 6) Response::error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
 
         $users  = $this->model('UserModel');
         $target = $users->find($userId);
         if (!$target) Response::error('ไม่พบผู้ใช้', 404);
 
+        // Use provided password or generate random
+        $passwordPlain = trim($input['password'] ?? '');
+        if ($passwordPlain && strlen($passwordPlain) < 6) Response::error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+        if (!$passwordPlain) {
+            $chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            $passwordPlain = '';
+            for ($i = 0; $i < 10; $i++) {
+                $passwordPlain .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        }
+
         $users->update(
-            ['password' => Auth::hashPassword($password)],
+            ['password' => Auth::hashPassword($passwordPlain)],
             ['id' => $userId]
         );
 
@@ -977,7 +996,10 @@ class MemberController extends Controller
             "รีเซ็ตรหัสผ่านสมาชิก: {$target['full_name']} ({$target['username']})", $userId, 'user'
         );
 
-        Response::success(null, 'รีเซ็ตรหัสผ่านสำเร็จ');
+        Response::success([
+            'username'       => $target['username'],
+            'password_plain' => $passwordPlain,
+        ], 'รีเซ็ตรหัสผ่านสำเร็จ');
     }
 
     /**

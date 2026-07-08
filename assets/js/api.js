@@ -303,6 +303,10 @@ const API = {
         return this.post(this.apiUrl('member', 'create'), data);
     },
 
+    async adminResetPassword(userId, password = '') {
+        return this.post(this.apiUrl('member', 'admin-reset-password'), { user_id: userId, password });
+    },
+
     async deleteMember(userId) {
         return this.post(this.apiUrl('member', 'delete'), { user_id: userId });
     },
