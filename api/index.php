@@ -160,8 +160,6 @@ if (!method_exists($ctrl, $method)) {
 try {
     $ctrl->$method();
 } catch (\Throwable $e) {
-    $msg = $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
-    error_log("API Error [{$controller}/{$action}]: " . $msg);
-    // TEMP DEBUG — remove after diagnosing
-    jsonResponse(false, '[DEBUG] ' . $msg, null, 500);
+    error_log("API Error [{$controller}/{$action}]: " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    jsonResponse(false, 'เกิดข้อผิดพลาดภายในระบบ', null, 500);
 }

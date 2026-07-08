@@ -174,15 +174,13 @@ class MemberController extends Controller
 
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
-        // Normalize & check member_number uniqueness
+        // Normalize member_number (duplicates allowed — no uniqueness check)
         if (isset($data['member_number']) && $data['member_number'] !== '') {
             $settings = $this->model('SettingsModel');
             $digits = (int)$settings->get('member_number_digits', '4');
             $data['member_number'] = UserModel::normalizeMemberNumber($data['member_number'], $digits);
             if ($data['member_number'] === '') {
                 unset($data['member_number']);
-            } elseif ($users->memberNumberExists($data['member_number'], $userId)) {
-                Response::error('เลขสมาชิก "' . $data['member_number'] . '" ถูกใช้แล้ว กรุณาระบุเลขอื่น');
             }
         }
 
