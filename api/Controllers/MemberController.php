@@ -225,8 +225,9 @@ class MemberController extends Controller
 
         $users  = $this->model('UserModel');
         $result = $users->getFilteredList([
-            'status'      => 'approved',
+            'status'      => 'active',
             'role'        => 'member',
+            'member_type' => $this->query('member_type') ?? '',
             'search'      => $search,
         ], $page, $perPage);
 
