@@ -442,8 +442,8 @@ function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
     }, 5000);
 }
 
-$(function () {
-    App.requireAdmin();
+$(async function () {
+    if (!await App.requireAdminOrSubAdmin()) return;
     loadReceipts();
     loadMembersList();
     loadCategories();
