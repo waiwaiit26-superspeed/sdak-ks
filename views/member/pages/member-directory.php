@@ -184,7 +184,8 @@ $(async function () {
             $b.data('fullname'),
             $b.data('position'),
             $b.data('rank'),
-            $b.data('school') || ''
+            $b.data('school') || '',
+            $b.data('email') || ''
         );
     });
 
@@ -325,7 +326,8 @@ async function loadDirectory(page = 1) {
                     data-fullname="${App.escapeHtml(nameWithoutPrefix)}"
                     data-position="${App.escapeHtml(m.position || '')}"
                     data-rank="${App.escapeHtml(m.academic_rank || '')}"
-                    data-school="${App.escapeHtml(m.school_organization || '')}">
+                    data-school="${App.escapeHtml(m.school_organization || '')}"
+                    data-email="${App.escapeHtml(m.email || '')}">
                     <i class="bi bi-pencil"></i></button>
                <button class="btn btn-xs btn-outline-warning dir-reset-btn" title="รีเซ็ตรหัสผ่าน"
                     data-id="${m.id}" data-name="${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}">
@@ -459,6 +461,10 @@ async function loadDirectory(page = 1) {
                     <label class="font-weight-bold">โรงเรียน / สถานที่ทำงาน</label>
                     <input type="text" class="form-control" id="dirEditSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
                 </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">อีเมล <small class="text-muted font-weight-normal">(ไม่บังคับกรอก)</small></label>
+                    <input type="email" class="form-control" id="dirEditEmail" placeholder="example@email.com" autocomplete="off">
+                </div>
                 <!-- Summary preview -->
                 <div class="callout callout-info py-2 px-3 mb-0" id="dirEditSummaryBox">
                     <small class="text-muted d-block mb-1">ตัวอย่างการแสดงผล</small>
@@ -555,10 +561,11 @@ $('#dirEditPosition').on('change', function () {
     updateDirEditSummary();
 });
 
-function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school) {
+function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school, email) {
     _dirEditUserId = userId;
     $('#dirEditMemberNumber').val(memberNumber);
     $('#dirEditSchool').val(school || '');
+    $('#dirEditEmail').val(email || '');
     // Prefix dropdown
     if (prefix && !$('#dirEditPrefix option[value="' + prefix + '"]').length) {
         $('#dirEditPrefix').val('other');
@@ -609,6 +616,7 @@ async function saveDirectoryEdit() {
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
 
     const school = $('#dirEditSchool').val().trim();
+    const email   = $('#dirEditEmail').val().trim();
 
     const res = await API.directoryEdit({
         user_id:             _dirEditUserId,
@@ -618,6 +626,7 @@ async function saveDirectoryEdit() {
         position:            position,
         academic_rank:       academicRank,
         school_organization: school,
+        email:               email,
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
@@ -663,6 +672,9 @@ async function saveDirectoryEdit() {
             const newSchool = res.data.school_organization || '';
             $editBtn.data('school', newSchool);
             row.find('.dir-school-cell').html(newSchool ? App.escapeHtml(newSchool) : '<span class="text-muted">-</span>');
+        }
+        if (res.data.email !== undefined) {
+            $editBtn.data('email', res.data.email || '');
         }
     }
     _dirEditUserId = null;
@@ -825,6 +837,10 @@ async function viewDirMember(id) {
                     <label class="font-weight-bold">โรงเรียน / สถานที่ทำงาน</label>
                     <input type="text" class="form-control" id="dirAddSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
                 </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">อีเมล <small class="text-muted font-weight-normal">(ไม่บังคับกรอก)</small></label>
+                    <input type="email" class="form-control" id="dirAddEmail" placeholder="example@email.com" autocomplete="off">
+                </div>
                 <div class="callout callout-info py-2 px-3 mb-0">
                     <small class="text-muted"><i class="bi bi-key me-1"></i>Username และ Password จะถูกสร้างอัตโนมัติ และแสดงให้ครั้งเดียวหลังบันทึก</small>
                 </div>
@@ -891,7 +907,7 @@ function openAddMemberModal() {
         });
         $('#dirAddMemberType').html(opts);
     }
-    $('#dirAddMemberNumber, #dirAddFullName, #dirAddPrefixOther, #dirAddPositionOther, #dirAddAcademicRankOther, #dirAddSchool').val('');
+    $('#dirAddMemberNumber, #dirAddFullName, #dirAddPrefixOther, #dirAddPositionOther, #dirAddAcademicRankOther, #dirAddSchool, #dirAddEmail').val('');
     $('#dirAddPrefix, #dirAddPosition').val('');
     $('#dirAddPrefixOtherWrap, #dirAddPositionOtherRow, #dirAddAcademicRankWrap').hide();
     $('#btnSaveDirAdd').prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');
@@ -965,6 +981,7 @@ async function saveAddMember() {
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
 
     const school = $('#dirAddSchool').val().trim();
+    const email   = $('#dirAddEmail').val().trim();
 
     const res = await API.createMember({
         member_number:       memberNumber,
@@ -975,6 +992,7 @@ async function saveAddMember() {
         position:            position,
         academic_rank:       academicRank,
         school_organization: school,
+        email:               email,
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');

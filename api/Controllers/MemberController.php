@@ -253,12 +253,14 @@ class MemberController extends Controller
         // Format member number + strip sensitive fields
         $prefix = $settings->get('member_number_prefix', '');
         $digits = (int)$settings->get('member_number_digits', '4');
+        $isPrivileged = isset($this->currentUser) &&
+            ($this->currentUser['role'] === 'admin' || $this->currentUser['role'] === 'member');
         $publicData = [];
         foreach ($result['data'] as $row) {
             $num = !empty($row['member_number'])
                 ? UserModel::formatMemberNumber($row['member_number'], $prefix, $digits)
                 : null;
-            $publicData[] = [
+            $entry = [
                 'id'                 => (int)$row['id'],
                 'member_number'      => $num,
                 'member_number_raw'  => $row['member_number'] ?? null,
@@ -272,6 +274,10 @@ class MemberController extends Controller
                 'google_picture'     => $row['google_picture'] ?? '',
                 'member_number_confirmed' => (int)($row['member_number_confirmed'] ?? 0),
             ];
+            if ($isPrivileged) {
+                $entry['email'] = $row['email'] ?? '';
+            }
+            $publicData[] = $entry;
         }
 
         Response::paginated($publicData, $result['total'], $result['page'], $result['per_page']);
@@ -332,6 +338,17 @@ class MemberController extends Controller
             $data['school_organization'] = trim((string)$input['school_organization']);
         }
 
+        // email — optional, validate format and uniqueness
+        if (array_key_exists('email', $input)) {
+            $emailVal = trim((string)$input['email']);
+            if ($emailVal !== '') {
+                if (!filter_var($emailVal, FILTER_VALIDATE_EMAIL)) Response::error('รูปแบบอีเมลไม่ถูกต้อง');
+                $existing = $users->findByEmail($emailVal);
+                if ($existing && (int)$existing['id'] !== $userId) Response::error('อีเมลนี้ถูกใช้โดยสมาชิกท่านอื่นแล้ว');
+            }
+            $data['email'] = $emailVal !== '' ? $emailVal : null;
+        }
+
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
         $filtered = $users->filterColumns($data);
@@ -367,6 +384,7 @@ class MemberController extends Controller
         if (isset($data['position']))       $result['position']      = $data['position'];
         if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
         if (isset($data['school_organization'])) $result['school_organization'] = $data['school_organization'];
+        if (array_key_exists('email', $data)) $result['email'] = $data['email'] ?? '';
 
         Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
     }
