@@ -327,6 +327,11 @@ class MemberController extends Controller
             $data['academic_rank'] = trim((string)$input['academic_rank']);
         }
 
+        // school_organization — direct override
+        if (array_key_exists('school_organization', $input)) {
+            $data['school_organization'] = trim((string)$input['school_organization']);
+        }
+
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
         $filtered = $users->filterColumns($data);
@@ -361,6 +366,7 @@ class MemberController extends Controller
         }
         if (isset($data['position']))       $result['position']      = $data['position'];
         if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
+        if (isset($data['school_organization'])) $result['school_organization'] = $data['school_organization'];
 
         Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
     }

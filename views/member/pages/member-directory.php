@@ -183,7 +183,8 @@ $(async function () {
             $b.data('prefix'),
             $b.data('fullname'),
             $b.data('position'),
-            $b.data('rank')
+            $b.data('rank'),
+            $b.data('school') || ''
         );
     });
 
@@ -323,7 +324,8 @@ async function loadDirectory(page = 1) {
                     data-prefix="${App.escapeHtml(m.prefix || '')}"
                     data-fullname="${App.escapeHtml(nameWithoutPrefix)}"
                     data-position="${App.escapeHtml(m.position || '')}"
-                    data-rank="${App.escapeHtml(m.academic_rank || '')}">
+                    data-rank="${App.escapeHtml(m.academic_rank || '')}"
+                    data-school="${App.escapeHtml(m.school_organization || '')}">
                     <i class="bi bi-pencil"></i></button>
                <button class="btn btn-xs btn-outline-warning dir-reset-btn" title="รีเซ็ตรหัสผ่าน"
                     data-id="${m.id}" data-name="${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}">
@@ -339,7 +341,7 @@ async function loadDirectory(page = 1) {
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td class="dir-pos-cell">${pos}${rank}</td>
-            <td>${school}</td>
+            <td class="dir-school-cell">${school}</td>
             <td>${editBtn}</td>
         </tr>`;
     });
@@ -453,6 +455,10 @@ async function loadDirectory(page = 1) {
                         <input type="text" class="form-control" id="dirEditAcademicRankOther" placeholder="เช่น ครูชำนาญการพิเศษ">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">โรงเรียน / สถานที่ทำงาน</label>
+                    <input type="text" class="form-control" id="dirEditSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
+                </div>
                 <!-- Summary preview -->
                 <div class="callout callout-info py-2 px-3 mb-0" id="dirEditSummaryBox">
                     <small class="text-muted d-block mb-1">ตัวอย่างการแสดงผล</small>
@@ -549,9 +555,10 @@ $('#dirEditPosition').on('change', function () {
     updateDirEditSummary();
 });
 
-function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank) {
+function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school) {
     _dirEditUserId = userId;
     $('#dirEditMemberNumber').val(memberNumber);
+    $('#dirEditSchool').val(school || '');
     // Prefix dropdown
     if (prefix && !$('#dirEditPrefix option[value="' + prefix + '"]').length) {
         $('#dirEditPrefix').val('other');
@@ -601,13 +608,16 @@ async function saveDirectoryEdit() {
     const btn = $('#btnSaveDirEdit');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
 
+    const school = $('#dirEditSchool').val().trim();
+
     const res = await API.directoryEdit({
-        user_id:       _dirEditUserId,
-        member_number: memberNumber,
-        prefix:        prefixVal,
-        full_name:     fullName,
-        position:      position,
-        academic_rank: academicRank,
+        user_id:             _dirEditUserId,
+        member_number:       memberNumber,
+        prefix:              prefixVal,
+        full_name:           fullName,
+        position:            position,
+        academic_rank:       academicRank,
+        school_organization: school,
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
@@ -647,6 +657,12 @@ async function saveDirectoryEdit() {
             const posHtml  = newPos  ? App.escapeHtml(newPos)  : '<span class="text-muted">-</span>';
             const rankHtml = newRank ? `<br><small class="text-muted">${App.escapeHtml(newRank)}</small>` : '';
             row.find('.dir-pos-cell').html(posHtml + rankHtml);
+        }
+        // school_organization
+        if (res.data.school_organization !== undefined) {
+            const newSchool = res.data.school_organization || '';
+            $editBtn.data('school', newSchool);
+            row.find('.dir-school-cell').html(newSchool ? App.escapeHtml(newSchool) : '<span class="text-muted">-</span>');
         }
     }
     _dirEditUserId = null;
@@ -805,6 +821,10 @@ async function viewDirMember(id) {
                         <input type="text" class="form-control" id="dirAddAcademicRankOther" placeholder="เช่น ครูชำนาญการพิเศษ">
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">โรงเรียน / สถานที่ทำงาน</label>
+                    <input type="text" class="form-control" id="dirAddSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
+                </div>
                 <div class="callout callout-info py-2 px-3 mb-0">
                     <small class="text-muted"><i class="bi bi-key me-1"></i>Username และ Password จะถูกสร้างอัตโนมัติ และแสดงให้ครั้งเดียวหลังบันทึก</small>
                 </div>
@@ -871,7 +891,7 @@ function openAddMemberModal() {
         });
         $('#dirAddMemberType').html(opts);
     }
-    $('#dirAddMemberNumber, #dirAddFullName, #dirAddPrefixOther, #dirAddPositionOther, #dirAddAcademicRankOther').val('');
+    $('#dirAddMemberNumber, #dirAddFullName, #dirAddPrefixOther, #dirAddPositionOther, #dirAddAcademicRankOther, #dirAddSchool').val('');
     $('#dirAddPrefix, #dirAddPosition').val('');
     $('#dirAddPrefixOtherWrap, #dirAddPositionOtherRow, #dirAddAcademicRankWrap').hide();
     $('#btnSaveDirAdd').prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');
@@ -944,14 +964,17 @@ async function saveAddMember() {
     const btn = $('#btnSaveDirAdd');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
 
+    const school = $('#dirAddSchool').val().trim();
+
     const res = await API.createMember({
-        member_number: memberNumber,
-        member_type:   memberType,
-        prefix:        prefix,
-        first_name:    firstName,
-        last_name:     '',
-        position:      position,
-        academic_rank: academicRank,
+        member_number:       memberNumber,
+        member_type:         memberType,
+        prefix:              prefix,
+        first_name:          firstName,
+        last_name:           '',
+        position:            position,
+        academic_rank:       academicRank,
+        school_organization: school,
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-person-plus-fill me-1"></i> เพิ่มสมาชิก');
