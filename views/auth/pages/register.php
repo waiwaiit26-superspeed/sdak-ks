@@ -272,9 +272,10 @@ $extraCss = '
                         </div>
                     </div>
                     <!-- ── Name Match Panel ── -->
-                    <div id="nameMatchPanel" style="display:none;" class="mb-2">
-                        <div class="callout callout-warning py-2 px-3 mb-2">
-                            <small><i class="bi bi-search me-1"></i> พบชื่อที่ตรงกันในระบบ &mdash; กรุณาตรวจสอบว่าท่านเป็นคนเดียวกันหรือไม่</small>
+                    <div id="nameMatchPanel" style="display:none;" class="mt-1 mb-2">
+                        <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;padding:7px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                            <small style="color:#92400e;"><i class="bi bi-people me-1"></i><strong>พบชื่อที่ตรงกันในระบบ</strong> — ท่านเป็นคนนี้หรือไม่?</small>
+                            <button type="button" onclick="$('#nameMatchPanel').hide()" style="background:none;border:none;color:#9ca3af;cursor:pointer;padding:0;font-size:1.1rem;line-height:1;">&times;</button>
                         </div>
                         <div id="nameMatchList"></div>
                     </div>
@@ -948,32 +949,47 @@ $(function () {
     }
 
     // params = string หรือ { first, last } หรือ { q }
-    async function runNameSearch(params, containerSelector, mode) {
+    // callbacks = { onNoResults: fn }  (optional)
+    async function runNameSearch(params, containerSelector, mode, callbacks) {
+        const $list  = $(containerSelector);
+        const $panel = $list.parent(); // ใช้ .parent() ตรงๆ แทน closest()
+
         let apiParams;
         if (typeof params === 'string') {
-            if (params.length < 2) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
+            if (params.length < 2) { $panel.hide(); return; }
             apiParams = { q: params };
         } else {
             apiParams = {};
             if (params.first && params.first.length >= 2) apiParams.first = params.first;
             if (params.last  && params.last.length  >= 2) apiParams.last  = params.last;
-            if (!apiParams.first && !apiParams.last) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
+            if (!apiParams.first && !apiParams.last) {
+                $panel.hide();
+                if (callbacks && callbacks.onNoResults) callbacks.onNoResults();
+                return;
+            }
         }
         const res = await API.searchMembersByName(apiParams);
         if (!res.success || !res.data || res.data.length === 0) {
-            $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return;
+            $panel.hide();
+            if (callbacks && callbacks.onNoResults) callbacks.onNoResults();
+            return;
         }
-        $(containerSelector).html(res.data.map(m => buildMatchCard(m, mode)).join(''));
-        $(containerSelector).closest('[id$=Panel],[id$=panel]').show();
+        $list.html(res.data.map(m => buildMatchCard(m, mode)).join(''));
+        $panel.show();
     }
 
     // Form register: debounce on first_name + last_name input (OR search)
     $('#first_name, #last_name').on('input', function () {
         clearTimeout(_nameSearchTimer);
+        const first = $('#first_name').val().trim();
+        const last  = $('#last_name').val().trim();
+        if (!first && !last) { $('#nameMatchPanel').hide(); return; }
+        // แสดง loading ทันที ไม่ต้องรอ debounce
+        if (first.length >= 2 || last.length >= 2) {
+            $('#nameMatchList').html('<div class="text-muted py-2 text-center" style="font-size:.85rem;"><span class="spinner-border spinner-border-sm mr-1"></span> กำลังค้นหา...</div>');
+            $('#nameMatchPanel').show();
+        }
         _nameSearchTimer = setTimeout(function () {
-            const first = $('#first_name').val().trim();
-            const last  = $('#last_name').val().trim();
-            if (!first && !last) { $('#nameMatchPanel').hide(); return; }
             runNameSearch({ first, last }, '#nameMatchList', 'email');
         }, 350);
     });
@@ -982,11 +998,19 @@ $(function () {
     let _wizardNameSearchTimer = null;
     $('#setupFirstName, #setupLastName').on('input', function () {
         clearTimeout(_wizardNameSearchTimer);
+        const first = $('#setupFirstName').val().trim();
+        const last  = $('#setupLastName').val().trim();
+        if (!first && !last) { $('#setupNameMatchPanel').hide(); $('#setupNameNextRow').show(); return; }
+        // แสดง loading ทันที
+        if (first.length >= 2 || last.length >= 2) {
+            $('#setupNameMatchList').html('<div class="text-muted py-2 text-center" style="font-size:.85rem;"><span class="spinner-border spinner-border-sm mr-1"></span> กำลังค้นหา...</div>');
+            $('#setupNameMatchPanel').show();
+            $('#setupNameNextRow').hide();
+        }
         _wizardNameSearchTimer = setTimeout(function () {
-            const first = $('#setupFirstName').val().trim();
-            const last  = $('#setupLastName').val().trim();
-            if (!first && !last) { $('#setupNameMatchPanel').hide(); return; }
-            runNameSearch({ first, last }, '#setupNameMatchList', 'google');
+            runNameSearch({ first, last }, '#setupNameMatchList', 'google', {
+                onNoResults: function() { $('#setupNameNextRow').show(); }
+            });
         }, 350);
     });
 
