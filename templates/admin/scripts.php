@@ -55,11 +55,17 @@ async function adjustSidebarForRole() {
     $('#nav-member-types, #nav-header-settings, #nav-navigation, #nav-pages, #nav-settings, #nav-logo').hide();
     $('#nav-header-finance, #nav-fees, #nav-receipts, #nav-finance, #nav-sub-admins').hide();
     $('#nav-header-telegram, #nav-telegram-send, #nav-logs').hide();
+    $('#nav-account-links').hide(); // hidden by default; shown below if members.approve
 
     // Content items: show only permitted areas
     if (!areas.members)    $('#nav-members').hide();
     if (!areas.news)       $('#nav-news').hide();
     if (!areas.activities) $('#nav-activities').hide();
+
+    // Show account-links if sub-admin has members.approve
+    if (areas.members && areas.members.includes('approve')) {
+        $('#nav-account-links').show();
+    }
 
     // Finance area: show finance menus if permitted
     if (areas.finance && areas.finance.length) {

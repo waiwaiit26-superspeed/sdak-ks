@@ -33,9 +33,9 @@ class RoleAccess
             'me'                       => ['member', 'admin'],
             'search-members-by-name'   => ['*'],
             'request-account-link'     => ['*'],
-            'list-pending-links'       => ['admin'],
-            'approve-account-link'     => ['admin'],
-            'reject-account-link'      => ['admin'],
+            'list-pending-links'       => ['admin', 'member'],
+            'approve-account-link'     => ['admin', 'member'],
+            'reject-account-link'      => ['admin', 'member'],
         ],
         'member' => [
             'profile'             => ['member', 'admin'],

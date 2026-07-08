@@ -985,6 +985,12 @@ class AuthController extends Controller
      */
     public function listPendingLinks(): void
     {
+        if ($this->currentUser['role'] !== 'admin') {
+            $sa = $this->model('SubAdminModel');
+            if (!$sa->hasPermission((int)$this->currentUser['id'], 'members', 'approve')) {
+                Response::error('ไม่มีสิทธิ์ดูคำขอผูกบัญชี', 403);
+            }
+        }
         $page    = $this->getPage();
         $perPage = $this->getPerPage(50);
         $result  = $this->model('AccountLinkRequestModel')->getPendingList($page, $perPage);
@@ -998,6 +1004,12 @@ class AuthController extends Controller
     public function approveAccountLink(): void
     {
         $this->requirePost();
+        if ($this->currentUser['role'] !== 'admin') {
+            $sa = $this->model('SubAdminModel');
+            if (!$sa->hasPermission((int)$this->currentUser['id'], 'members', 'approve')) {
+                Response::error('ไม่มีสิทธิ์อนุมัติคำขอ', 403);
+            }
+        }
         $input     = $this->input();
         $requestId = (int)($input['request_id'] ?? 0);
         $note      = trim($input['note'] ?? '');
@@ -1058,6 +1070,12 @@ class AuthController extends Controller
     public function rejectAccountLink(): void
     {
         $this->requirePost();
+        if ($this->currentUser['role'] !== 'admin') {
+            $sa = $this->model('SubAdminModel');
+            if (!$sa->hasPermission((int)$this->currentUser['id'], 'members', 'approve')) {
+                Response::error('ไม่มีสิทธิ์ปฏิเสธคำขอ', 403);
+            }
+        }
         $input     = $this->input();
         $requestId = (int)($input['request_id'] ?? 0);
         $note      = trim($input['note'] ?? '');

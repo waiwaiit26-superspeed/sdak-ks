@@ -89,6 +89,7 @@
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
 <script>
 let _currentLinkAction = {};
+let _canManageLinks    = false;
 
 function getLinkTypeBadge(t) {
     return t === 'google'
@@ -131,7 +132,7 @@ async function loadLinks(page = 1) {
     rows.forEach((r, i) => {
         const targetSchool = r.target_school ? `<br><small class="text-muted">${App.escapeHtml(r.target_school)}</small>` : '';
         let actions = '';
-        if (r.status === 'pending') {
+        if (r.status === 'pending' && _canManageLinks) {
             actions = `
                 <button class="btn btn-xs btn-success mr-1" onclick="linkAction(${r.id},'approve','${App.escHtml(r.target_full_name || '')}')">
                     <i class="bi bi-check-lg"></i> อนุมัติ
@@ -200,7 +201,19 @@ $('#btnDoLinkAction').on('click', async function () {
     }
 });
 
-$(function () {
+$(async function () {
+    if (API.isAdmin()) {
+        _canManageLinks = true;
+    } else {
+        const permsRes = await API.getMySubAdminPermissions();
+        if (permsRes.success && permsRes.data?.areas?.members?.includes('approve')) {
+            _canManageLinks = true;
+        } else {
+            // Sub-admin without approve permission: redirect away
+            window.location.href = './?page=dashboard';
+            return;
+        }
+    }
     loadLinks(1);
     $('#filterLinkStatus').on('change', () => loadLinks(1));
 });
