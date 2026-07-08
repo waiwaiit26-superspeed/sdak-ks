@@ -181,20 +181,25 @@ $(async function () {
 
 
 async function toggleConfirmNumber(el) {
-    const $el = $(el);
-    const userId = $el.data('id');
-    const $icon  = $el.find('i');
-    $icon.css('opacity', '0.4');
+    const userId = $(el).data('id');
+    $(el).css('pointer-events', 'none').find('i').css('opacity', '0.4');
 
     const res = await API.directoryConfirmNumber({ user_id: userId });
-    $icon.css('opacity', '');
+
+    // Re-query element after await to ensure fresh reference
+    const $badge = $(`.dir-confirm-badge[data-id="${userId}"]`);
+    $badge.css('pointer-events', '').find('i').css('opacity', '');
 
     if (!res.success) { App.error(res.message || 'เกิดข้อผิดพลาด'); return; }
 
-    const newConfirmed = res.data.member_number_confirmed;
-    $el.data('confirmed', newConfirmed);
-    $el.attr('title', newConfirmed ? 'ยืนยันเลขสมาชิกแล้ว' : 'ยังไม่ยืนยันเลขสมาชิก');
-    $icon.attr('class', newConfirmed ? 'bi bi-check-circle-fill text-success' : 'bi bi-circle text-secondary');
+    const newConfirmed = res.data.member_number_confirmed ? 1 : 0;
+    $badge.data('confirmed', newConfirmed)
+          .attr('title', newConfirmed ? 'ยืนยันเลขสมาชิกแล้ว' : 'ยังไม่ยืนยันเลขสมาชิก');
+
+    $badge.find('i')
+        .removeClass('bi-check-circle-fill bi-circle text-success text-secondary')
+        .addClass(newConfirmed ? 'bi-check-circle-fill text-success' : 'bi-circle text-secondary');
+
     App.toast(res.message, newConfirmed ? 'success' : 'info');
 }
 
