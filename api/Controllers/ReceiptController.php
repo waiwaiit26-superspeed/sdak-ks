@@ -37,9 +37,14 @@ class ReceiptController extends Controller
         $receipt = $receipts->getDetail($id);
         if (!$receipt) Response::error('ไม่พบใบเสร็จ', 404);
 
-        // Only owner or admin
+        // Only owner, full admin, or members-area sub-admin with fees permission
         $isAdmin = $this->currentUser['role'] === 'admin';
-        if ($receipt['user_id'] != $this->currentUser['id'] && !$isAdmin) {
+        $isFeeSubAdmin = false;
+        if (!$isAdmin) {
+            $sa = $this->model('SubAdminModel');
+            $isFeeSubAdmin = $sa->hasPermission((int)$this->currentUser['id'], 'members', 'fees');
+        }
+        if ($receipt['user_id'] != $this->currentUser['id'] && !$isAdmin && !$isFeeSubAdmin) {
             Response::error('ไม่มีสิทธิ์ดูใบเสร็จนี้', 403);
         }
 
