@@ -305,7 +305,7 @@ async function loadDirectory(page = 1) {
         const editBtn = canEdit
             ? `<button class="btn btn-xs btn-outline-secondary dir-edit-btn" title="แก้ไข"
                     data-id="${m.id}"
-                    data-member-number="${App.escapeHtml(m.member_number_raw || '')}"
+                    data-member-number="${parseInt(m.member_number_raw) || ''}"
                     data-prefix="${App.escapeHtml(m.prefix || '')}"
                     data-fullname="${App.escapeHtml(nameWithoutPrefix)}"
                     data-position="${App.escapeHtml(m.position || '')}"
@@ -374,9 +374,9 @@ async function loadDirectory(page = 1) {
             <div class="modal-body">
                 <div class="form-group">
                     <label class="font-weight-bold">รหัสสมาชิก</label>
-                    <input type="text" class="form-control" id="dirEditMemberNumber"
-                        placeholder="เช่น 0042 หรือ SDAK-0042">
-                    <small class="text-muted">ระบบจะดึงเฉพาะตัวเลขและเติม 0 นำหน้าโดยอัตโนมัติ อนุญาตให้กำหนดซ้ำได้</small>
+                    <input type="number" min="1" class="form-control" id="dirEditMemberNumber"
+                        placeholder="เช่น 1, 50, 100">
+                    <small class="text-muted">ใส่ตัวเลขเท่านั้น เช่น <code>1</code> หรือ <code>50</code> — ระบบจะจัดรูปแบบแสดงผลตามการตั้งค่าอัตโนมัติ</small>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-4">
@@ -603,13 +603,16 @@ async function saveDirectoryEdit() {
     const row = $(`tr[data-member-id="${_dirEditUserId}"]`);
     if (row.length) {
         const $editBtn = row.find('.dir-edit-btn');
-        // member_number
+        // member_number — preserve confirm badge when rebuilding the cell
         if (res.data.member_number_display !== undefined) {
             const disp = res.data.member_number_display || '';
-            row.find('.dir-num-cell').html(disp
+            const $numCell = row.find('.dir-num-cell');
+            const confirmHtml = $numCell.find('span[title]').prop('outerHTML') || '';
+            const memNumHtml = disp
                 ? `<span class="badge badge-light border">${App.escapeHtml(disp)}</span>`
-                : '<span class="text-muted small">-</span>');
-            $editBtn.data('member-number', res.data.member_number_raw || '');
+                : '<span class="text-muted small">-</span>';
+            $numCell.html(`<div class="d-flex align-items-center gap-1">${memNumHtml} ${confirmHtml}</div>`);
+            $editBtn.data('member-number', parseInt(res.data.member_number_raw) || '');
         }
         // prefix + full_name
         if (res.data.prefix !== undefined || res.data.full_name !== undefined) {
