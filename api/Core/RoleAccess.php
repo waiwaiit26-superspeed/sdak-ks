@@ -113,6 +113,7 @@ class RoleAccess
         ],
         'fee' => [
             'list'          => ['member', 'admin'],
+            'export'        => ['member', 'admin'],
             'summary'       => ['member', 'admin'],
             'generate'      => ['admin'],
             'approve'       => ['member', 'admin'],

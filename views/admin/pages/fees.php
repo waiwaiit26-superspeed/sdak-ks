@@ -65,7 +65,7 @@
             <!-- Filters & Actions -->
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <div class="row align-items-center">
+                    <div class="row align-items-center mb-2">
                         <div class="col-md-3 mb-2 mb-md-0">
                             <label class="form-label mb-0 small text-muted">ปี พ.ศ.</label>
                             <select class="form-control form-control-sm" id="filterYear">
@@ -86,8 +86,24 @@
                             <label class="form-label mb-0 small text-muted">ค้นหา</label>
                             <input type="text" class="form-control form-control-sm" id="filterSearch" placeholder="ชื่อ, อีเมล...">
                         </div>
-                        <div class="col-md-3 text-md-right">
-                            <label class="form-label mb-0 small text-muted d-block">&nbsp;</label>
+                        <div class="col-md-3 mb-2 mb-md-0">
+                            <label class="form-label mb-0 small text-muted">แสดงต่อหน้า</label>
+                            <select class="form-control form-control-sm" id="perPage">
+                                <option value="20">20 รายการ</option>
+                                <option value="50" selected>50 รายการ</option>
+                                <option value="100">100 รายการ</option>
+                                <option value="9999">ทั้งหมด</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <small class="text-muted" id="feesTotalInfo"></small>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-success btn-sm mr-2" id="btnExportFees" onclick="exportFees()">
+                                <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel
+                            </button>
                             <button class="btn btn-primary btn-sm" onclick="showGenerateModal()">
                                 <i class="bi bi-plus-circle me-1"></i> สร้างรายการค่าธรรมเนียม
                             </button>
@@ -224,7 +240,7 @@ $(function () {
     loadSummary();
 
     // Filters
-    $('#filterYear, #filterStatus').on('change', function () {
+    $('#filterYear, #filterStatus, #perPage').on('change', function () {
         loadFees(1);
         loadSummary();
     });
@@ -255,7 +271,8 @@ function getFeeTypeBadge(feeType) {
 }
 
 async function loadFees(page = 1) {
-    const params = { page, per_page: 30 };
+    const perPage = parseInt($('#perPage').val()) || 50;
+    const params = { page, per_page: perPage };
     const year = $('#filterYear').val();
     const status = $('#filterStatus').val();
     const search = $('#filterSearch').val().trim();
@@ -274,6 +291,7 @@ async function loadFees(page = 1) {
     if (!result.data || result.data.length === 0) {
         tbody.html('<tr><td colspan="12" class="text-center text-muted py-4">ไม่พบรายการค่าธรรมเนียม</td></tr>');
         $('#feesPagination').empty();
+        $('#feesTotalInfo').text('ไม่พบรายการค่าธรรมเนียม');
         return;
     }
 
@@ -334,6 +352,8 @@ async function loadFees(page = 1) {
     tbody.html(html);
 
     if (result.pagination) {
+        const total = result.pagination.total || 0;
+        $('#feesTotalInfo').text(`พบ ${total.toLocaleString('th-TH')} รายการ`);
         App.buildPagination('#feesPagination', result.pagination, loadFees);
     }
 }
@@ -376,6 +396,59 @@ async function doGenerate() {
     } else {
         App.error(result.message);
     }
+}
+
+async function exportFees() {
+    const btn = $('#btnExportFees');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังส่งออก...');
+
+    const params = {};
+    const year   = $('#filterYear').val();
+    const status = $('#filterStatus').val();
+    const search = $('#filterSearch').val().trim();
+    if (year)   params.year   = year;
+    if (status) params.status = status;
+    if (search) params.search = search;
+
+    const result = await API.exportFees(params);
+    btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel');
+
+    if (!result.success) { App.error(result.message); return; }
+
+    const { fees, exported_at, exported_by } = result.data;
+    const esc = (s) => `"${String(s || '').replace(/"/g, '""')}"`;
+    const statusLabel  = { pending: 'รอชำระ', paid: 'ชำระแล้ว', overdue: 'ค้างชำระ', waived: 'ยกเว้น' };
+    const feeTypeLabel = { annual: 'รายปี', onetime: 'ครั้งเดียว' };
+
+    let csv = '\uFEFF';
+    csv += 'รายการค่าธรรมเนียมสมาชิก\n';
+    csv += `ส่งออกเมื่อ: ${exported_at}\n`;
+    csv += `ส่งออกโดย: ${exported_by}\n\n`;
+    csv += 'ลำดับ,ชื่อ-สกุล,อีเมล,ประเภทสมาชิก,รูปแบบ,ปี พ.ศ.,จำนวน (บาท),สถานะ,วันรับเงิน,อนุมัติโดย,วันที่อนุมัติ,หมายเหตุ\n';
+    fees.forEach((f, i) => {
+        csv += [
+            i + 1,
+            esc(f.full_name),
+            esc(f.email),
+            esc(f.member_type),
+            feeTypeLabel[f.fee_type] || f.fee_type,
+            f.year,
+            f.amount,
+            statusLabel[f.status] || f.status,
+            f.received_date || '',
+            esc(f.approver_name),
+            f.approved_at || '',
+            esc(f.note),
+        ].join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `ค่าธรรมเนียมสมาชิก_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    App.success(`ส่งออก ${fees.length} รายการสำเร็จ`);
 }
 
 let currentFeeAction = {};

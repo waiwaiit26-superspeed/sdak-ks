@@ -503,6 +503,10 @@ const API = {
         return this.post(this.apiUrl('fee', 'issue-receipt'), { fee_id: feeId });
     },
 
+    async exportFees(params = {}) {
+        return this.get(this.apiUrl('fee', 'export'), params);
+    },
+
     async getMyFees() {
         return this.get(this.apiUrl('fee', 'my-fees'));
     },

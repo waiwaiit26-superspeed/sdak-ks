@@ -285,6 +285,32 @@ class FeeController extends Controller
     }
 
     /**
+     * GET  ?controller=fee&action=export
+     * Admin: ส่งออกรายการค่าธรรมเนียมทั้งหมด (ไม่มี pagination)
+     */
+    public function export(): void
+    {
+        $this->requireFeeManageAccess();
+        $fees = $this->model('MembershipFeeModel');
+        $result = $fees->getFilteredList(
+            [
+                'year'   => $this->query('year'),
+                'status' => $this->query('status'),
+                'search' => $this->query('search'),
+            ],
+            1,
+            10000
+        );
+
+        Response::success([
+            'fees'        => $result['data'],
+            'total'       => $result['total'],
+            'exported_at' => date('Y-m-d H:i:s'),
+            'exported_by' => $this->currentUser['full_name'] ?? $this->currentUser['username'] ?? '',
+        ]);
+    }
+
+    /**
      * POST  ?controller=fee&action=issue-receipt
      * Admin: ออกใบเสร็จสำหรับรายการค่าธรรมเนียมที่อนุมัติแล้ว
      */
