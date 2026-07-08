@@ -69,6 +69,9 @@ async function adjustSidebarForRole() {
         $('#nav-finance').show();
     }
 
+    // Sub-admin: "กลับหน้าเว็บ" goes to member portal (their home base)
+    $('#nav-back-web a').attr('href', BASE_PATH + 'member/?page=home');
+
     // Hide content header if no content area is permitted
     if (!areas.members && !areas.news && !areas.activities) {
         $('#nav-header-content').hide();

@@ -119,7 +119,7 @@ $page = $page ?? '';
                         <p>ประวัติการใช้งาน</p>
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" id="nav-back-web">
                     <a href="<?php echo $basePath; ?>" class="nav-link">
                         <i class="nav-icon bi bi-house"></i>
                         <p>กลับหน้าเว็บ</p>
