@@ -285,9 +285,24 @@ class MemberController extends Controller
             $data['member_number'] = $normalized !== '' ? $normalized : null;
         }
 
+        // prefix — direct override
+        if (array_key_exists('prefix', $input)) {
+            $data['prefix'] = trim((string)$input['prefix']);
+        }
+
         // full_name — direct override
         if (array_key_exists('full_name', $input) && trim((string)$input['full_name']) !== '') {
             $data['full_name'] = trim((string)$input['full_name']);
+        }
+
+        // position — direct override
+        if (array_key_exists('position', $input)) {
+            $data['position'] = trim((string)$input['position']);
+        }
+
+        // academic_rank — direct override
+        if (array_key_exists('academic_rank', $input)) {
+            $data['academic_rank'] = trim((string)$input['academic_rank']);
         }
 
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
@@ -312,9 +327,10 @@ class MemberController extends Controller
                 ? UserModel::formatMemberNumber($data['member_number'], $prefix, $dgt)
                 : '';
         }
-        if (isset($data['full_name'])) {
-            $result['full_name'] = $data['full_name'];
-        }
+        if (isset($data['prefix']))        $result['prefix']        = $data['prefix'];
+        if (isset($data['full_name']))      $result['full_name']     = $data['full_name'];
+        if (isset($data['position']))       $result['position']      = $data['position'];
+        if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
 
         Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
     }

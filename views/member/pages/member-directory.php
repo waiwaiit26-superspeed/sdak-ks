@@ -159,6 +159,18 @@ $(async function () {
         }
         loadDirectory(1);
     });
+
+    $(document).on('click', '.dir-edit-btn', function () {
+        const $b = $(this);
+        openEditModal(
+            $b.data('id'),
+            $b.data('member-number'),
+            $b.data('prefix'),
+            $b.data('fullname'),
+            $b.data('position'),
+            $b.data('rank')
+        );
+    });
 });
 
 async function exportDirectory() {
@@ -251,8 +263,18 @@ async function loadDirectory(page = 1) {
         const pos     = m.position ? App.escapeHtml(m.position) : '<span class="text-muted">-</span>';
         const school  = m.school_organization ? App.escapeHtml(m.school_organization) : '<span class="text-muted">-</span>';
         const memNum  = m.member_number ? `<span class="badge badge-light border">${App.escapeHtml(m.member_number)}</span>` : '<span class="text-muted small">-</span>';
+        const nameWithoutPrefix = (m.prefix && m.full_name && m.full_name.startsWith(m.prefix))
+            ? m.full_name.slice(m.prefix.length).trim()
+            : (m.full_name || '');
         const editBtn = canEdit
-            ? `<button class="btn btn-xs btn-outline-secondary" title="แก้ไข" onclick="openEditModal(${m.id}, '${(m.member_number_raw || '').replace(/'/g,'')}', '${App.escapeHtml(m.full_name || '').replace(/'/g, '&#39;')}')"><i class="bi bi-pencil"></i></button>`
+            ? `<button class="btn btn-xs btn-outline-secondary dir-edit-btn" title="แก้ไข"
+                    data-id="${m.id}"
+                    data-member-number="${App.escapeHtml(m.member_number_raw || '')}"
+                    data-prefix="${App.escapeHtml(m.prefix || '')}"
+                    data-fullname="${App.escapeHtml(nameWithoutPrefix)}"
+                    data-position="${App.escapeHtml(m.position || '')}"
+                    data-rank="${App.escapeHtml(m.academic_rank || '')}">
+                    <i class="bi bi-pencil"></i></button>`
             : '';
 
         html += `<tr data-member-id="${m.id}" data-prefix="${App.escapeHtml(m.prefix || '')}">
@@ -262,7 +284,7 @@ async function loadDirectory(page = 1) {
                 <strong>${App.escapeHtml((m.prefix || '') + m.full_name)}</strong>
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
-            <td>${pos}${rank}</td>
+            <td class="dir-pos-cell">${pos}${rank}</td>
             <td>${school}</td>
             <td>${editBtn}</td>
         </tr>`;
@@ -301,10 +323,51 @@ async function loadDirectory(page = 1) {
                         placeholder="เช่น 0042 หรือ SDAK-0042">
                     <small class="text-muted">ระบบจะดึงเฉพาะตัวเลขและเติม 0 นำหน้าโดยอัตโนมัติ อนุญาตให้กำหนดซ้ำได้</small>
                 </div>
-                <div class="form-group">
-                    <label class="font-weight-bold">ชื่อ-นามสกุล (ไม่รวมคำนำหน้า)</label>
-                    <input type="text" class="form-control" id="dirEditFullName"
-                        placeholder="ชื่อ-นามสกุล">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label class="font-weight-bold">คำนำหน้า</label>
+                        <select class="form-control" id="dirEditPrefix">
+                            <option value="">— ไม่ระบุ —</option>
+                            <option value="นาย">นาย</option>
+                            <option value="นาง">นาง</option>
+                            <option value="นางสาว">นางสาว</option>
+                            <option value="ดร.">ดร.</option>
+                            <option value="ผศ.ดร.">ผศ.ดร.</option>
+                            <option value="รศ.ดร.">รศ.ดร.</option>
+                            <option value="ศ.ดร.">ศ.ดร.</option>
+                            <option value="ผศ.">ผศ.</option>
+                            <option value="รศ.">รศ.</option>
+                            <option value="ศ.">ศ.</option>
+                            <option value="พันตำรวจเอก">พันตำรวจเอก</option>
+                            <option value="พันตำรวจโท">พันตำรวจโท</option>
+                            <option value="พันตำรวจตรี">พันตำรวจตรี</option>
+                            <option value="ว่าที่ร้อยตรี">ว่าที่ร้อยตรี</option>
+                            <option value="other">อื่นๆ (กรอกเอง)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label class="font-weight-bold">ชื่อ-นามสกุล <small class="text-muted font-weight-normal">(ไม่รวมคำนำหน้า)</small></label>
+                        <input type="text" class="form-control" id="dirEditFullName" placeholder="ชื่อ-นามสกุล">
+                    </div>
+                </div>
+                <div id="dirEditPrefixOtherWrap" style="display:none;" class="form-group">
+                    <label class="font-weight-bold">คำนำหน้า (ระบุเอง)</label>
+                    <input type="text" class="form-control" id="dirEditPrefixOther" placeholder="เช่น พ.ต.อ., ดเ็กชาย">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">ตำแหน่ง</label>
+                        <input type="text" class="form-control" id="dirEditPosition" placeholder="เช่น ครู, ผู้อำนวยการสถานศึกษา">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">วิทยฐานะ</label>
+                        <input type="text" class="form-control" id="dirEditAcademicRank" placeholder="เช่น ครูชำนาญการพิเศษ">
+                    </div>
+                </div>
+                <!-- Summary preview -->
+                <div class="callout callout-info py-2 px-3 mb-0" id="dirEditSummaryBox">
+                    <small class="text-muted d-block mb-1">ตัวอย่างการแสดงผล</small>
+                    <div id="dirEditSummary" class="small"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -320,18 +383,66 @@ async function loadDirectory(page = 1) {
 <script>
 let _dirEditUserId = null;
 
-function openEditModal(userId, memberNumber, fullName) {
+function _getEditPrefix() {
+    const sel = $('#dirEditPrefix').val();
+    return sel === 'other' ? $('#dirEditPrefixOther').val().trim() : (sel || '');
+}
+
+function updateDirEditSummary() {
+    const prefix   = _getEditPrefix();
+    const fullName = $('#dirEditFullName').val().trim();
+    const position = $('#dirEditPosition').val().trim();
+    const rank     = $('#dirEditAcademicRank').val().trim();
+    const namePart = App.escapeHtml((prefix || '') + (fullName || ''));
+    const posParts = [position, rank].filter(Boolean).map(App.escapeHtml).join(' &nbsp;/&nbsp; ');
+    let html = namePart
+        ? `<i class="bi bi-person me-1 text-primary"></i><strong>${namePart}</strong>`
+        : '<span class="text-muted">&mdash;</span>';
+    if (posParts) html += `&nbsp;&nbsp;<i class="bi bi-briefcase me-1 text-muted"></i><span class="text-muted">${posParts}</span>`;
+    $('#dirEditSummary').html(html);
+}
+
+$('#dirEditPrefix, #dirEditFullName, #dirEditPrefixOther, #dirEditPosition, #dirEditAcademicRank')
+    .on('input change', updateDirEditSummary);
+
+$('#dirEditPrefix').on('change', function () {
+    if ($(this).val() === 'other') {
+        $('#dirEditPrefixOtherWrap').slideDown(150);
+        $('#dirEditPrefixOther').focus();
+    } else {
+        $('#dirEditPrefixOtherWrap').slideUp(150);
+        $('#dirEditPrefixOther').val('');
+    }
+});
+
+function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank) {
     _dirEditUserId = userId;
     $('#dirEditMemberNumber').val(memberNumber);
-    $('#dirEditFullName').val(fullName);
-    $('#btnSaveDirEdit').prop('disabled', false);
+    // Prefix dropdown
+    if (prefix && !$('#dirEditPrefix option[value="' + prefix + '"]').length) {
+        $('#dirEditPrefix').val('other');
+        $('#dirEditPrefixOther').val(prefix);
+        $('#dirEditPrefixOtherWrap').show();
+    } else {
+        $('#dirEditPrefix').val(prefix || '');
+        $('#dirEditPrefixOtherWrap').hide();
+        $('#dirEditPrefixOther').val('');
+    }
+    $('#dirEditFullName').val(fullName || '');
+    $('#dirEditPosition').val(position || '');
+    $('#dirEditAcademicRank').val(academicRank || '');
+    $('#btnSaveDirEdit').prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
+    updateDirEditSummary();
     $('#modalDirEdit').modal('show');
 }
 
 async function saveDirectoryEdit() {
     if (!_dirEditUserId) return;
     const memberNumber = $('#dirEditMemberNumber').val().trim();
+    const prefixVal    = _getEditPrefix();
     const fullName     = $('#dirEditFullName').val().trim();
+    const position     = $('#dirEditPosition').val().trim();
+    const academicRank = $('#dirEditAcademicRank').val().trim();
     if (!fullName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
 
     const btn = $('#btnSaveDirEdit');
@@ -340,26 +451,46 @@ async function saveDirectoryEdit() {
     const res = await API.directoryEdit({
         user_id:       _dirEditUserId,
         member_number: memberNumber,
+        prefix:        prefixVal,
         full_name:     fullName,
+        position:      position,
+        academic_rank: academicRank,
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
-
     if (!res.success) { App.error(res.message || 'บันทึกล้มเหลว'); return; }
 
     App.success('อัปเดตข้อมูลสำเร็จ');
     $('#modalDirEdit').modal('hide');
 
-    // Update the row in-place
+    // In-place row update
     const row = $(`tr[data-member-id="${_dirEditUserId}"]`);
     if (row.length) {
+        const $editBtn = row.find('.dir-edit-btn');
+        // member_number
         if (res.data.member_number_display !== undefined) {
             const disp = res.data.member_number_display || '';
-            row.find('.dir-num-cell').html(disp ? `<span class="badge badge-light border">${App.escapeHtml(disp)}</span>` : '<span class="text-muted small">-</span>');
+            row.find('.dir-num-cell').html(disp
+                ? `<span class="badge badge-light border">${App.escapeHtml(disp)}</span>`
+                : '<span class="text-muted small">-</span>');
+            $editBtn.data('member-number', res.data.member_number_raw || '');
         }
-        if (res.data.full_name !== undefined) {
-            const prefix = row.data('prefix') || '';
-            row.find('.dir-name-cell strong').text(prefix + res.data.full_name);
+        // prefix + full_name
+        if (res.data.prefix !== undefined || res.data.full_name !== undefined) {
+            const newPrefix   = res.data.prefix    !== undefined ? (res.data.prefix    || '') : (row.data('prefix') || '');
+            const newFullName = res.data.full_name !== undefined ? (res.data.full_name || '') : $editBtn.data('fullname');
+            row.data('prefix', newPrefix);
+            row.find('.dir-name-cell strong').text(newPrefix + newFullName);
+            $editBtn.data('prefix', newPrefix).data('fullname', newFullName);
+        }
+        // position / academic_rank
+        if (res.data.position !== undefined || res.data.academic_rank !== undefined) {
+            const newPos  = res.data.position      !== undefined ? (res.data.position      || '') : ($editBtn.data('position') || '');
+            const newRank = res.data.academic_rank !== undefined ? (res.data.academic_rank || '') : ($editBtn.data('rank')     || '');
+            $editBtn.data('position', newPos).data('rank', newRank);
+            const posHtml  = newPos  ? App.escapeHtml(newPos)  : '<span class="text-muted">-</span>';
+            const rankHtml = newRank ? `<br><small class="text-muted">${App.escapeHtml(newRank)}</small>` : '';
+            row.find('.dir-pos-cell').html(posHtml + rankHtml);
         }
     }
     _dirEditUserId = null;
