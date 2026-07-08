@@ -318,7 +318,8 @@ async function toggleSa(area, userId) {
 }
 
 async function deleteSa(id, area) {
-    if (!confirm('ต้องการลบระเบียนสิทธิ์นี้หรือไม่?')) return;
+    const confirmed = await App.confirm('ลบระเบียนสิทธิ์', 'ต้องการลบระเบียนสิทธิ์นี้หรือไม่?', 'warning');
+    if (!confirmed) return;
     const res = await API.deleteSubAdminRecord(id);
     if (res.success) {
         App.success('ลบสำเร็จ');

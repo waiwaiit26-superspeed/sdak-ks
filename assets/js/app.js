@@ -703,26 +703,50 @@ const App = {
     },
 
     /**
-     * Success alert
+     * SweetAlert2 Toast mixin
      */
-    success(message) {
-        Swal.fire({
-            icon: 'success',
-            title: 'สำเร็จ',
-            text: message,
-            timer: 2000,
-            showConfirmButton: false
-        });
+    _toast: null,
+    getToast() {
+        if (!this._toast) {
+            this._toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+        return this._toast;
     },
 
     /**
-     * Error alert
+     * Toast notification (success / error / warning / info)
+     */
+    toast(message, icon = 'success') {
+        this.getToast().fire({ icon, title: message });
+    },
+
+    /**
+     * Success toast
+     */
+    success(message) {
+        this.getToast().fire({ icon: 'success', title: message });
+    },
+
+    /**
+     * Error alert (modal — ต้องการให้ผู้ใช้กดปิด)
      */
     error(message) {
         Swal.fire({
             icon: 'error',
             title: 'เกิดข้อผิดพลาด',
-            text: message
+            text: message,
+            confirmButtonColor: '#e74c3c',
+            confirmButtonText: 'ตกลง'
         });
     },
 
