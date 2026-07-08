@@ -829,13 +829,14 @@ class AuthController extends Controller
 
         if (empty($terms)) {
             Response::success([], 'กรุณากรอกอย่างน้อย 2 ตัวอักษร');
+            return;
         }
 
         // Medoo: array ใน [~] → OR LIKE '%t1%' OR LIKE '%t2%'
         $nameCond = count($terms) === 1 ? $terms[0] : $terms;
 
         $users = $this->model('UserModel');
-        $rows  = $users->db->select('users',
+        $rows  = $users->all(
             ['id', 'full_name', 'prefix', 'position', 'school_organization', 'email'],
             [
                 'role'         => 'member',
@@ -888,7 +889,7 @@ class AuthController extends Controller
         if (!in_array($requestType, ['email', 'google'], true)) Response::error('ประเภทคำขอไม่ถูกต้อง');
 
         $users  = $this->model('UserModel');
-        $target = $users->db->get('users', ['id', 'full_name', 'email', 'google_id', 'status', 'role'], ['id' => $targetId]);
+        $target = $users->findBy(['id' => $targetId], ['id', 'full_name', 'email', 'google_id', 'status', 'role']);
         if (!$target) Response::error('ไม่พบสมาชิก', 404);
         if ($target['role'] !== 'member') Response::error('ไม่พบสมาชิก', 404);
         if ($target['status'] !== 'active') Response::error('สมาชิกนี้ไม่สามารถยื่นคำขอได้', 400);
