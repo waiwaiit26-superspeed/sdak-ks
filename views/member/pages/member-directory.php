@@ -63,11 +63,11 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th width="5%">#</th>
-                                    <th width="10%">รหัส</th>
-                                    <th width="25%">ชื่อ-นามสกุล</th>
-                                    <th width="12%">ประเภท</th>
-                                    <th width="15%">ตำแหน่ง / วิทยฐานะ</th>
-                                    <th>โรงเรียน / หน่วยงาน</th>
+                                    <th width="10%" data-sort="member_number" style="cursor:pointer;white-space:nowrap;">รหัส <i class="bi bi-sort-down-alt text-primary sort-icon"></i></th>
+                                    <th width="25%" data-sort="full_name" style="cursor:pointer;white-space:nowrap;">ชื่อ-นามสกุล <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th width="12%" data-sort="member_type" style="cursor:pointer;white-space:nowrap;">ประเภท <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th width="15%" data-sort="position" style="cursor:pointer;white-space:nowrap;">ตำแหน่ง / วิทยฐานะ <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th data-sort="school_organization" style="cursor:pointer;white-space:nowrap;">โรงเรียน / หน่วยงาน <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                 </tr>
                             </thead>
                             <tbody id="dirTableBody">
@@ -105,7 +105,7 @@ $(async function () {
         if (!res.success || !res.data) return;
         let opts = '<option value="">ทุกประเภท</option>';
         res.data.forEach(t => {
-            opts += `<option value="${t.key}">${App.escapeHtml(t.label)}</option>`;
+            opts += `<option value="${t.type_key}">${App.escapeHtml(t.label)}</option>`;
         });
         $('#dirType').html(opts);
     });
@@ -118,14 +118,28 @@ $(async function () {
         searchTimer = setTimeout(() => loadDirectory(1), 400);
     });
     $('#dirType').on('change', () => loadDirectory(1));
+
+    $(document).on('click', 'th[data-sort]', function () {
+        const col = $(this).data('sort');
+        if (dirSort.col === col) {
+            dirSort.dir = dirSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            dirSort.col = col;
+            dirSort.dir = 'asc';
+        }
+        loadDirectory(1);
+    });
 });
+
+let dirSort = { col: 'member_number', dir: 'asc' };
 
 async function loadDirectory(page = 1) {
     const search = $('#dirSearch').val().trim();
     const type   = $('#dirType').val();
     const params = { page, per_page: 30 };
-    if (search) params.search = search;
-    if (type)   params.member_type = type;
+    if (search)       params.search      = search;
+    if (type)         params.member_type = type;
+    if (dirSort.col)  { params.order_by = dirSort.col; params.order_dir = dirSort.dir; }
 
     $('#dirTableBody').html('<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span></td></tr>');
 
@@ -173,6 +187,14 @@ async function loadDirectory(page = 1) {
     });
 
     $('#dirTableBody').html(html);
+
+    // Update sort icons
+    $('th[data-sort] .sort-icon').attr('class', 'bi bi-arrow-down-up text-muted sort-icon');
+    if (dirSort.col) {
+        $(`th[data-sort="${dirSort.col}"] .sort-icon`).attr('class',
+            `bi ${dirSort.dir === 'asc' ? 'bi-sort-down-alt' : 'bi-sort-down'} text-primary sort-icon`
+        );
+    }
 
     if (pagination) {
         App.buildPagination('#dirPagination', pagination, loadDirectory);

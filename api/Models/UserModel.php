@@ -232,6 +232,12 @@ class UserModel extends Model
 
         $where['ORDER'] = ['created_at' => 'DESC'];
 
+        $allowedSortCols = ['full_name', 'member_number', 'member_type', 'position', 'school_organization', 'created_at'];
+        if (!empty($filters['order_by']) && in_array($filters['order_by'], $allowedSortCols)) {
+            $dir = strtoupper($filters['order_dir'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
+            $where['ORDER'] = [$filters['order_by'] => $dir];
+        }
+
         try {
             return $this->paginate(self::SAFE_COLUMNS, $where, $page, $perPage);
         } catch (\Throwable $e) {

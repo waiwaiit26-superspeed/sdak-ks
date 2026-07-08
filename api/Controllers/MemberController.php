@@ -229,6 +229,8 @@ class MemberController extends Controller
             'role'        => 'member',
             'member_type' => $this->query('member_type') ?? '',
             'search'      => $search,
+            'order_by'    => $this->query('order_by')  ?: 'member_number',
+            'order_dir'   => $this->query('order_dir') ?: 'asc',
         ], $page, $perPage);
 
         // Format member number + strip sensitive fields
