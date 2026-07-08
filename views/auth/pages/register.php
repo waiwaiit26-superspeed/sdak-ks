@@ -910,9 +910,10 @@ $(function () {
     });
 
     // ── Name Match Search (Form Register) ─────────────────────────────────────
-    let _nameSearchTimer = null;
-    let _linkTargetId    = null;
-    let _linkGoogleToken = null; // set when triggered from Google wizard
+    let _nameSearchTimer   = null;
+    let _linkTargetId      = null;
+    let _linkGoogleToken   = null; // set when triggered from Google wizard
+    const _searchGenMap    = {};   // race-condition guard: per-containerSelector generation counter
 
     function buildMatchCard(m, mode) {
         const hasEmail = m.has_email;
@@ -954,6 +955,11 @@ $(function () {
         const $list  = $(containerSelector);
         const $panel = $list.parent(); // ใช้ .parent() ตรงๆ แทน closest()
 
+        // ── Race-condition guard: นับ generation ไว้, ถ้า response กลับมาช้า
+        //    แต่มี request ใหม่กว่าแล้ว → ทิ้ง response เก่าทิ้ง
+        if (!_searchGenMap[containerSelector]) _searchGenMap[containerSelector] = 0;
+        const myGen = ++_searchGenMap[containerSelector];
+
         let apiParams;
         if (typeof params === 'string') {
             if (params.length < 2) { $panel.hide(); return; }
@@ -969,6 +975,10 @@ $(function () {
             }
         }
         const res = await API.searchMembersByName(apiParams);
+
+        // ถ้า response นี้ล้าสมัยแล้ว (มี request ใหม่กว่าตาม gen) → ทิ้งเงียบๆ
+        if (_searchGenMap[containerSelector] !== myGen) return;
+
         if (!res.success || !res.data || res.data.length === 0) {
             $panel.hide();
             if (callbacks && callbacks.onNoResults) callbacks.onNoResults();
