@@ -274,7 +274,7 @@ $extraCss = '
                     <!-- ── Name Match Panel ── -->
                     <div id="nameMatchPanel" style="display:none;" class="mt-1 mb-2">
                         <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;padding:9px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
-                            <span style="color:#92400e;font-size:1rem;"><i class="bi bi-people me-1"></i><strong>พบชื่อที่ตรงกันในระบบ</strong> — ท่านเป็นคนนี้หรือไม่?</span>
+                            <span style="color:#92400e;font-size:1.15rem;"><i class="bi bi-people me-1"></i><strong>พบชื่อที่ตรงกันในระบบ</strong> — ท่านเป็นคนนี้หรือไม่?</span>
                             <button type="button" onclick="$('#nameMatchPanel').hide()" style="background:none;border:none;color:#9ca3af;cursor:pointer;padding:0;font-size:1.1rem;line-height:1;">&times;</button>
                         </div>
                         <div id="nameMatchList"></div>
@@ -917,7 +917,7 @@ $(function () {
         const pos      = m.position ? `<span class="badge badge-light border mr-1">${App.escapeHtml(m.position)}</span>` : '';
         let actionHtml = '';
         if (hasEmail) {
-            actionHtml = `<div class="mt-2 alert alert-info py-2 px-3 mb-0" style="font-size:.85rem;">
+            actionHtml = `<div class="mt-2 alert alert-info py-2 px-3 mb-0" style="font-size:.95rem;">
                 <i class="bi bi-envelope me-1"></i> มีอีเมลในระบบ: <strong>${App.escapeHtml(m.email_hint)}</strong>
                 <br><small>หากนี่คือท่าน กรุณา <a href="./?page=login">เข้าสู่ระบบด้วยอีเมลนี้</a> แทน</small>
             </div>`;
@@ -937,7 +937,7 @@ $(function () {
         return `<div class="border rounded p-3 mb-2 bg-white">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
                 <div>
-                    <strong style="font-size:1.1rem;">${App.escapeHtml(m.full_name)}</strong><br>
+                    <strong style="font-size:1.25rem;">${App.escapeHtml(m.full_name)}</strong><br>
                     ${pos}${school}
                 </div>
             </div>
