@@ -1258,6 +1258,17 @@ async function showAssignManagerModal() {
         });
     }
     $('#mgrUserId').html(opts);
+
+    // Init Select2 for searchable dropdown
+    try { $('#mgrUserId').select2('destroy'); } catch(e) {}
+    $('#mgrUserId').select2({
+        dropdownParent: $('#mgrModal'),
+        width: '100%',
+        placeholder: '-- เลือกสมาชิก --',
+        allowClear: true,
+        language: { noResults: () => 'ไม่พบสมาชิก' }
+    });
+
     $('#permCreate, #permEdit, #permDelete, #permExport').prop('checked', true);
     $('#mgrModal').modal('show');
 }

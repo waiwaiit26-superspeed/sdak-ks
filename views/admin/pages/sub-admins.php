@@ -273,6 +273,16 @@ async function showAssignSaModal(area) {
         sel.appendChild(opt);
     });
 
+    // Init Select2 for searchable dropdown
+    try { $('#saUserId').select2('destroy'); } catch(e) {}
+    $('#saUserId').select2({
+        dropdownParent: $('#saModal'),
+        width: '100%',
+        placeholder: '-- เลือกสมาชิก --',
+        allowClear: true,
+        language: { noResults: () => 'ไม่พบสมาชิก' }
+    });
+
     // Build permissions checkboxes (all checked by default)
     buildPermCheckboxes(area, Object.keys(SA_AREAS[area]?.permissions || {}));
     $('#saModal').modal('show');
