@@ -688,7 +688,7 @@ class MemberController extends Controller
     public function delete(): void
     {
         $this->requirePost();
-        if ($this->currentUser['role'] !== 'admin') Response::error('ไม่มีสิทธิ์', 403);
+        $this->requireMembersAccess('delete');
 
         $input  = $this->input();
         $userId = (int)($input['user_id'] ?? 0);

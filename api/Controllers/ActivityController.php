@@ -35,6 +35,14 @@ class ActivityController extends Controller
         $activity = $this->model('ActivityModel');
         $isAdmin  = $this->currentUser && $this->currentUser['role'] === 'admin';
 
+        // Sub-admin with any activities permission can see all statuses (like admin)
+        if (!$isAdmin && $this->currentUser) {
+            $sa = $this->model('SubAdminModel');
+            $isAdmin = $sa->hasPermission((int)$this->currentUser['id'], 'activities', 'create')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'activities', 'edit')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'activities', 'delete');
+        }
+
         $result = $activity->getList(
             [
                 'status'   => $this->query('status'),
@@ -75,6 +83,12 @@ class ActivityController extends Controller
         if (!$item) Response::error('ไม่พบกิจกรรมที่ต้องการ', 404);
 
         $isAdmin = $this->currentUser && $this->currentUser['role'] === 'admin';
+        // Sub-admin with activities permission can access draft/non-published activities
+        if (!$isAdmin && $this->currentUser) {
+            $sa = $this->model('SubAdminModel');
+            $isAdmin = $sa->hasPermission((int)$this->currentUser['id'], 'activities', 'edit')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'activities', 'delete');
+        }
         if (!in_array($item['status'], ['open', 'closed', 'cancelled']) && !$isAdmin) {
             Response::error('ไม่พบกิจกรรมที่ต้องการ', 404);
         }

@@ -28,8 +28,16 @@ class NewsController extends Controller
      */
     public function list(): void
     {
-        $news   = $this->model('NewsModel');
+        $news    = $this->model('NewsModel');
         $isAdmin = $this->currentUser && $this->currentUser['role'] === 'admin';
+
+        // Sub-admin with any news permission can see drafts
+        if (!$isAdmin && $this->currentUser) {
+            $sa = $this->model('SubAdminModel');
+            $isAdmin = $sa->hasPermission((int)$this->currentUser['id'], 'news', 'create')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'news', 'edit')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'news', 'delete');
+        }
 
         $result = $news->getList(
             ['status' => $this->query('status'), 'search' => $this->query('search')],
@@ -54,6 +62,12 @@ class NewsController extends Controller
         if (!$item) Response::error('ไม่พบข่าวที่ต้องการ', 404);
 
         $isAdmin = $this->currentUser && $this->currentUser['role'] === 'admin';
+        // Sub-admin with news edit/delete can access draft news
+        if (!$isAdmin && $this->currentUser) {
+            $sa = $this->model('SubAdminModel');
+            $isAdmin = $sa->hasPermission((int)$this->currentUser['id'], 'news', 'edit')
+                    || $sa->hasPermission((int)$this->currentUser['id'], 'news', 'delete');
+        }
         if ($item['status'] !== 'published' && !$isAdmin) {
             Response::error('ไม่พบข่าวที่ต้องการ', 404);
         }
