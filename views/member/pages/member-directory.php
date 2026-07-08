@@ -30,7 +30,7 @@
             <!-- Search & Filter -->
             <div class="card shadow-sm mb-3">
                 <div class="card-body py-3">
-                    <div class="row align-items-end">
+                    <div class="row align-items-end mb-2">
                         <div class="col-md-5 mb-2 mb-md-0">
                             <label class="form-label small text-muted mb-1">ค้นหาสมาชิก</label>
                             <div class="input-group">
@@ -41,15 +41,30 @@
                                     placeholder="ชื่อ, โรงเรียน, ตำแหน่ง...">
                             </div>
                         </div>
-                        <div class="col-md-3 mb-2 mb-md-0">
+                        <div class="col-md-4 mb-2 mb-md-0">
                             <label class="form-label small text-muted mb-1">ประเภทสมาชิก</label>
                             <select class="form-control" id="dirType">
                                 <option value="">ทุกประเภท</option>
                             </select>
                         </div>
-                        <div class="col-md-4 text-md-right">
-                            <label class="form-label small text-muted mb-1 d-block">&nbsp;</label>
+                        <div class="col-md-3 mb-2 mb-md-0">
+                            <label class="form-label small text-muted mb-1">แสดงต่อหน้า</label>
+                            <select class="form-control" id="dirPerPage">
+                                <option value="20">20 รายการ</option>
+                                <option value="50" selected>50 รายการ</option>
+                                <option value="100">100 รายการ</option>
+                                <option value="9999">ทั้งหมด</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col">
                             <span class="text-muted small" id="dirResultInfo"></span>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-success btn-sm" id="btnExportDir" onclick="exportDirectory()">
+                                <i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -117,7 +132,7 @@ $(async function () {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => loadDirectory(1), 400);
     });
-    $('#dirType').on('change', () => loadDirectory(1));
+    $('#dirType, #dirPerPage').on('change', () => loadDirectory(1));
 
     $(document).on('click', 'th[data-sort]', function () {
         const col = $(this).data('sort');
@@ -131,12 +146,61 @@ $(async function () {
     });
 });
 
+async function exportDirectory() {
+    const btn = $('#btnExportDir');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังส่งออก...');
+
+    const params = {};
+    const type   = $('#dirType').val();
+    const search = $('#dirSearch').val().trim();
+    if (type)   params.member_type = type;
+    if (search) params.search      = search;
+
+    const result = await API.exportMemberDirectory(params);
+    btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-1"></i> ส่งออก Excel');
+
+    if (!result.success) { App.error(result.message); return; }
+
+    const { members, exported_at, exported_by } = result.data;
+    const esc = (s) => `"${String(s || '').replace(/"/g, '""')}"`;
+    const typeLabel = (key) => {
+        const opt = $(`#dirType option[value="${key}"]`);
+        return opt.length ? opt.text() : (key || '');
+    };
+
+    let csv = '\uFEFF';
+    csv += 'ทำเนียบสมาชิก\n';
+    csv += `ส่งออกเมื่อ: ${exported_at}\n`;
+    csv += `ส่งออกโดย: ${exported_by}\n\n`;
+    csv += 'ลำดับ,รหัสสมาชิก,ชื่อ-นามสกุล,ประเภทสมาชิก,วิทยฐานะ,ตำแหน่ง,โรงเรียน / หน่วยงาน\n';
+    members.forEach((m, i) => {
+        csv += [
+            i + 1,
+            esc(m.member_number),
+            esc(m.full_name),
+            esc(typeLabel(m.member_type)),
+            esc(m.academic_rank),
+            esc(m.position),
+            esc(m.school_organization),
+        ].join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `ทำเนียบสมาชิก_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    App.success(`ส่งออก ${members.length} รายการสำเร็จ`);
+}
+
 let dirSort = { col: 'member_number', dir: 'asc' };
 
 async function loadDirectory(page = 1) {
-    const search = $('#dirSearch').val().trim();
-    const type   = $('#dirType').val();
-    const params = { page, per_page: 30 };
+    const search  = $('#dirSearch').val().trim();
+    const type    = $('#dirType').val();
+    const perPage = parseInt($('#dirPerPage').val()) || 50;
+    const params  = { page, per_page: perPage };
     if (search)       params.search      = search;
     if (type)         params.member_type = type;
     if (dirSort.col)  { params.order_by = dirSort.col; params.order_dir = dirSort.dir; }

@@ -221,7 +221,7 @@ class MemberController extends Controller
 
         $search   = $this->query('search') ?? '';
         $page     = $this->getPage();
-        $perPage  = $this->getPerPage(30);
+        $perPage  = $this->getPerPage(9999);
 
         $users  = $this->model('UserModel');
         $result = $users->getFilteredList([
@@ -254,6 +254,52 @@ class MemberController extends Controller
         }
 
         Response::paginated($publicData, $result['total'], $result['page'], $result['per_page']);
+    }
+
+    /**
+     * GET  ?controller=member&action=directory-export
+     * ส่งออกทำเนียบสมาชิกทั้งหมด (ไม่มี pagination)
+     */
+    public function directoryExport(): void
+    {
+        $settings = $this->model('SettingsModel');
+        if ($settings->get('member_directory_enabled', '1') !== '1') {
+            Response::error('ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ', 403);
+        }
+
+        $users  = $this->model('UserModel');
+        $result = $users->getFilteredList([
+            'status'      => 'active',
+            'role'        => 'member',
+            'member_type' => $this->query('member_type') ?? '',
+            'search'      => $this->query('search') ?? '',
+            'order_by'    => $this->query('order_by')  ?: 'member_number',
+            'order_dir'   => $this->query('order_dir') ?: 'asc',
+        ], 1, 10000);
+
+        $prefix = $settings->get('member_number_prefix', '');
+        $digits = (int)$settings->get('member_number_digits', '4');
+        $publicData = [];
+        foreach ($result['data'] as $row) {
+            $num = !empty($row['member_number'])
+                ? UserModel::formatMemberNumber($row['member_number'], $prefix, $digits)
+                : null;
+            $publicData[] = [
+                'member_number'       => $num,
+                'full_name'           => ($row['prefix'] ?? '') . ($row['full_name'] ?? ''),
+                'member_type'         => $row['member_type'] ?? '',
+                'academic_rank'       => $row['academic_rank'] ?? '',
+                'position'            => $row['position'] ?? '',
+                'school_organization' => $row['school_organization'] ?? '',
+            ];
+        }
+
+        Response::success([
+            'members'     => $publicData,
+            'total'       => $result['total'],
+            'exported_at' => date('Y-m-d H:i:s'),
+            'exported_by' => $this->currentUser['full_name'] ?? $this->currentUser['username'] ?? '',
+        ]);
     }
 
     /**

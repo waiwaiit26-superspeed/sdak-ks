@@ -38,6 +38,7 @@ class RoleAccess
             'notifications'       => ['member', 'admin'],
             'list'                => ['member', 'admin'],
             'directory'           => ['member', 'admin'],
+            'directory-export'    => ['member', 'admin'],
             'approve'             => ['member', 'admin'],
             'create'              => ['member', 'admin'],
             'delete'              => ['admin'],
