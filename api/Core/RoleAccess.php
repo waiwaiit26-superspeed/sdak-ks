@@ -48,7 +48,7 @@ class RoleAccess
             'directory-confirm-number' => ['member', 'admin'],
             'approve'             => ['member', 'admin'],
             'create'              => ['member', 'admin'],
-            'delete'              => ['admin'],
+            'delete'              => ['member', 'admin'],
             'import'              => ['admin'],
             'statistics'          => ['member', 'admin'],
             'next-member-number'      => ['member', 'admin'],

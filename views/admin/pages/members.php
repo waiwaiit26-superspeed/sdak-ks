@@ -448,6 +448,7 @@
 let membersTable;
 let importData = [];
 let mfBirthFp = null;
+let _canDeleteMember = false;
 
 // CSV Template columns
 const TEMPLATE_HEADERS = [
@@ -465,6 +466,16 @@ const FIELD_MAP = [
 
 $(async function () {
     if (!await App.requireAdminOrSubAdmin()) return;
+
+    // Determine delete permission
+    if (API.isAdmin()) {
+        _canDeleteMember = true;
+    } else {
+        const permsRes = await API.getMySubAdminPermissions();
+        if (permsRes.success && permsRes.data?.areas?.members?.includes('delete')) {
+            _canDeleteMember = true;
+        }
+    }
 
     // Populate member type selects from cached data
     App.loadMemberTypes().then(() => {
@@ -625,7 +636,7 @@ function initDataTable() {
                     if (row.status === 'active') b += '<button class="btn btn-outline-warning btn-xs" onclick="approveMember(' + id + ',\'suspend\')" title="ระงับ"><i class="bi bi-pause-circle"></i></button> ';
                     if (row.status === 'suspended' || row.status === 'cancelled') b += '<button class="btn btn-outline-success btn-xs" onclick="approveMember(' + id + ',\'activate\')" title="เปิดใช้"><i class="bi bi-play-circle"></i></button> ';
                     b += '<button class="btn btn-outline-secondary btn-xs" onclick="openResetPassword(' + id + ',\'' + App.escapeHtml(row.full_name).replace(/'/g, "\\'") + '\')" title="รีเซ็ตรหัสผ่าน"><i class="bi bi-key"></i></button> ';
-                    b += '<button class="btn btn-outline-danger btn-xs" onclick="deleteMember(' + id + ',\'' + App.escapeHtml(row.full_name).replace(/'/g, "\\'") + '\')" title="ลบ"><i class="bi bi-trash"></i></button>';
+                    if (_canDeleteMember) b += '<button class="btn btn-outline-danger btn-xs" onclick="deleteMember(' + id + ',\'' + App.escapeHtml(row.full_name).replace(/'/g, "\\'") + '\')" title="ลบ"><i class="bi bi-trash"></i></button>';
                     return b;
                 }
             }
