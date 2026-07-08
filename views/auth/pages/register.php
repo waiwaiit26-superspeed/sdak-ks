@@ -487,10 +487,6 @@ $extraCss = '
     </div>
 </div>
 
-<!-- Google Registration Setup Modal -->
-<div class="modal-overlay" id="setupModal">
-    <div class="setup-modal">
-        <div class="setup-modal-header">
 <!-- Account Link Request Modal -->
 <div class="modal-overlay" id="linkRequestModal">
     <div class="setup-modal" style="max-width:460px;">
