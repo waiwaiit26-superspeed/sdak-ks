@@ -228,6 +228,26 @@ const API = {
         return this.post(this.apiUrl('auth', 'register'), data);
     },
 
+    async searchMembersByName(q) {
+        return this.get(this.apiUrl('auth', 'search-members-by-name'), { q });
+    },
+
+    async requestAccountLink(data) {
+        return this.post(this.apiUrl('auth', 'request-account-link'), data);
+    },
+
+    async listPendingLinks(params = {}) {
+        return this.get(this.apiUrl('auth', 'list-pending-links'), params);
+    },
+
+    async approveAccountLink(requestId, note = '') {
+        return this.post(this.apiUrl('auth', 'approve-account-link'), { request_id: requestId, note });
+    },
+
+    async rejectAccountLink(requestId, note = '') {
+        return this.post(this.apiUrl('auth', 'reject-account-link'), { request_id: requestId, note });
+    },
+
     async googleLogin(googleToken) {
         return this.post(this.apiUrl('auth', 'google-login'), { google_token: googleToken });
     },

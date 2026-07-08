@@ -804,4 +804,269 @@ class AuthController extends Controller
 
         return $url;
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    //  Account Linking Feature
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * GET  ?controller=auth&action=search-members-by-name&q=ชื่อ
+     * Public: search active members by name, returns limited safe info for linking flow.
+     */
+    public function searchMembersByName(): void
+    {
+        $q = trim($this->query('q') ?? '');
+        if (mb_strlen($q) < 2) {
+            Response::success([], 'กรุณากรอกอย่างน้อย 2 ตัวอักษร');
+        }
+
+        $users = $this->model('UserModel');
+        $rows  = $users->db->select('users',
+            ['id', 'full_name', 'prefix', 'position', 'school_organization', 'email'],
+            [
+                'role'        => 'member',
+                'status'      => 'active',
+                'full_name[~]' => $q,
+                'LIMIT'       => 10,
+            ]
+        );
+
+        $out = [];
+        foreach ($rows ?: [] as $r) {
+            $emailRaw = $r['email'] ?? '';
+            $hasEmail = $emailRaw !== '' &&
+                        substr($emailRaw, -11) !== '@temp.local' &&
+                        filter_var($emailRaw, FILTER_VALIDATE_EMAIL);
+            $emailHint = '';
+            if ($hasEmail && strpos($emailRaw, '@') !== false) {
+                [$local, $domain] = explode('@', $emailRaw, 2);
+                $visible    = mb_substr($local, 0, min(2, mb_strlen($local)));
+                $stars      = str_repeat('*', max(3, mb_strlen($local) - 2));
+                $emailHint  = $visible . $stars . '@' . $domain;
+            }
+            $out[] = [
+                'id'                  => (int)$r['id'],
+                'full_name'           => $r['full_name'],
+                'position'            => $r['position'] ?? '',
+                'school_organization' => $r['school_organization'] ?? '',
+                'has_email'           => $hasEmail,
+                'email_hint'          => $emailHint,
+            ];
+        }
+
+        Response::success($out);
+    }
+
+    /**
+     * POST  ?controller=auth&action=request-account-link
+     * Public: submit a link request (pending admin approval).
+     * request_type=email: provide email, proposed_username, proposed_password
+     * request_type=google: provide google_token
+     */
+    public function requestAccountLink(): void
+    {
+        $this->requirePost();
+        $input       = $this->input();
+        $targetId    = (int)($input['target_user_id'] ?? 0);
+        $requestType = $input['request_type'] ?? 'email';
+
+        if (!$targetId) Response::error('กรุณาระบุ user_id');
+        if (!in_array($requestType, ['email', 'google'], true)) Response::error('ประเภทคำขอไม่ถูกต้อง');
+
+        $users  = $this->model('UserModel');
+        $target = $users->db->get('users', ['id', 'full_name', 'email', 'google_id', 'status', 'role'], ['id' => $targetId]);
+        if (!$target) Response::error('ไม่พบสมาชิก', 404);
+        if ($target['role'] !== 'member') Response::error('ไม่พบสมาชิก', 404);
+        if ($target['status'] !== 'active') Response::error('สมาชิกนี้ไม่สามารถยื่นคำขอได้', 400);
+
+        $linkModel = $this->model('AccountLinkRequestModel');
+
+        if ($requestType === 'email') {
+            $email     = trim($input['email'] ?? '');
+            $uname     = trim($input['proposed_username'] ?? '');
+            $password  = $input['proposed_password'] ?? '';
+
+            if (!$email)  Response::error('กรุณาระบุอีเมล');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) Response::error('รูปแบบอีเมลไม่ถูกต้อง');
+            if (strlen($password) < 6) Response::error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+            if (!preg_match('/^[a-zA-Z0-9_]{3,50}$/', $uname)) Response::error('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษ ตัวเลข หรือ _ ยาว 3-50 ตัวอักษร');
+
+            // Validate email & username uniqueness
+            $existingByEmail = $users->findByEmail($email);
+            if ($existingByEmail && (int)$existingByEmail['id'] !== $targetId) {
+                Response::error('อีเมลนี้ถูกใช้โดยบัญชีอื่นแล้ว');
+            }
+            if ($users->usernameExists($uname)) Response::error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
+
+            // Check target doesn't already have a real email
+            $existingEmail = $target['email'] ?? '';
+            if ($existingEmail && substr($existingEmail, -11) !== '@temp.local' && filter_var($existingEmail, FILTER_VALIDATE_EMAIL)) {
+                Response::error('สมาชิกนี้มีอีเมลในระบบแล้ว ไม่สามารถยื่นคำขอผูกบัญชีได้');
+            }
+
+            if ($linkModel->hasPending($targetId)) Response::error('มีคำขอรออนุมัติอยู่แล้วสำหรับสมาชิกคนนี้');
+
+            $requestId = $linkModel->create([
+                'target_user_id'       => $targetId,
+                'request_type'         => 'email',
+                'email'                => $email,
+                'proposed_username'    => $uname,
+                'proposed_password_hash' => Auth::hashPassword($password),
+                'status'               => 'pending',
+            ]);
+
+        } else {
+            // Google
+            $googleToken = $input['google_token'] ?? '';
+            if (!$googleToken) Response::error('กรุณาระบุ Google Token');
+
+            $gUser = $this->verifyGoogleToken($googleToken);
+            if (!$gUser) Response::error('Google Token ไม่ถูกต้องหรือหมดอายุ', 401);
+
+            $googleEmail = $gUser['email'] ?? '';
+            $googleSub   = $gUser['sub']   ?? '';
+
+            // Validate Google email/id uniqueness
+            $existingByEmail = $users->findByEmail($googleEmail);
+            if ($existingByEmail && (int)$existingByEmail['id'] !== $targetId) {
+                Response::error('บัญชี Google นี้ (อีเมล) ถูกใช้โดยบัญชีอื่นแล้ว');
+            }
+            $existingByGoogle = $googleSub ? $users->findByGoogleId($googleSub) : null;
+            if ($existingByGoogle && (int)$existingByGoogle['id'] !== $targetId) {
+                Response::error('บัญชี Google นี้ถูกเชื่อมต่อกับบัญชีอื่นแล้ว');
+            }
+
+            // Check target doesn't already have google_id
+            if (!empty($target['google_id'])) {
+                Response::error('สมาชิกนี้เชื่อมต่อ Google แล้ว');
+            }
+
+            if ($linkModel->hasPending($targetId)) Response::error('มีคำขอรออนุมัติอยู่แล้วสำหรับสมาชิกคนนี้');
+
+            $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
+            $requestId = $linkModel->create([
+                'target_user_id' => $targetId,
+                'request_type'   => 'google',
+                'email'          => $googleEmail,
+                'google_id'      => $googleSub,
+                'extra_data'     => json_encode([
+                    'google_name'    => $gUser['name']    ?? '',
+                    'google_picture' => $googlePicture,
+                ], JSON_UNESCAPED_UNICODE),
+                'status' => 'pending',
+            ]);
+        }
+
+        Auth::logActivity(0, 'request_account_link', 'auth',
+            'ยื่นคำขอผูกบัญชีกับสมาชิก: ' . ($target['full_name'] ?? ''),
+            $targetId, 'user');
+
+        Response::success(['request_id' => $requestId], 'ยื่นคำขอเรียบร้อย รอผู้ดูแลระบบอนุมัติ', 201);
+    }
+
+    /**
+     * GET  ?controller=auth&action=list-pending-links
+     * Admin only: list all account link requests.
+     */
+    public function listPendingLinks(): void
+    {
+        $page    = $this->getPage();
+        $perPage = $this->getPerPage(50);
+        $result  = $this->model('AccountLinkRequestModel')->getPendingList($page, $perPage);
+        Response::paginated($result['data'], $result['total'], $page, $perPage);
+    }
+
+    /**
+     * POST  ?controller=auth&action=approve-account-link
+     * Admin only: approve a link request — links account to existing member.
+     */
+    public function approveAccountLink(): void
+    {
+        $this->requirePost();
+        $input     = $this->input();
+        $requestId = (int)($input['request_id'] ?? 0);
+        $note      = trim($input['note'] ?? '');
+        if (!$requestId) Response::error('กรุณาระบุ request_id');
+
+        $linkModel = $this->model('AccountLinkRequestModel');
+        $req       = $linkModel->getWithUser($requestId);
+
+        if (!$req) Response::error('ไม่พบคำขอ', 404);
+        if ($req['status'] !== 'pending') Response::error('คำขอนี้ได้รับการดำเนินการแล้ว');
+
+        $users    = $this->model('UserModel');
+        $targetId = (int)$req['target_user_id'];
+        $adminId  = (int)$this->currentUser['id'];
+
+        $updateData = [];
+        if ($req['request_type'] === 'email') {
+            $updateData = [
+                'email'    => $req['email'],
+                'username' => $req['proposed_username'],
+                'password' => $req['proposed_password_hash'],
+            ];
+        } else {
+            // google
+            $extra = $req['extra_data'] ? json_decode($req['extra_data'], true) : [];
+            $googlePicture = $this->sanitizeGooglePictureUrl($extra['google_picture'] ?? '');
+            $target = $users->find($targetId, ['profile_image']);
+            $updateData = [
+                'email'          => $req['email'],
+                'google_id'      => $req['google_id'],
+                'google_picture' => $googlePicture ?: null,
+            ];
+            if ($googlePicture && empty($target['profile_image'])) {
+                $updateData['profile_image'] = $googlePicture;
+            }
+        }
+
+        $users->update($updateData, ['id' => $targetId]);
+
+        $linkModel->update([
+            'status'      => 'approved',
+            'approved_by' => $adminId,
+            'approved_at' => date('Y-m-d H:i:s'),
+            'note'        => $note ?: null,
+        ], ['id' => $requestId]);
+
+        Auth::logActivity($adminId, 'approve_account_link', 'auth',
+            'อนุมัติคำขอผูกบัญชีสมาชิก: ' . ($req['target_full_name'] ?? ''),
+            $targetId, 'user');
+
+        Response::success(['request_id' => $requestId, 'target_user_id' => $targetId], 'อนุมัติคำขอเรียบร้อย');
+    }
+
+    /**
+     * POST  ?controller=auth&action=reject-account-link
+     * Admin only: reject a link request.
+     */
+    public function rejectAccountLink(): void
+    {
+        $this->requirePost();
+        $input     = $this->input();
+        $requestId = (int)($input['request_id'] ?? 0);
+        $note      = trim($input['note'] ?? '');
+        if (!$requestId) Response::error('กรุณาระบุ request_id');
+
+        $linkModel = $this->model('AccountLinkRequestModel');
+        $req       = $linkModel->findBy(['id' => $requestId]);
+
+        if (!$req) Response::error('ไม่พบคำขอ', 404);
+        if ($req['status'] !== 'pending') Response::error('คำขอนี้ได้รับการดำเนินการแล้ว');
+
+        $adminId = (int)$this->currentUser['id'];
+        $linkModel->update([
+            'status'      => 'rejected',
+            'approved_by' => $adminId,
+            'approved_at' => date('Y-m-d H:i:s'),
+            'note'        => $note ?: null,
+        ], ['id' => $requestId]);
+
+        Auth::logActivity($adminId, 'reject_account_link', 'auth',
+            'ปฏิเสธคำขอผูกบัญชีสมาชิก id=' . $requestId,
+            (int)($req['target_user_id'] ?? 0), 'user');
+
+        Response::success(['request_id' => $requestId], 'ปฏิเสธคำขอเรียบร้อย');
+    }
 }
+

@@ -33,6 +33,12 @@ $page = $page ?? '';
                         <p>จัดการสมาชิก</p>
                     </a>
                 </li>
+                <li class="nav-item" id="nav-account-links">
+                    <a href="./?page=account-links" class="nav-link <?= $page === 'account-links' ? 'active' : '' ?>">
+                        <i class="nav-icon bi bi-link-45deg"></i>
+                        <p>คำขอผูกบัญชี</p>
+                    </a>
+                </li>
                 <li class="nav-item" id="nav-member-types">
                     <a href="./?page=member-types" class="nav-link <?= $page === 'member-types' ? 'active' : '' ?>">
                         <i class="nav-icon bi bi-people-fill"></i>

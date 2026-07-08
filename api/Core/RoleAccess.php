@@ -31,6 +31,11 @@ class RoleAccess
             'logout'                   => ['member', 'admin'],
             'refresh'                  => ['*'],
             'me'                       => ['member', 'admin'],
+            'search-members-by-name'   => ['*'],
+            'request-account-link'     => ['*'],
+            'list-pending-links'       => ['admin'],
+            'approve-account-link'     => ['admin'],
+            'reject-account-link'      => ['admin'],
         ],
         'member' => [
             'profile'             => ['member', 'admin'],

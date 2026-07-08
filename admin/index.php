@@ -14,6 +14,7 @@ $page = $_GET['page'] ?? 'dashboard';
 $allowed = [
     'dashboard',
     'members',
+    'account-links',
     'news',
     'activities',
     'navigation',

@@ -271,6 +271,13 @@ $extraCss = '
                             </div>
                         </div>
                     </div>
+                    <!-- ── Name Match Panel ── -->
+                    <div id="nameMatchPanel" style="display:none;" class="mb-2">
+                        <div class="callout callout-warning py-2 px-3 mb-2">
+                            <small><i class="bi bi-search me-1"></i> พบชื่อที่ตรงกันในระบบ &mdash; กรุณาตรวจสอบว่าท่านเป็นคนเดียวกันหรือไม่</small>
+                        </div>
+                        <div id="nameMatchList"></div>
+                    </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -483,6 +490,67 @@ $extraCss = '
 <div class="modal-overlay" id="setupModal">
     <div class="setup-modal">
         <div class="setup-modal-header">
+<!-- Account Link Request Modal -->
+<div class="modal-overlay" id="linkRequestModal">
+    <div class="setup-modal" style="max-width:460px;">
+        <div class="setup-modal-header" style="background:linear-gradient(135deg,#0369a1,#0284c7);">
+            <h3><i class="bi bi-link-45deg me-1"></i> ยื่นคำขอผูกบัญชี</h3>
+            <p id="linkReqTargetName" style="font-weight:600;font-size:.95rem;margin-bottom:2px;"></p>
+            <p style="opacity:.8;font-size:.82rem;margin:0;">รอ admin อนุมัติก่อนจึงจะเข้าสู่ระบบได้</p>
+        </div>
+        <div class="setup-modal-body">
+            <!-- Email link form -->
+            <div id="linkEmailForm">
+                <div class="setup-form-group">
+                    <label><i class="bi bi-envelope me-1"></i> อีเมล <span class="text-danger">*</span></label>
+                    <div class="setup-input-group">
+                        <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                        <input type="email" id="linkEmail" placeholder="example@email.com" autocomplete="off">
+                    </div>
+                </div>
+                <div class="setup-form-group">
+                    <label><i class="bi bi-person me-1"></i> ชื่อผู้ใช้ <span class="text-danger">*</span></label>
+                    <div class="setup-input-group">
+                        <span class="input-icon"><i class="bi bi-person"></i></span>
+                        <input type="text" id="linkUsername" placeholder="a-z 0-9 _ ยาว 3-50 ตัว" autocomplete="off">
+                    </div>
+                </div>
+                <div class="setup-form-group">
+                    <label><i class="bi bi-lock me-1"></i> รหัสผ่าน <span class="text-danger">*</span></label>
+                    <div class="setup-input-group">
+                        <span class="input-icon"><i class="bi bi-lock"></i></span>
+                        <input type="password" id="linkPassword" placeholder="อย่างน้อย 6 ตัวอักษร">
+                    </div>
+                </div>
+                <div class="setup-form-group">
+                    <label><i class="bi bi-lock-fill me-1"></i> ยืนยันรหัสผ่าน <span class="text-danger">*</span></label>
+                    <div class="setup-input-group">
+                        <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                        <input type="password" id="linkPasswordConfirm" placeholder="กรอกรหัสผ่านอีกครั้ง">
+                    </div>
+                </div>
+            </div>
+            <!-- Google link (hidden — handled in wizard) -->
+            <div id="linkGoogleForm" style="display:none;">
+                <div class="callout callout-info py-2 px-3">
+                    <small><i class="bi bi-google me-1"></i> ระบบจะผูกบัญชี Google ของท่านกับสมาชิกนี้</small>
+                </div>
+            </div>
+            <div id="linkReqError" class="alert alert-danger py-2 mt-2" style="display:none;font-size:.88rem;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:0 28px 24px;">
+            <button type="button" class="btn-step btn-step-outline" onclick="closeLinkModal()">ยกเลิก</button>
+            <button type="button" class="btn-step btn-step-primary" id="btnSubmitLink">
+                <i class="bi bi-send me-1"></i> ส่งคำขอ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Google Registration Setup Modal -->
+<div class="modal-overlay" id="setupModal">
+    <div class="setup-modal">
+        <div class="setup-modal-header">
             <h3><i class="bi bi-person-plus me-1"></i> ตั้งค่าบัญชีสมาชิก</h3>
             <p>กรุณากรอกข้อมูล เลือกประเภทสมาชิก และชำระค่าธรรมเนียม</p>
         </div>
@@ -540,7 +608,18 @@ $extraCss = '
                     </div>
                 </div>
 
-                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;">
+                <!-- Name match results inside wizard -->
+                <div id="setupNameMatchPanel" style="display:none;margin-top:16px;">
+                    <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+                        <small style="color:#92400e;"><i class="bi bi-search me-1"></i> พบชื่อที่ตรงกันในระบบ — ท่านเป็นคนนี้หรือไม่?</small>
+                    </div>
+                    <div id="setupNameMatchList"></div>
+                    <div style="margin-top:10px;">
+                        <button type="button" class="btn-step btn-step-outline" style="font-size:.85rem;padding:8px 16px;" onclick="skipNameMatch()">ไม่ใช่คนเหล่านี้ → ดำเนินการต่อ</button>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;" id="setupNameNextRow">
                     <button type="button" class="btn-step btn-step-primary" id="btnSetupNameNext" disabled>ถัดไป <i class="bi bi-arrow-right"></i></button>
                 </div>
             </div>
@@ -829,6 +908,163 @@ $(function () {
         }
     });
 
+    // ── Name Match Search (Form Register) ─────────────────────────────────────
+    let _nameSearchTimer = null;
+    let _linkTargetId    = null;
+    let _linkGoogleToken = null; // set when triggered from Google wizard
+
+    function buildMatchCard(m, mode) {
+        const hasEmail = m.has_email;
+        const school   = m.school_organization ? `<small class="text-muted">${App.escapeHtml(m.school_organization)}</small>` : '';
+        const pos      = m.position ? `<span class="badge badge-light border mr-1">${App.escapeHtml(m.position)}</span>` : '';
+        let actionHtml = '';
+        if (hasEmail) {
+            actionHtml = `<div class="mt-2 alert alert-info py-2 px-3 mb-0" style="font-size:.85rem;">
+                <i class="bi bi-envelope me-1"></i> มีอีเมลในระบบ: <strong>${App.escapeHtml(m.email_hint)}</strong>
+                <br><small>หากนี่คือท่าน กรุณา <a href="./?page=login">เข้าสู่ระบบด้วยอีเมลนี้</a> แทน</small>
+            </div>`;
+        } else {
+            if (mode === 'google') {
+                actionHtml = `<button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                    onclick="openLinkModal(${m.id}, '${App.escapeHtml(m.full_name)}', 'google')">
+                    <i class="bi bi-link-45deg me-1"></i> ใช่คนนี้ — ผูกบัญชี Google
+                </button>`;
+            } else {
+                actionHtml = `<button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                    onclick="openLinkModal(${m.id}, '${App.escapeHtml(m.full_name)}', 'email')">
+                    <i class="bi bi-link-45deg me-1"></i> ใช่คนนี้ — ผูกอีเมลและรหัสผ่าน
+                </button>`;
+            }
+        }
+        return `<div class="border rounded p-2 mb-2 bg-white">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
+                <div>
+                    <strong>${App.escapeHtml(m.full_name)}</strong><br>
+                    ${pos}${school}
+                </div>
+            </div>
+            ${actionHtml}
+        </div>`;
+    }
+
+    async function runNameSearch(q, containerSelector, mode) {
+        if (q.length < 2) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
+        const res = await API.searchMembersByName(q);
+        if (!res.success || !res.data || res.data.length === 0) {
+            $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return;
+        }
+        const listSel = containerSelector;
+        $(listSel).html(res.data.map(m => buildMatchCard(m, mode)).join(''));
+        $(listSel).closest('[id$=Panel],[id$=panel]').show();
+    }
+
+    // Form register: debounce on first_name + last_name input
+    $('#first_name, #last_name').on('input', function () {
+        clearTimeout(_nameSearchTimer);
+        _nameSearchTimer = setTimeout(function () {
+            const q = ($('#first_name').val().trim() + ' ' + $('#last_name').val().trim()).trim();
+            runNameSearch(q, '#nameMatchList', 'email');
+        }, 600);
+    });
+
+    // ── Name Match Search (Google Wizard Step 1) ─────────────────────────────
+    let _wizardNameSearchTimer = null;
+    $('#setupFirstName, #setupLastName').on('input', function () {
+        clearTimeout(_wizardNameSearchTimer);
+        _wizardNameSearchTimer = setTimeout(function () {
+            const q = ($('#setupFirstName').val().trim() + ' ' + $('#setupLastName').val().trim()).trim();
+            runNameSearch(q, '#setupNameMatchList', 'google');
+        }, 600);
+    });
+
+    function skipNameMatch() {
+        $('#setupNameMatchPanel').hide();
+        goToSetupStep(2);
+    }
+
+    // ── Link Modal ─────────────────────────────────────────────────────────────
+    function openLinkModal(targetId, targetName, requestType) {
+        _linkTargetId = targetId;
+        // If triggered from Google wizard, use the current google token
+        if (requestType === 'google') {
+            _linkGoogleToken = _googleToken || null;
+        }
+        $('#linkReqTargetName').text(targetName);
+        $('#linkReqError').hide();
+        if (requestType === 'google') {
+            $('#linkEmailForm').hide();
+            $('#linkGoogleForm').show();
+        } else {
+            $('#linkEmailForm').show();
+            $('#linkGoogleForm').hide();
+            $('#linkEmail, #linkUsername, #linkPassword, #linkPasswordConfirm').val('');
+        }
+        $('#btnSubmitLink').data('type', requestType).prop('disabled', false)
+            .html('<i class="bi bi-send me-1"></i> ส่งคำขอ');
+        $('#linkRequestModal').addClass('show');
+    }
+
+    function closeLinkModal() {
+        $('#linkRequestModal').removeClass('show');
+        _linkTargetId = null;
+        _linkGoogleToken = null;
+    }
+    $('#linkRequestModal').on('click', function (e) {
+        if ($(e.target).is('#linkRequestModal')) closeLinkModal();
+    });
+
+    $('#btnSubmitLink').on('click', async function () {
+        const btn = $(this);
+        const requestType = btn.data('type');
+        if (!_linkTargetId) return;
+        $('#linkReqError').hide();
+
+        let payload = { target_user_id: _linkTargetId, request_type: requestType };
+
+        if (requestType === 'email') {
+            const email   = $('#linkEmail').val().trim();
+            const uname   = $('#linkUsername').val().trim();
+            const pass    = $('#linkPassword').val();
+            const confirm = $('#linkPasswordConfirm').val();
+            if (!email || !uname || !pass || !confirm) {
+                $('#linkReqError').text('กรุณากรอกข้อมูลให้ครบทุกช่อง').show(); return;
+            }
+            if (pass !== confirm) {
+                $('#linkReqError').text('รหัสผ่านไม่ตรงกัน').show(); return;
+            }
+            if (pass.length < 6) {
+                $('#linkReqError').text('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร').show(); return;
+            }
+            payload.email = email;
+            payload.proposed_username = uname;
+            payload.proposed_password = pass;
+        } else {
+            // Google: use token stored from wizard
+            if (!_linkGoogleToken) {
+                $('#linkReqError').text('ไม่พบข้อมูล Google Token กรุณาลองใหม่').show(); return;
+            }
+            payload.google_token = _linkGoogleToken;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังส่ง...');
+        const res = await API.requestAccountLink(payload);
+        btn.prop('disabled', false).html('<i class="bi bi-send me-1"></i> ส่งคำขอ');
+
+        if (res.success) {
+            closeLinkModal();
+            Swal.fire({
+                icon: 'success',
+                title: 'ส่งคำขอสำเร็จ!',
+                html: 'ระบบได้รับคำขอของท่านแล้ว<br><small class="text-muted">กรุณารอ admin อนุมัติก่อนจึงจะเข้าสู่ระบบได้</small>',
+                confirmButtonText: 'รับทราบ',
+            });
+        } else {
+            $('#linkReqError').text(res.message || 'เกิดข้อผิดพลาด').show();
+        }
+    });
+
+    // ── Name Match Search (Form Register) end ─────────────────────────────────
+
     // Helper: get resolved prefix value
     function getResolvedPrefix() {
         const sel = $('#setupPrefix').val();
@@ -846,14 +1082,28 @@ $(function () {
     }
     $(document).on('input change', '#setupPrefix, #setupPrefixOther, #setupFirstName, #setupLastName', validateNameStep);
 
-    // Name step → next to member type
-    $('#btnSetupNameNext').on('click', function() {
+    // Name step → check for matches first, then proceed
+    $('#btnSetupNameNext').on('click', async function() {
         if (!getResolvedPrefix() || !$('#setupFirstName').val().trim() || !$('#setupLastName').val().trim()) return;
-        goToSetupStep(2);
+        const q = ($('#setupFirstName').val().trim() + ' ' + $('#setupLastName').val().trim()).trim();
+        // Check for name matches before proceeding
+        const res = await API.searchMembersByName(q);
+        if (res.success && res.data && res.data.length > 0) {
+            $('#setupNameMatchList').html(res.data.map(m => buildMatchCard(m, 'google')).join(''));
+            $('#setupNameMatchPanel').show();
+            $('#setupNameNextRow').hide();
+        } else {
+            $('#setupNameMatchPanel').hide();
+            goToSetupStep(2);
+        }
     });
 
     // Back from member type → name step
-    $('#btnSetupNameBack').on('click', function() { goToSetupStep(1); });
+    $('#btnSetupNameBack').on('click', function() {
+        $('#setupNameNextRow').show();
+        $('#setupNameMatchPanel').hide();
+        goToSetupStep(1);
+    });
 
     // Select member type
     $(document).on('click', '.member-type-card', function() {
