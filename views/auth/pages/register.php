@@ -947,24 +947,35 @@ $(function () {
         </div>`;
     }
 
-    async function runNameSearch(q, containerSelector, mode) {
-        if (q.length < 2) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
-        const res = await API.searchMembersByName(q);
+    // params = string หรือ { first, last } หรือ { q }
+    async function runNameSearch(params, containerSelector, mode) {
+        let apiParams;
+        if (typeof params === 'string') {
+            if (params.length < 2) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
+            apiParams = { q: params };
+        } else {
+            apiParams = {};
+            if (params.first && params.first.length >= 2) apiParams.first = params.first;
+            if (params.last  && params.last.length  >= 2) apiParams.last  = params.last;
+            if (!apiParams.first && !apiParams.last) { $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return; }
+        }
+        const res = await API.searchMembersByName(apiParams);
         if (!res.success || !res.data || res.data.length === 0) {
             $(containerSelector).closest('[id$=Panel],[id$=panel]').hide(); return;
         }
-        const listSel = containerSelector;
-        $(listSel).html(res.data.map(m => buildMatchCard(m, mode)).join(''));
-        $(listSel).closest('[id$=Panel],[id$=panel]').show();
+        $(containerSelector).html(res.data.map(m => buildMatchCard(m, mode)).join(''));
+        $(containerSelector).closest('[id$=Panel],[id$=panel]').show();
     }
 
-    // Form register: debounce on first_name + last_name input
+    // Form register: debounce on first_name + last_name input (OR search)
     $('#first_name, #last_name').on('input', function () {
         clearTimeout(_nameSearchTimer);
         _nameSearchTimer = setTimeout(function () {
-            const q = ($('#first_name').val().trim() + ' ' + $('#last_name').val().trim()).trim();
-            runNameSearch(q, '#nameMatchList', 'email');
-        }, 600);
+            const first = $('#first_name').val().trim();
+            const last  = $('#last_name').val().trim();
+            if (!first && !last) { $('#nameMatchPanel').hide(); return; }
+            runNameSearch({ first, last }, '#nameMatchList', 'email');
+        }, 350);
     });
 
     // ── Name Match Search (Google Wizard Step 1) ─────────────────────────────
@@ -972,9 +983,11 @@ $(function () {
     $('#setupFirstName, #setupLastName').on('input', function () {
         clearTimeout(_wizardNameSearchTimer);
         _wizardNameSearchTimer = setTimeout(function () {
-            const q = ($('#setupFirstName').val().trim() + ' ' + $('#setupLastName').val().trim()).trim();
-            runNameSearch(q, '#setupNameMatchList', 'google');
-        }, 600);
+            const first = $('#setupFirstName').val().trim();
+            const last  = $('#setupLastName').val().trim();
+            if (!first && !last) { $('#setupNameMatchPanel').hide(); return; }
+            runNameSearch({ first, last }, '#setupNameMatchList', 'google');
+        }, 350);
     });
 
     function skipNameMatch() {

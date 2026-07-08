@@ -810,24 +810,38 @@ class AuthController extends Controller
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * GET  ?controller=auth&action=search-members-by-name&q=ชื่อ
+     * GET  ?controller=auth&action=search-members-by-name&q=...  (หรือ &first=...&last=...)
      * Public: search active members by name, returns limited safe info for linking flow.
+     * รองรับ OR search: first=ชื่อ&last=นามสกุล หรือ q=คำค้น
      */
     public function searchMembersByName(): void
     {
-        $q = trim($this->query('q') ?? '');
-        if (mb_strlen($q) < 2) {
+        $q     = trim($this->query('q')     ?? '');
+        $first = trim($this->query('first') ?? '');
+        $last  = trim($this->query('last')  ?? '');
+
+        // รวบรวม terms ที่ยาวพอ (≥2 ตัวอักษร), กรอง duplicate
+        $terms = [];
+        foreach ([$first, $last, $q] as $t) {
+            if (mb_strlen($t) >= 2) $terms[] = $t;
+        }
+        $terms = array_values(array_unique($terms));
+
+        if (empty($terms)) {
             Response::success([], 'กรุณากรอกอย่างน้อย 2 ตัวอักษร');
         }
+
+        // Medoo: array ใน [~] → OR LIKE '%t1%' OR LIKE '%t2%'
+        $nameCond = count($terms) === 1 ? $terms[0] : $terms;
 
         $users = $this->model('UserModel');
         $rows  = $users->db->select('users',
             ['id', 'full_name', 'prefix', 'position', 'school_organization', 'email'],
             [
-                'role'        => 'member',
-                'status'      => 'active',
-                'full_name[~]' => $q,
-                'LIMIT'       => 10,
+                'role'         => 'member',
+                'status'       => 'active',
+                'full_name[~]' => $nameCond,
+                'LIMIT'        => 10,
             ]
         );
 

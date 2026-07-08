@@ -228,8 +228,10 @@ const API = {
         return this.post(this.apiUrl('auth', 'register'), data);
     },
 
-    async searchMembersByName(q) {
-        return this.get(this.apiUrl('auth', 'search-members-by-name'), { q });
+    async searchMembersByName(params) {
+        // params = string (q) หรือ object { first, last, q }
+        const p = typeof params === 'string' ? { q: params } : params;
+        return this.get(this.apiUrl('auth', 'search-members-by-name'), p);
     },
 
     async requestAccountLink(data) {
