@@ -357,11 +357,28 @@ async function loadDirectory(page = 1) {
                 <div class="form-row">
                     <div class="form-group col-md-6">
                         <label class="font-weight-bold">ตำแหน่ง</label>
-                        <input type="text" class="form-control" id="dirEditPosition" placeholder="เช่น ครู, ผู้อำนวยการสถานศึกษา">
+                        <select class="form-control" id="dirEditPosition">
+                            <option value="">— ไม่ระบุ —</option>
+                            <option value="ผู้อำนวยการสถานศึกษา">ผู้อำนวยการสถานศึกษา</option>
+                            <option value="รองผู้อำนวยการสถานศึกษา">รองผู้อำนวยการสถานศึกษา</option>
+                            <option value="other">อื่นๆ (กรอกเอง)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6" id="dirEditAcademicRankWrap" style="display:none;">
+                        <label class="font-weight-bold">วิทยฐานะ</label>
+                        <select class="form-control" id="dirEditAcademicRank">
+                            <option value="">— ไม่ระบุ —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" id="dirEditPositionOtherRow" style="display:none;">
+                    <div class="form-group col-md-6">
+                        <label class="font-weight-bold">ระบุตำแหน่ง</label>
+                        <input type="text" class="form-control" id="dirEditPositionOther" placeholder="เช่น ครู, ผู้ช่วยผู้อำนวยการโรงเรียน">
                     </div>
                     <div class="form-group col-md-6">
-                        <label class="font-weight-bold">วิทยฐานะ</label>
-                        <input type="text" class="form-control" id="dirEditAcademicRank" placeholder="เช่น ครูชำนาญการพิเศษ">
+                        <label class="font-weight-bold">วิทยฐานะ <small class="text-muted font-weight-normal">(ถ้ามี)</small></label>
+                        <input type="text" class="form-control" id="dirEditAcademicRankOther" placeholder="เช่น ครูชำนาญการพิเศษ">
                     </div>
                 </div>
                 <!-- Summary preview -->
@@ -383,16 +400,47 @@ async function loadDirectory(page = 1) {
 <script>
 let _dirEditUserId = null;
 
+// รายการวิทยฐานะตามตำแหน่ง (ตรงกับหน้า profile)
+const _dirEditRankOpts = {
+    'ผู้อำนวยการสถานศึกษา': ['ผู้อำนวยการชำนาญการ', 'ผู้อำนวยการชำนาญการพิเศษ', 'ผู้อำนวยการเชี่ยวชาญ'],
+    'รองผู้อำนวยการสถานศึกษา': ['รองผู้อำนวยการชำนาญการ', 'รองผู้อำนวยการชำนาญการพิเศษ', 'รองผู้อำนวยการเชี่ยวชาญ'],
+};
+
+function _updateDirEditRankDropdown(position, selectedRank) {
+    const opts = _dirEditRankOpts[position];
+    if (opts) {
+        $('#dirEditAcademicRank').html(
+            '<option value="">— ไม่ระบุ —</option>' +
+            opts.map(o => `<option value="${o}"${o === selectedRank ? ' selected' : ''}>${o}</option>`).join('')
+        );
+        $('#dirEditAcademicRankWrap').slideDown(150);
+    } else {
+        $('#dirEditAcademicRank').html('<option value="">— ไม่ระบุ —</option>');
+        $('#dirEditAcademicRankWrap').slideUp(150);
+    }
+}
+
 function _getEditPrefix() {
     const sel = $('#dirEditPrefix').val();
     return sel === 'other' ? $('#dirEditPrefixOther').val().trim() : (sel || '');
 }
 
+function _getEditPosition() {
+    const sel = $('#dirEditPosition').val();
+    return sel === 'other' ? $('#dirEditPositionOther').val().trim() : (sel || '');
+}
+
+function _getEditAcademicRank() {
+    return $('#dirEditPosition').val() === 'other'
+        ? $('#dirEditAcademicRankOther').val().trim()
+        : ($('#dirEditAcademicRank').val() || '');
+}
+
 function updateDirEditSummary() {
     const prefix   = _getEditPrefix();
     const fullName = $('#dirEditFullName').val().trim();
-    const position = $('#dirEditPosition').val().trim();
-    const rank     = $('#dirEditAcademicRank').val().trim();
+    const position = _getEditPosition();
+    const rank     = _getEditAcademicRank();
     const namePart = App.escapeHtml((prefix || '') + (fullName || ''));
     const posParts = [position, rank].filter(Boolean).map(App.escapeHtml).join(' &nbsp;/&nbsp; ');
     let html = namePart
@@ -402,7 +450,8 @@ function updateDirEditSummary() {
     $('#dirEditSummary').html(html);
 }
 
-$('#dirEditPrefix, #dirEditFullName, #dirEditPrefixOther, #dirEditPosition, #dirEditAcademicRank')
+$('#dirEditPrefix, #dirEditFullName, #dirEditPrefixOther,
+  #dirEditPosition, #dirEditAcademicRank, #dirEditPositionOther, #dirEditAcademicRankOther')
     .on('input change', updateDirEditSummary);
 
 $('#dirEditPrefix').on('change', function () {
@@ -413,6 +462,21 @@ $('#dirEditPrefix').on('change', function () {
         $('#dirEditPrefixOtherWrap').slideUp(150);
         $('#dirEditPrefixOther').val('');
     }
+});
+
+$('#dirEditPosition').on('change', function () {
+    const pos = $(this).val();
+    if (pos === 'other') {
+        $('#dirEditPositionOtherRow').slideDown(150);
+        $('#dirEditAcademicRankWrap').slideUp(150);
+        $('#dirEditPositionOther').focus();
+    } else {
+        $('#dirEditPositionOtherRow').slideUp(150);
+        $('#dirEditPositionOther').val('');
+        $('#dirEditAcademicRankOther').val('');
+        _updateDirEditRankDropdown(pos, '');
+    }
+    updateDirEditSummary();
 });
 
 function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank) {
@@ -429,8 +493,27 @@ function openEditModal(userId, memberNumber, prefix, fullName, position, academi
         $('#dirEditPrefixOther').val('');
     }
     $('#dirEditFullName').val(fullName || '');
-    $('#dirEditPosition').val(position || '');
-    $('#dirEditAcademicRank').val(academicRank || '');
+    // Position dropdown
+    const posInList = position in _dirEditRankOpts;
+    if (posInList) {
+        $('#dirEditPosition').val(position);
+        $('#dirEditPositionOtherRow').hide();
+        $('#dirEditPositionOther').val('');
+        $('#dirEditAcademicRankOther').val('');
+        _updateDirEditRankDropdown(position, academicRank || '');
+    } else if (position) {
+        $('#dirEditPosition').val('other');
+        $('#dirEditPositionOther').val(position);
+        $('#dirEditAcademicRankOther').val(academicRank || '');
+        $('#dirEditPositionOtherRow').show();
+        $('#dirEditAcademicRankWrap').hide();
+    } else {
+        $('#dirEditPosition').val('');
+        $('#dirEditPositionOtherRow').hide();
+        $('#dirEditPositionOther').val('');
+        $('#dirEditAcademicRankOther').val('');
+        _updateDirEditRankDropdown('', '');
+    }
     $('#btnSaveDirEdit').prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
     updateDirEditSummary();
     $('#modalDirEdit').modal('show');
@@ -441,8 +524,8 @@ async function saveDirectoryEdit() {
     const memberNumber = $('#dirEditMemberNumber').val().trim();
     const prefixVal    = _getEditPrefix();
     const fullName     = $('#dirEditFullName').val().trim();
-    const position     = $('#dirEditPosition').val().trim();
-    const academicRank = $('#dirEditAcademicRank').val().trim();
+    const position     = _getEditPosition();
+    const academicRank = _getEditAcademicRank();
     if (!fullName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
 
     const btn = $('#btnSaveDirEdit');
