@@ -273,8 +273,8 @@ $extraCss = '
                     </div>
                     <!-- ── Name Match Panel ── -->
                     <div id="nameMatchPanel" style="display:none;" class="mt-1 mb-2">
-                        <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;padding:7px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
-                            <small style="color:#92400e;"><i class="bi bi-people me-1"></i><strong>พบชื่อที่ตรงกันในระบบ</strong> — ท่านเป็นคนนี้หรือไม่?</small>
+                        <div style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;padding:9px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+                            <span style="color:#92400e;font-size:1rem;"><i class="bi bi-people me-1"></i><strong>พบชื่อที่ตรงกันในระบบ</strong> — ท่านเป็นคนนี้หรือไม่?</span>
                             <button type="button" onclick="$('#nameMatchPanel').hide()" style="background:none;border:none;color:#9ca3af;cursor:pointer;padding:0;font-size:1.1rem;line-height:1;">&times;</button>
                         </div>
                         <div id="nameMatchList"></div>
@@ -938,10 +938,10 @@ $(function () {
                 </button>`;
             }
         }
-        return `<div class="border rounded p-2 mb-2 bg-white">
+        return `<div class="border rounded p-3 mb-2 bg-white">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
                 <div>
-                    <strong>${App.escapeHtml(m.full_name)}</strong><br>
+                    <strong style="font-size:1.1rem;">${App.escapeHtml(m.full_name)}</strong><br>
                     ${pos}${school}
                 </div>
             </div>
