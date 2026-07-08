@@ -37,7 +37,31 @@ $basePath = $basePath ?? './';
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
 <script>
-// Update top navbar username & dynamic favicon/logo
+
+async function adjustSidebarForRole() {
+    if (API.isAdmin()) return; // Full admin: show everything
+
+    const res = await API.getMySubAdminPermissions();
+    if (!res.success || !res.data || !res.data.is_sub_admin) return;
+
+    const areas = res.data.areas || {};
+
+    // Admin-only items: hide for sub-admins
+    $('#nav-member-types, #nav-header-settings, #nav-navigation, #nav-pages, #nav-settings, #nav-logo').hide();
+    $('#nav-header-finance, #nav-fees, #nav-receipts, #nav-finance, #nav-sub-admins').hide();
+    $('#nav-header-telegram, #nav-telegram-send, #nav-logs').hide();
+
+    // Content items: show only permitted areas
+    if (!areas.members)    $('#nav-members').hide();
+    if (!areas.news)       $('#nav-news').hide();
+    if (!areas.activities) $('#nav-activities').hide();
+
+    // Hide content header if no content area is permitted
+    if (!areas.members && !areas.news && !areas.activities) {
+        $('#nav-header-content').hide();
+    }
+}
+
 $(function() {
     const user = API.getUser();
     if (user) {
@@ -131,5 +155,8 @@ $(function() {
         $(this).find('input').attr('type', 'password');
         $(this).find('.toggle-password i').removeClass('bi-eye-slash').addClass('bi-eye');
     });
+
+    // Adjust sidebar based on role (sub-admin sees only permitted menus)
+    adjustSidebarForRole();
 });
 </script>
