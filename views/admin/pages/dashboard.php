@@ -23,8 +23,8 @@
         <section class="content">
             <div class="container-fluid">
 
-                <!-- Overview Cards -->
-                <div class="row">
+                <!-- Overview Cards (admin only) -->
+                <div class="row" id="dashboardAdminStats">
                     <div class="col-lg-3 col-6 mb-3">
                         <div class="overview-card bg-grad-members">
                             <i class="bi bi-people-fill ov-icon"></i>
@@ -59,8 +59,8 @@
                     </div>
                 </div>
 
-                <!-- Charts Row -->
-                <div class="row mt-4">
+                <!-- Charts Row (admin only) -->
+                <div class="row mt-4" id="dashboardCharts">
                     <div class="col-md-6">
                         <div class="card chart-card">
                             <div class="card-header">
@@ -85,6 +85,15 @@
                             </div>
                         </div>
                     </div>
+                </div><!-- /dashboardCharts -->
+
+                <!-- Sub-admin quick links (shown instead of admin stats) -->
+                <div id="dashboardSubAdmin" style="display:none">
+                    <div class="alert alert-info">
+                        <i class="bi bi-person-gear me-2"></i>
+                        <strong>สวัสดี!</strong> คุณมีสิทธิ์ดูแลบางส่วนของระบบ — ใช้เมนูด้านซ้ายหรือคลิกด้านล่างเพื่อจัดการในส่วนที่ได้รับมอบหมาย
+                    </div>
+                    <div class="row" id="subAdminQuickLinks"></div>
                 </div>
 
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
@@ -94,6 +103,17 @@ $(async function () {
     if (!await App.requireAdminOrSubAdmin()) return;
     const user = API.getUser();
     if (user) $('#adminWelcome').text('สวัสดี, ' + user.full_name);
+
+    if (API.isAdmin()) {
+        // Full admin: show all stats
+        loadDashboard();
+        loadStatistics();
+    } else {
+        // Sub-admin: hide admin-only sections, show quick links
+        $('#dashboardAdminStats').hide();
+        $('#dashboardCharts').hide();
+        loadSubAdminView();
+    }
 
     // Load dashboard data
     async function loadDashboard() {
@@ -152,8 +172,32 @@ $(async function () {
         }
     }
 
-    loadDashboard();
-    loadStatistics();
+    async function loadSubAdminView() {
+        const res = await API.getMySubAdminPermissions();
+        if (!res.success || !res.data) return;
+        const areas = res.data.areas || {};
+        const map = {
+            members:    { label: 'จัดการสมาชิก',   icon: 'bi-people',         page: 'members',    color: 'bg-grad-members' },
+            news:       { label: 'จัดการข่าวสาร',  icon: 'bi-newspaper',      page: 'news',       color: 'bg-grad-news' },
+            activities: { label: 'จัดการกิจกรรม',  icon: 'bi-calendar-event', page: 'activities', color: 'bg-grad-activities' },
+        };
+        let html = '';
+        for (const [area, cfg] of Object.entries(map)) {
+            if (!areas[area]) continue;
+            html += `<div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                <a href="./?page=${cfg.page}" class="text-decoration-none">
+                    <div class="overview-card ${cfg.color}" style="cursor:pointer">
+                        <i class="bi ${cfg.icon} ov-icon"></i>
+                        <div class="ov-label mt-4">${cfg.label}</div>
+                    </div>
+                </a>
+            </div>`;
+        }
+        if (html) {
+            $('#subAdminQuickLinks').html(html);
+            $('#dashboardSubAdmin').show();
+        }
+    }
 });
 </script>
 
