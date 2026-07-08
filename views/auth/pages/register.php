@@ -1030,7 +1030,7 @@ $(function () {
     }
 
     // ── Link Modal ─────────────────────────────────────────────────────────────
-    function openLinkModal(targetId, targetName, requestType) {
+    window.openLinkModal = function openLinkModal(targetId, targetName, requestType) {
         _linkTargetId = targetId;
         // If triggered from Google wizard, use the current google token
         if (requestType === 'google') {
@@ -1051,7 +1051,7 @@ $(function () {
         $('#linkRequestModal').addClass('show');
     }
 
-    function closeLinkModal() {
+    window.closeLinkModal = function closeLinkModal() {
         $('#linkRequestModal').removeClass('show');
         _linkTargetId = null;
         _linkGoogleToken = null;
