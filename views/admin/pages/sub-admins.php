@@ -35,6 +35,11 @@
                         <i class="bi bi-calendar-event me-1"></i>กิจกรรม
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-finance" data-toggle="tab" href="#pane-finance" role="tab">
+                        <i class="bi bi-wallet2 me-1"></i>การเงิน
+                    </a>
+                </li>
             </ul>
 
             <div class="tab-content" id="subAdminTabContent">
@@ -82,6 +87,23 @@
                             'create' => 'สร้างกิจกรรมใหม่',
                             'edit'   => 'แก้ไขกิจกรรม',
                             'delete' => 'ลบกิจกรรม',
+                        ]
+                    ); ?>
+                </div>
+
+                <!-- ======================================================= -->
+                <!-- TAB: FINANCE                                             -->
+                <!-- ======================================================= -->
+                <div class="tab-pane fade" id="pane-finance" role="tabpanel">
+                    <?php echo buildAreaPane('finance', 'บริหารการเงิน',
+                        '<i class="bi bi-wallet2 me-1"></i>',
+                        'มอบสิทธิ์ให้สมาชิกช่วยดูแลการเงินของสมาคม',
+                        [
+                            'view'   => 'ดูรายการการเงิน',
+                            'create' => 'บันทึกรายการใหม่',
+                            'edit'   => 'แก้ไขรายการ',
+                            'delete' => 'ลบรายการ',
+                            'export' => 'ส่งออกข้อมูล',
                         ]
                     ); ?>
                 </div>
@@ -166,6 +188,16 @@ const SA_AREAS = {
             create: 'สร้างกิจกรรมใหม่',
             edit:   'แก้ไขกิจกรรม',
             delete: 'ลบกิจกรรม',
+        }
+    },
+    finance: {
+        label: 'บริหารการเงิน',
+        permissions: {
+            view:   'ดูรายการการเงิน',
+            create: 'บันทึกรายการใหม่',
+            edit:   'แก้ไขรายการ',
+            delete: 'ลบรายการ',
+            export: 'ส่งออกข้อมูล',
         }
     }
 };
@@ -339,6 +371,7 @@ $(function() {
         const target = $(e.target).attr('href');
         if (target === '#pane-news')       loadSaList('news');
         if (target === '#pane-activities') loadSaList('activities');
+        if (target === '#pane-finance')    loadSaList('finance');
     });
 });
 </script>

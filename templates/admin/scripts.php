@@ -56,6 +56,14 @@ async function adjustSidebarForRole() {
     if (!areas.news)       $('#nav-news').hide();
     if (!areas.activities) $('#nav-activities').hide();
 
+    // Finance area: show finance menus if permitted
+    if (areas.finance && areas.finance.length) {
+        $('#nav-header-finance').show();
+        $('#nav-fees').show();
+        $('#nav-receipts').show();
+        $('#nav-finance').show();
+    }
+
     // Hide content header if no content area is permitted
     if (!areas.members && !areas.news && !areas.activities) {
         $('#nav-header-content').hide();

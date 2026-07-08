@@ -178,6 +178,7 @@ $(async function () {
             members:    { label: 'จัดการสมาชิก',   icon: 'bi-people',         page: 'members',    color: 'bg-grad-members' },
             news:       { label: 'จัดการข่าวสาร',  icon: 'bi-newspaper',      page: 'news',       color: 'bg-grad-news' },
             activities: { label: 'จัดการกิจกรรม',  icon: 'bi-calendar-event', page: 'activities', color: 'bg-grad-activities' },
+            finance:    { label: 'บริหารการเงิน',   icon: 'bi-wallet2',        page: 'finance',    color: 'bg-grad-regs' },
         };
         let html = '';
         for (const [area, cfg] of Object.entries(map)) {

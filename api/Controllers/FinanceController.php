@@ -18,18 +18,28 @@ class FinanceController extends Controller
         }
         if ($this->currentUser['role'] === 'admin') return;
 
+        $uid = (int)$this->currentUser['id'];
+
+        // Check legacy finance manager table
         $mgr = $this->model('FinanceManagerModel');
-        if (!$mgr->hasPermission((int)$this->currentUser['id'], $permission)) {
-            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
-        }
+        if ($mgr->hasPermission($uid, $permission)) return;
+
+        // Also allow sub-admin with finance area permission
+        $sa = $this->model('SubAdminModel');
+        if ($sa->hasPermission($uid, 'finance', $permission)) return;
+
+        Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
     }
 
     private function isFinanceManager(): bool
     {
         if (!$this->currentUser) return false;
         if ($this->currentUser['role'] === 'admin') return true;
+        $uid = (int)$this->currentUser['id'];
         $mgr = $this->model('FinanceManagerModel');
-        return $mgr->isFinanceManager((int)$this->currentUser['id']);
+        if ($mgr->isFinanceManager($uid)) return true;
+        $sa = $this->model('SubAdminModel');
+        return $sa->isSubAdmin($uid) && !empty($sa->getMyAreas($uid)['finance'] ?? []);
     }
 
     // =============================================

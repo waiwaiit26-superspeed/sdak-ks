@@ -15,6 +15,7 @@ class SubAdminModel extends Model
         'members'    => ['view', 'approve', 'create', 'edit', 'delete'],
         'news'       => ['create', 'edit', 'delete'],
         'activities' => ['create', 'edit', 'delete'],
+        'finance'    => ['view', 'create', 'edit', 'delete', 'export'],
     ];
 
     private array $join = [
