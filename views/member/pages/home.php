@@ -147,6 +147,45 @@
                     </a>
                 </div>
 
+                <!-- Sub-Admin: Members management -->
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modAdminMembers" style="display:none;">
+                    <a href="<?php echo $basePath; ?>admin/?page=members" class="text-decoration-none">
+                        <div class="card shadow-sm h-100 dash-card" style="border-left: 4px solid #1a5276;">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3"><i class="bi bi-people" style="font-size:2.5rem;color:#1a5276;"></i></div>
+                                <h6 class="card-title text-dark mb-1">จัดการสมาชิก</h6>
+                                <small class="text-muted">บริหารข้อมูลสมาชิก</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Sub-Admin: News management -->
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modAdminNews" style="display:none;">
+                    <a href="<?php echo $basePath; ?>admin/?page=news" class="text-decoration-none">
+                        <div class="card shadow-sm h-100 dash-card" style="border-left: 4px solid #117a65;">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3"><i class="bi bi-newspaper" style="font-size:2.5rem;color:#117a65;"></i></div>
+                                <h6 class="card-title text-dark mb-1">จัดการข่าวสาร</h6>
+                                <small class="text-muted">สร้าง/แก้ไข/ลบข่าว</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Sub-Admin: Activities management -->
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modAdminActivities" style="display:none;">
+                    <a href="<?php echo $basePath; ?>admin/?page=activities" class="text-decoration-none">
+                        <div class="card shadow-sm h-100 dash-card" style="border-left: 4px solid #6e2fa0;">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3"><i class="bi bi-calendar-plus" style="font-size:2.5rem;color:#6e2fa0;"></i></div>
+                                <h6 class="card-title text-dark mb-1">จัดการกิจกรรม</h6>
+                                <small class="text-muted">สร้าง/แก้ไข/ลบกิจกรรม</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
                 <!-- Payment Approval (only for finance managers) -->
                 <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modPaymentApproval" style="display:none;">
                     <a href="<?php echo $basePath; ?>member/?page=payment-approval" class="text-decoration-none">
@@ -210,6 +249,7 @@ $(function() {
     loadDashboardStats();
     loadRecentActivities();
     checkFinanceManagerAccess();
+    checkSubAdminAccess();
 });
 
 async function loadDashboardStats() {
@@ -248,8 +288,7 @@ async function loadDashboardStats() {
     }
 }
 
-async function checkFinanceManagerAccess() {
-    try {
+async function checkFinanceManagerAccess() {    try {
         const res = await API.getMyFinancePermissions();
         if (res.success && res.data && (res.data.is_admin || res.data.is_finance_manager)) {
             $('#modFinance').show();
@@ -266,6 +305,17 @@ async function checkFinanceManagerAccess() {
                 }
             }
         }
+    } catch(e) {}
+}
+
+async function checkSubAdminAccess() {
+    try {
+        const res = await API.getMySubAdminPermissions();
+        if (!res.success || !res.data || !res.data.is_sub_admin) return;
+        const areas = res.data.areas || {};
+        if (areas.members) $('#modAdminMembers').show();
+        if (areas.news)    $('#modAdminNews').show();
+        if (areas.activities) $('#modAdminActivities').show();
     } catch(e) {}
 }
 

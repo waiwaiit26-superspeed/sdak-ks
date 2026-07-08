@@ -90,8 +90,8 @@
 <?php include ROOT_PATH . 'templates/admin/scripts.php'; ?>
 
 <script>
-$(function () {
-    App.requireAdmin();
+$(async function () {
+    if (!await App.requireAdminOrSubAdmin()) return;
     const user = API.getUser();
     if (user) $('#adminWelcome').text('สวัสดี, ' + user.full_name);
 
