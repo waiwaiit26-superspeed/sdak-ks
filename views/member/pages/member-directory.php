@@ -281,7 +281,7 @@ async function loadDirectory(page = 1) {
             <td>${startNum + i + 1}</td>
             <td class="dir-num-cell">${memNum}</td>
             <td class="dir-name-cell">
-                <strong>${App.escapeHtml((m.prefix || '') + m.full_name)}</strong>
+                <strong>${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong>
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td class="dir-pos-cell">${pos}${rank}</td>
