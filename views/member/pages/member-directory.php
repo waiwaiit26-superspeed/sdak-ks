@@ -1000,7 +1000,13 @@ async function doResetPassword() {
     _resetPwdUserId = null;
 }
 
+// Store credentials in module-level vars to avoid inline-onclick escaping issues
+let _credFullName = '', _credUsername = '', _credPassword = '';
+
 function showCredModal(fullName, username, password) {
+    _credFullName = fullName;
+    _credUsername = username;
+    _credPassword = password;
     $('#credResultBody').html(
         '<table class="table table-sm table-bordered mb-2">' +
             '<tr><td class="text-muted" style="width:100px">ชื่อ-สกุล</td><td><strong>' + App.escapeHtml(fullName) + '</strong></td></tr>' +
@@ -1008,16 +1014,14 @@ function showCredModal(fullName, username, password) {
             '<tr><td class="text-muted">Password</td><td><strong class="text-danger">' + App.escapeHtml(password) + '</strong></td></tr>' +
         '</table>' +
         '<small class="text-danger d-block mb-2"><i class="bi bi-exclamation-triangle me-1"></i>กรุณาจดรหัสผ่านนี้ไว้ จะไม่แสดงอีก</small>' +
-        '<button class="btn btn-sm btn-outline-secondary" id="btnCopyCred" onclick="copyCredentials(' +
-            JSON.stringify(fullName) + ',' + JSON.stringify(username) + ',' + JSON.stringify(password) +
-        ')">' +
+        '<button class="btn btn-sm btn-outline-secondary" id="btnCopyCred" onclick="copyCredentials()">' +
         '<i class="bi bi-clipboard me-1"></i>คัดลอก</button>'
     );
     $('#modalDirCredResult').modal('show');
 }
 
-function copyCredentials(fullName, username, password) {
-    const text = 'ชื่อ-สกุล: ' + fullName + '\nUsername: ' + username + '\nPassword: ' + password;
+function copyCredentials() {
+    const text = 'ชื่อ-สกุล: ' + _credFullName + '\nUsername: ' + _credUsername + '\nPassword: ' + _credPassword;
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
             const btn = document.getElementById('btnCopyCred');
