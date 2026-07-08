@@ -281,8 +281,8 @@ async function loadDirectory(page = 1) {
         html += `<tr data-member-id="${m.id}" data-prefix="${App.escapeHtml(m.prefix || '')}">
             <td>${startNum + i + 1}</td>
             <td class="dir-num-cell">${memNum}</td>
-            <td class="dir-name-cell">
-                <div class="d-flex align-items-center">${avatar}<strong>${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong></div>
+            <td class="dir-name-cell" style="cursor:pointer;" onclick="viewDirMember(${m.id})">
+                <div class="d-flex align-items-center">${avatar}<strong class="text-primary">${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong></div>
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td class="dir-pos-cell">${pos}${rank}</td>
@@ -306,6 +306,24 @@ async function loadDirectory(page = 1) {
     }
 }
 </script>
+
+<!-- View Member Modal -->
+<div class="modal fade" id="dirMemberViewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ข้อมูลสมาชิก</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" id="dirMemberViewBody">
+                <div class="text-center py-4"><span class="spinner-border"></span></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Edit Member Modal -->
 <div class="modal fade" id="modalDirEdit" tabindex="-1" role="dialog" aria-labelledby="modalDirEditLabel" aria-hidden="true">
@@ -576,6 +594,60 @@ async function saveDirectoryEdit() {
         }
     }
     _dirEditUserId = null;
+}
+
+async function viewDirMember(id) {
+    $('#dirMemberViewModal').modal('show');
+    const body = $('#dirMemberViewBody');
+    body.html('<div class="text-center py-4"><span class="spinner-border"></span></div>');
+
+    const result = await API.getProfile(id);
+    if (!result.success) {
+        body.html('<p class="text-danger text-center py-3">ไม่สามารถโหลดข้อมูลได้</p>');
+        return;
+    }
+    const u = result.data;
+    let ha = u.home_address || {};
+    if (typeof ha === 'string') { try { ha = JSON.parse(ha); } catch(e) { ha = {}; } }
+    let wa = u.work_address || {};
+    if (typeof wa === 'string') { try { wa = JSON.parse(wa); } catch(e) { wa = {}; } }
+
+    const formatAddr = (a) => {
+        if (!a || !Object.values(a).some(v => v)) return '-';
+        return [a.no ? 'เลขที่ ' + a.no : '', a.soi && a.soi !== '-' ? 'ซอย ' + a.soi : '',
+                a.moo ? 'หมู่ ' + a.moo : '', a.road && a.road !== '-' ? 'ถ.' + a.road : '',
+                a.subdistrict ? 'ต.' + a.subdistrict : '', a.district ? 'อ.' + a.district : '',
+                a.province ? 'จ.' + a.province : '', a.postal_code || ''].filter(Boolean).join(' ');
+    };
+
+    const displayName = (u.prefix || '') + (u.first_name && u.last_name ? u.first_name + ' ' + u.last_name : u.full_name);
+
+    body.html(
+        '<div class="row">' +
+            '<div class="col-md-4 text-center mb-3">' +
+                '<img src="' + App.getProfileImage(u) + '" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover">' +
+                '<h5>' + App.escapeHtml(displayName) + '</h5>' +
+                App.getRoleBadge(u.role) + ' ' + (u.member_type ? App.getMemberTypeBadge(u.member_type) : '') + ' ' + App.getStatusBadge(u.status) +
+            '</div>' +
+            '<div class="col-md-8">' +
+                '<table class="table table-sm table-bordered mb-2">' +
+                    '<tr><th class="bg-light" colspan="4">ข้อมูลทั่วไป</th></tr>' +
+                    '<tr><td class="text-muted" width="130">เลขสมาชิก</td><td><strong class="text-primary">' + (u.member_number || '<span class="text-muted">ยังไม่กำหนด</span>') + '</strong></td><td class="text-muted" width="130">อีเมล</td><td>' + (u.email || '-') + '</td></tr>' +
+                    '<tr><td class="text-muted">ชื่อผู้ใช้</td><td>' + (u.username || '-') + '</td><td class="text-muted">เลขบัตรประชาชน</td><td>' + (u.national_id || '-') + '</td></tr>' +
+                    '<tr><td class="text-muted">วันเกิด</td><td>' + (u.birth_date ? App.formatDate(u.birth_date) : '-') + '</td><td class="text-muted">มือถือ</td><td>' + (u.phone || '-') + '</td></tr>' +
+                    '<tr><td class="text-muted">ตำแหน่ง</td><td>' + (u.position || '-') + '</td><td class="text-muted">วิทยฐานะ</td><td>' + (u.academic_rank || '-') + '</td></tr>' +
+                    '<tr><td class="text-muted">โรงเรียน</td><td colspan="3">' + (u.school_organization || '-') + '</td></tr>' +
+                    '<tr><td class="text-muted">โทรศัพท์ (ร.ร.)</td><td>' + (u.work_phone || '-') + '</td><td class="text-muted">สังกัด</td><td>' + (u.education_area || '-') + ' ' + (u.region || '') + '</td></tr>' +
+                    '<tr><th class="bg-light" colspan="4">ที่อยู่ปัจจุบัน</th></tr>' +
+                    '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(ha) + '</td></tr>' +
+                    '<tr><th class="bg-light" colspan="4">ที่อยู่สถานที่ทำงาน</th></tr>' +
+                    '<tr><td class="text-muted">ที่อยู่</td><td colspan="3">' + formatAddr(wa) + '</td></tr>' +
+                    '<tr><td class="text-muted">วันที่สมัคร</td><td colspan="3">' + App.formatDateTime(u.created_at) + '</td></tr>' +
+                    '<tr><td class="text-muted">วันเริ่มเป็นสมาชิก</td><td colspan="3">' + (u.approved_at ? App.formatDateTime(u.approved_at) : '<span class="text-muted">รออนุมัติ</span>') + '</td></tr>' +
+                '</table>' +
+            '</div>' +
+        '</div>'
+    );
 }
 </script>
 

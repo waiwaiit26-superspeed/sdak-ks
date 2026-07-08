@@ -42,11 +42,21 @@ class MemberController extends Controller
     {
         $userId = (int)($this->query('id') ?: $this->currentUser['id']);
 
-        // Allow admin, sub-admin with view, or the user themselves
+        // Allow admin, sub-admin with view, the user themselves,
+        // or any member viewing another active member (directory access)
         if ($userId !== (int)$this->currentUser['id']
             && $this->currentUser['role'] !== 'admin'
             && !$this->isAdminOrSubAdmin('view')) {
-            Response::error('คุณไม่มีสิทธิ์ดูข้อมูลผู้ใช้อื่น', 403);
+            // Members may view other active members (same as directory listing)
+            if ($this->currentUser['role'] === 'member') {
+                $users  = $this->model('UserModel');
+                $target = $users->find($userId);
+                if (!$target || $target['status'] !== 'active' || $target['role'] !== 'member') {
+                    Response::error('คุณไม่มีสิทธิ์ดูข้อมูลผู้ใช้อื่น', 403);
+                }
+            } else {
+                Response::error('คุณไม่มีสิทธิ์ดูข้อมูลผู้ใช้อื่น', 403);
+            }
         }
 
         $users   = $this->model('UserModel');
