@@ -281,8 +281,8 @@ async function saveSaModal() {
     const note    = $('#saNote').val().trim();
     const perms   = [...document.querySelectorAll('.sa-perm-check:checked')].map(c => c.value);
 
-    if (!userId) { App.alert('กรุณาเลือกสมาชิก', 'warning'); return; }
-    if (!perms.length) { App.alert('กรุณาเลือกสิทธิ์อย่างน้อย 1 รายการ', 'warning'); return; }
+    if (!userId) { App.error('กรุณาเลือกสมาชิก'); return; }
+    if (!perms.length) { App.error('กรุณาเลือกสิทธิ์อย่างน้อย 1 รายการ'); return; }
 
     const btn = document.getElementById('saModalSaveBtn');
     btn.disabled = true;
@@ -296,11 +296,11 @@ async function saveSaModal() {
 
     btn.disabled = false;
     if (res.success) {
-        App.toast(res.message || 'บันทึกสำเร็จ', 'success');
+        App.success(res.message || 'บันทึกสำเร็จ');
         $('#saModal').modal('hide');
         loadSaList(area);
     } else {
-        App.alert(res.message || 'เกิดข้อผิดพลาด', 'danger');
+        App.error(res.message || 'เกิดข้อผิดพลาด');
     }
 }
 
@@ -310,10 +310,10 @@ async function saveSaModal() {
 async function toggleSa(area, userId) {
     const res = await API.toggleSubAdmin(userId, area);
     if (res.success) {
-        App.toast(res.message || 'เปลี่ยนสถานะสำเร็จ', 'success');
+        App.success(res.message || 'เปลี่ยนสถานะสำเร็จ');
         loadSaList(area);
     } else {
-        App.alert(res.message || 'เกิดข้อผิดพลาด', 'danger');
+        App.error(res.message || 'เกิดข้อผิดพลาด');
     }
 }
 
@@ -321,10 +321,10 @@ async function deleteSa(id, area) {
     if (!confirm('ต้องการลบระเบียนสิทธิ์นี้หรือไม่?')) return;
     const res = await API.deleteSubAdminRecord(id);
     if (res.success) {
-        App.toast('ลบสำเร็จ', 'success');
+        App.success('ลบสำเร็จ');
         loadSaList(area);
     } else {
-        App.alert(res.message || 'เกิดข้อผิดพลาด', 'danger');
+        App.error(res.message || 'เกิดข้อผิดพลาด');
     }
 }
 
