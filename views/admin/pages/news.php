@@ -164,8 +164,8 @@
 <script>
 let currentPage = 1;
 
-$(function () {
-    App.requireAdmin();
+$(async function () {
+    if (!await App.requireAdminOrSubAdmin()) return;
     loadNews();
 });
 

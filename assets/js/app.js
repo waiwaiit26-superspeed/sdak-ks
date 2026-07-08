@@ -799,6 +799,25 @@ const App = {
     },
 
     /**
+     * Require admin OR active sub-admin (async)
+     * Use on pages that sub-admins should also access (members, news, activities)
+     * Returns false and redirects if neither condition is met.
+     */
+    async requireAdminOrSubAdmin() {
+        if (API.isAdmin()) return true;
+        if (!API.isLoggedIn()) {
+            window.location.href = API.baseUrl + 'auth/?page=login';
+            return false;
+        }
+        try {
+            const res = await API.getMySubAdminPermissions();
+            if (res.success && res.data && res.data.is_sub_admin) return true;
+        } catch (e) { /* ignore */ }
+        window.location.href = API.baseUrl;
+        return false;
+    },
+
+    /**
      * Build pagination HTML
      */
     buildPagination(selector, pagination, callback) {

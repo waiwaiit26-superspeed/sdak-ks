@@ -258,8 +258,8 @@
 <script>
 let currentPage = 1;
 
-$(function () {
-    App.requireAdmin();
+$(async function () {
+    if (!await App.requireAdminOrSubAdmin()) return;
 
     // Populate member type checkboxes dynamically
     App.loadMemberTypes().then(() => {

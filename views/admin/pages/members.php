@@ -463,8 +463,8 @@ const FIELD_MAP = [
     'h_no','h_soi','h_moo','h_road','h_subdistrict','h_district','h_province','h_postal'
 ];
 
-$(function () {
-    App.requireAdmin();
+$(async function () {
+    if (!await App.requireAdminOrSubAdmin()) return;
 
     // Populate member type selects from cached data
     App.loadMemberTypes().then(() => {
