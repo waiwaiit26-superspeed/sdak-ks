@@ -83,10 +83,11 @@
                                     <th width="12%" data-sort="member_type" style="cursor:pointer;white-space:nowrap;">ประเภท <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th width="15%" data-sort="position" style="cursor:pointer;white-space:nowrap;">ตำแหน่ง / วิทยฐานะ <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th data-sort="school_organization" style="cursor:pointer;white-space:nowrap;">โรงเรียน / หน่วยงาน <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th id="dirActionHeader" width="6%" style="display:none;"></th>
                                 </tr>
                             </thead>
                             <tbody id="dirTableBody">
-                                <tr><td colspan="6" class="text-center py-4 text-muted">
+                                <tr><td colspan="7" class="text-center py-4 text-muted">
                                     <span class="spinner-border spinner-border-sm"></span> กำลังโหลด...
                                 </td></tr>
                             </tbody>
@@ -105,15 +106,29 @@
 <?php include ROOT_PATH . 'templates/member/scripts.php'; ?>
 
 <script>
+let canEdit = false;
+
 $(async function () {
     App.requireLogin();
 
     // Check if feature is enabled
     const sRes = await API.getSettings();
     if (sRes.success && sRes.data && sRes.data.member_directory_enabled === '0') {
-        $('#dirTableBody').html('<tr><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-lock" style="font-size:2rem;"></i><br>ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ</td></tr>');
+        $('#dirTableBody').html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-lock" style="font-size:2rem;"></i><br>ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ</td></tr>');
         return;
     }
+
+    // Check edit permission (admin or sub-admin with members.edit)
+    const _u = API.getUser();
+    if (_u && _u.role === 'admin') {
+        canEdit = true;
+    } else {
+        try {
+            const _pRes = await API.getMySubAdminPermissions();
+            if (_pRes.success && _pRes.data?.areas?.members?.includes('edit')) canEdit = true;
+        } catch (e) {}
+    }
+    if (canEdit) $('#dirActionHeader').show();
 
     // Populate member type filter
     API.getMemberTypes().then(res => {
@@ -205,11 +220,11 @@ async function loadDirectory(page = 1) {
     if (type)         params.member_type = type;
     if (dirSort.col)  { params.order_by = dirSort.col; params.order_dir = dirSort.dir; }
 
-    $('#dirTableBody').html('<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span></td></tr>');
+    $('#dirTableBody').html('<tr><td colspan="7" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span></td></tr>');
 
     const res = await API.getMemberDirectory(params);
     if (!res.success) {
-        $('#dirTableBody').html(`<tr><td colspan="6" class="text-center text-danger py-4">${App.escapeHtml(res.message || 'โหลดข้อมูลล้มเหลว')}</td></tr>`);
+        $('#dirTableBody').html(`<tr><td colspan="7" class="text-center text-danger py-4">${App.escapeHtml(res.message || 'โหลดข้อมูลล้มเหลว')}</td></tr>`);
         return;
     }
 
@@ -224,7 +239,7 @@ async function loadDirectory(page = 1) {
     $('#dirResultInfo').text(total > 0 ? `แสดง ${start}–${end} จาก ${total} รายการ` : '');
 
     if (!data.length) {
-        $('#dirTableBody').html('<tr><td colspan="6" class="text-center text-muted py-5"><i class="bi bi-person-x" style="font-size:2rem;"></i><br>ไม่พบสมาชิก</td></tr>');
+        $('#dirTableBody').html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-person-x" style="font-size:2rem;"></i><br>ไม่พบสมาชิก</td></tr>');
         $('#dirPagination').empty();
         return;
     }
@@ -236,16 +251,20 @@ async function loadDirectory(page = 1) {
         const pos     = m.position ? App.escapeHtml(m.position) : '<span class="text-muted">-</span>';
         const school  = m.school_organization ? App.escapeHtml(m.school_organization) : '<span class="text-muted">-</span>';
         const memNum  = m.member_number ? `<span class="badge badge-light border">${App.escapeHtml(m.member_number)}</span>` : '<span class="text-muted small">-</span>';
+        const editBtn = canEdit
+            ? `<button class="btn btn-xs btn-outline-secondary" title="แก้ไข" onclick="openEditModal(${m.id}, '${(m.member_number_raw || '').replace(/'/g,'')}', '${App.escapeHtml(m.full_name || '').replace(/'/g, '&#39;')}')"><i class="bi bi-pencil"></i></button>`
+            : '';
 
-        html += `<tr>
+        html += `<tr data-member-id="${m.id}" data-prefix="${App.escapeHtml(m.prefix || '')}">
             <td>${startNum + i + 1}</td>
-            <td>${memNum}</td>
-            <td>
+            <td class="dir-num-cell">${memNum}</td>
+            <td class="dir-name-cell">
                 <strong>${App.escapeHtml((m.prefix || '') + m.full_name)}</strong>
             </td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td>${pos}${rank}</td>
             <td>${school}</td>
+            <td>${editBtn}</td>
         </tr>`;
     });
 
@@ -262,6 +281,88 @@ async function loadDirectory(page = 1) {
     if (pagination) {
         App.buildPagination('#dirPagination', pagination, loadDirectory);
     }
+}
+</script>
+
+<!-- Edit Member Modal -->
+<div class="modal fade" id="modalDirEdit" tabindex="-1" role="dialog" aria-labelledby="modalDirEditLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDirEditLabel"><i class="bi bi-pencil-square me-1"></i> แก้ไขข้อมูลสมาชิก</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="font-weight-bold">รหัสสมาชิก</label>
+                    <input type="text" class="form-control" id="dirEditMemberNumber"
+                        placeholder="เช่น 0042 หรือ SDAK-0042">
+                    <small class="text-muted">ระบบจะดึงเฉพาะตัวเลขและเติม 0 นำหน้าโดยอัตโนมัติ อนุญาตให้กำหนดซ้ำได้</small>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">ชื่อ-นามสกุล (ไม่รวมคำนำหน้า)</label>
+                    <input type="text" class="form-control" id="dirEditFullName"
+                        placeholder="ชื่อ-นามสกุล">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" id="btnSaveDirEdit" onclick="saveDirectoryEdit()">
+                    <i class="bi bi-check-lg me-1"></i> บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let _dirEditUserId = null;
+
+function openEditModal(userId, memberNumber, fullName) {
+    _dirEditUserId = userId;
+    $('#dirEditMemberNumber').val(memberNumber);
+    $('#dirEditFullName').val(fullName);
+    $('#btnSaveDirEdit').prop('disabled', false);
+    $('#modalDirEdit').modal('show');
+}
+
+async function saveDirectoryEdit() {
+    if (!_dirEditUserId) return;
+    const memberNumber = $('#dirEditMemberNumber').val().trim();
+    const fullName     = $('#dirEditFullName').val().trim();
+    if (!fullName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
+
+    const btn = $('#btnSaveDirEdit');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
+
+    const res = await API.directoryEdit({
+        user_id:       _dirEditUserId,
+        member_number: memberNumber,
+        full_name:     fullName,
+    });
+
+    btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
+
+    if (!res.success) { App.error(res.message || 'บันทึกล้มเหลว'); return; }
+
+    App.success('อัปเดตข้อมูลสำเร็จ');
+    $('#modalDirEdit').modal('hide');
+
+    // Update the row in-place
+    const row = $(`tr[data-member-id="${_dirEditUserId}"]`);
+    if (row.length) {
+        if (res.data.member_number_display !== undefined) {
+            const disp = res.data.member_number_display || '';
+            row.find('.dir-num-cell').html(disp ? `<span class="badge badge-light border">${App.escapeHtml(disp)}</span>` : '<span class="text-muted small">-</span>');
+        }
+        if (res.data.full_name !== undefined) {
+            const prefix = row.data('prefix') || '';
+            row.find('.dir-name-cell strong').text(prefix + res.data.full_name);
+        }
+    }
+    _dirEditUserId = null;
 }
 </script>
 

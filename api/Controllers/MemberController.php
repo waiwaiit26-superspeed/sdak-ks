@@ -244,6 +244,7 @@ class MemberController extends Controller
             $publicData[] = [
                 'id'                 => (int)$row['id'],
                 'member_number'      => $num,
+                'member_number_raw'  => $row['member_number'] ?? null,
                 'full_name'          => $row['full_name'] ?? '',
                 'prefix'             => $row['prefix'] ?? '',
                 'member_type'        => $row['member_type'] ?? '',
@@ -254,6 +255,68 @@ class MemberController extends Controller
         }
 
         Response::paginated($publicData, $result['total'], $result['page'], $result['per_page']);
+    }
+
+    /**
+     * POST  ?controller=member&action=directory-edit
+     * Admin/sub-admin ที่มีสิทธิ์ edit: แก้ไข member_number และ full_name โดยตรง (อนุญาตซ้ำได้)
+     */
+    public function directoryEdit(): void
+    {
+        if (!$this->isAdminOrSubAdmin('edit')) {
+            Response::error('คุณไม่มีสิทธิ์ดำเนินการนี้', 403);
+        }
+        $this->requirePost();
+        $input  = $this->input();
+        $userId = (int)($input['user_id'] ?? 0);
+        if (!$userId) Response::error('กรุณาระบุ user_id');
+
+        $users  = $this->model('UserModel');
+        $member = $users->find($userId, ['id', 'full_name', 'member_number']);
+        if (!$member) Response::error('ไม่พบสมาชิก', 404);
+
+        $data = [];
+
+        // member_number — allow duplicates (admin manual override), skip uniqueness check
+        if (array_key_exists('member_number', $input)) {
+            $settings   = $this->model('SettingsModel');
+            $digits     = (int)$settings->get('member_number_digits', '4');
+            $normalized = UserModel::normalizeMemberNumber(trim((string)$input['member_number']), $digits);
+            $data['member_number'] = $normalized !== '' ? $normalized : null;
+        }
+
+        // full_name — direct override
+        if (array_key_exists('full_name', $input) && trim((string)$input['full_name']) !== '') {
+            $data['full_name'] = trim((string)$input['full_name']);
+        }
+
+        if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
+        $filtered = $users->filterColumns($data);
+        $users->update($filtered, ['id' => $userId]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'update_member', 'member',
+            'แก้ไขทำเนียบสมาชิก: ' . ($member['full_name'] ?? '') . " (id={$userId})",
+            $userId, 'user'
+        );
+
+        // Build response — include display-formatted member_number
+        $result = ['user_id' => $userId];
+        if (isset($data['member_number'])) {
+            if (!isset($settings)) $settings = $this->model('SettingsModel');
+            $prefix = $settings->get('member_number_prefix', '');
+            $dgt    = (int)$settings->get('member_number_digits', '4');
+            $result['member_number_raw']     = $data['member_number'];
+            $result['member_number_display'] = $data['member_number']
+                ? UserModel::formatMemberNumber($data['member_number'], $prefix, $dgt)
+                : '';
+        }
+        if (isset($data['full_name'])) {
+            $result['full_name'] = $data['full_name'];
+        }
+
+        Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
     }
 
     /**
