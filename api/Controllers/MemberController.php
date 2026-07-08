@@ -357,7 +357,7 @@ class MemberController extends Controller
             // Return name WITHOUT prefix for frontend in-place update (JS combines prefix + name)
             $pfx  = $result['prefix'] ?? ($data['prefix'] ?? '');
             $full = $data['full_name'];
-            $result['full_name'] = ($pfx !== '' && str_starts_with($full, $pfx))
+            $result['full_name'] = ($pfx !== '' && substr($full, 0, strlen($pfx)) === $pfx)
                 ? ltrim(substr($full, strlen($pfx)))
                 : $full;
         }
