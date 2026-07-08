@@ -128,8 +128,9 @@ class UserModel extends Model
 
     public function filterColumns(array $data): array
     {
-        $available = array_flip($this->getColumns());
-        return array_intersect_key($data, $available);
+        // Use SAFE_COLUMNS constant to avoid SHOW COLUMNS prepared-statement issues
+        // on older MySQL versions (< 8.0.22) with PDO EMULATE_PREPARES=false.
+        return array_intersect_key($data, array_flip(self::SAFE_COLUMNS));
     }
 
     /**
