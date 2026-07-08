@@ -74,7 +74,7 @@ class SubAdminModel extends Model
      */
     public function getMyAreas(int $userId): array
     {
-        $rows = $this->select(['area', 'permissions'], ['user_id' => $userId, 'is_active' => 1]);
+        $rows = $this->all(['area', 'permissions'], ['user_id' => $userId, 'is_active' => 1]);
         $result = [];
         foreach ($rows as $row) {
             $result[$row['area']] = $this->decodePermissions($row['permissions'] ?? '[]');
