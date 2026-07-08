@@ -230,7 +230,7 @@ class MemberController extends Controller
             'member_type' => $this->query('member_type') ?? '',
             'search'      => $search,
             'order_by'    => $this->query('order_by')  ?: 'member_number',
-            'order_dir'   => $this->query('order_dir') ?: 'asc',
+            'order_dir'   => $this->query('order_dir') ?: 'desc',
         ], $page, $perPage);
 
         // Format member number + strip sensitive fields
@@ -274,7 +274,7 @@ class MemberController extends Controller
             'member_type' => $this->query('member_type') ?? '',
             'search'      => $this->query('search') ?? '',
             'order_by'    => $this->query('order_by')  ?: 'member_number',
-            'order_dir'   => $this->query('order_dir') ?: 'asc',
+            'order_dir'   => $this->query('order_dir') ?: 'desc',
         ], 1, 10000);
 
         $prefix = $settings->get('member_number_prefix', '');

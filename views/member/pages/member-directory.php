@@ -78,7 +78,7 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th width="5%">#</th>
-                                    <th width="10%" data-sort="member_number" style="cursor:pointer;white-space:nowrap;">รหัส <i class="bi bi-sort-down-alt text-primary sort-icon"></i></th>
+                                    <th width="10%" data-sort="member_number" style="cursor:pointer;white-space:nowrap;">รหัส <i class="bi bi-sort-down text-primary sort-icon"></i></th>
                                     <th width="25%" data-sort="full_name" style="cursor:pointer;white-space:nowrap;">ชื่อ-นามสกุล <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th width="12%" data-sort="member_type" style="cursor:pointer;white-space:nowrap;">ประเภท <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th width="15%" data-sort="position" style="cursor:pointer;white-space:nowrap;">ตำแหน่ง / วิทยฐานะ <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
@@ -194,7 +194,7 @@ async function exportDirectory() {
     App.success(`ส่งออก ${members.length} รายการสำเร็จ`);
 }
 
-let dirSort = { col: 'member_number', dir: 'asc' };
+let dirSort = { col: 'member_number', dir: 'desc' };
 
 async function loadDirectory(page = 1) {
     const search  = $('#dirSearch').val().trim();
@@ -219,7 +219,6 @@ async function loadDirectory(page = 1) {
 
     $('#dirTotal').text(total);
     const page_ = pagination.current_page || 1;
-    const perPage = pagination.per_page || 30;
     const start = (page_ - 1) * perPage + 1;
     const end   = Math.min(page_ * perPage, total);
     $('#dirResultInfo').text(total > 0 ? `แสดง ${start}–${end} จาก ${total} รายการ` : '');
