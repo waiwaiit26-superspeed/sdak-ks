@@ -208,6 +208,52 @@ class MemberController extends Controller
     }
 
     /**
+     * GET  ?controller=member&action=directory
+     * สมาชิกดูทำเนียบสมาชิกที่ได้รับการอนุมัติ (ต้อง login)
+     * เปิด/ปิดได้จากการตั้งค่าระบบ member_directory_enabled
+     */
+    public function directory(): void
+    {
+        $settings = $this->model('SettingsModel');
+        if ($settings->get('member_directory_enabled', '1') !== '1') {
+            Response::error('ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ', 403);
+        }
+
+        $search   = $this->query('search') ?? '';
+        $page     = $this->getPage();
+        $perPage  = $this->getPerPage(30);
+
+        $users  = $this->model('UserModel');
+        $result = $users->getFilteredList([
+            'status'      => 'approved',
+            'role'        => 'member',
+            'search'      => $search,
+        ], $page, $perPage);
+
+        // Format member number + strip sensitive fields
+        $prefix = $settings->get('member_number_prefix', '');
+        $digits = (int)$settings->get('member_number_digits', '4');
+        $publicData = [];
+        foreach ($result['data'] as $row) {
+            $num = !empty($row['member_number'])
+                ? UserModel::formatMemberNumber($row['member_number'], $prefix, $digits)
+                : null;
+            $publicData[] = [
+                'id'                 => (int)$row['id'],
+                'member_number'      => $num,
+                'full_name'          => $row['full_name'] ?? '',
+                'prefix'             => $row['prefix'] ?? '',
+                'member_type'        => $row['member_type'] ?? '',
+                'academic_rank'      => $row['academic_rank'] ?? '',
+                'position'           => $row['position'] ?? '',
+                'school_organization'=> $row['school_organization'] ?? '',
+            ];
+        }
+
+        Response::paginated($publicData, $result['total'], $result['page'], $result['per_page']);
+    }
+
+    /**
      * GET  ?controller=member&action=list
      */
     public function list(): void

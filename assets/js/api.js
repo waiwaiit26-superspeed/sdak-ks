@@ -267,6 +267,10 @@ const API = {
         return this.get(this.apiUrl('member', 'list'), params);
     },
 
+    async getMemberDirectory(params = {}) {
+        return this.get(this.apiUrl('member', 'directory'), params);
+    },
+
     async approveMember(userId, action, reason = '', memberNumber = '') {
         return this.post(this.apiUrl('member', 'approve'), { user_id: userId, action, reason, member_number: memberNumber });
     },

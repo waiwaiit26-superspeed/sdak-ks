@@ -16,7 +16,8 @@ $allowed = [
     'fees',
     'receipts',
     'finance',
-    'payment-approval'
+    'payment-approval',
+    'member-directory',
 ];
 
 if (in_array($page, $allowed)) {

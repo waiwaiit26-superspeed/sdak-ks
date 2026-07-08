@@ -186,6 +186,19 @@
                     </a>
                 </div>
 
+                <!-- Member Directory (shown when admin enables it) -->
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modMemberDirectory" style="display:none;">
+                    <a href="<?php echo $basePath; ?>member/?page=member-directory" class="text-decoration-none">
+                        <div class="card shadow-sm h-100 dash-card" style="border-left: 4px solid #0d6efd;">
+                            <div class="card-body text-center py-4">
+                                <div class="mb-3"><i class="bi bi-people-fill" style="font-size:2.5rem;color:#0d6efd;"></i></div>
+                                <h6 class="card-title text-dark mb-1">ทำเนียบสมาชิก</h6>
+                                <small class="text-muted">ดูรายชื่อสมาชิกทั้งหมด</small>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
                 <!-- Payment Approval (only for finance managers) -->
                 <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3" id="modPaymentApproval" style="display:none;">
                     <a href="<?php echo $basePath; ?>member/?page=payment-approval" class="text-decoration-none">
@@ -250,6 +263,7 @@ $(function() {
     loadRecentActivities();
     checkFinanceManagerAccess();
     checkSubAdminAccess();
+    checkMemberDirectoryEnabled();
 });
 
 async function loadDashboardStats() {
@@ -304,6 +318,15 @@ async function checkFinanceManagerAccess() {    try {
                     $('#modBadgePending').text(count + ' รอตรวจสอบ').show();
                 }
             }
+        }
+    } catch(e) {}
+}
+
+async function checkMemberDirectoryEnabled() {
+    try {
+        const res = await API.getSettings();
+        if (res.success && res.data && res.data.member_directory_enabled !== '0') {
+            $('#modMemberDirectory').show();
         }
     } catch(e) {}
 }

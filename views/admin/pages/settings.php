@@ -300,6 +300,15 @@
                                     </div>
                                     <small class="text-muted">เมื่อปิด ผู้ใช้จะไม่สามารถสมัครสมาชิกใหม่ได้</small>
                                 </div>
+                                <div class="mb-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="memberDirectoryEnabled" name="member_directory_enabled">
+                                        <label class="custom-control-label" for="memberDirectoryEnabled">
+                                            <strong>เปิดให้สมาชิกดูทำเนียบสมาชิก</strong>
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">เมื่อเปิด สมาชิกที่ login แล้วจะเห็นเมนู "ทำเนียบสมาชิก" และดูรายชื่อสมาชิกที่ได้รับอนุมัติได้</small>
+                                </div>
                                 <hr>
 
                                 <h6 class="mb-3"><i class="bi bi-hash me-1"></i>กำหนดรหัสสมาชิก</h6>
@@ -707,6 +716,11 @@ async function loadSettings() {
     // Random default for reset_confirm_code if empty
     if (!$('[name="reset_confirm_code"]').val()) {
         randomizeResetCode();
+    }
+
+    // Default ON if not yet saved
+    if (s.member_directory_enabled === undefined || s.member_directory_enabled === null) {
+        $('#memberDirectoryEnabled').prop('checked', true);
     }
 }
 
