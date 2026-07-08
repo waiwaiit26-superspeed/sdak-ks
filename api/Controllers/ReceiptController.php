@@ -131,10 +131,17 @@ class ReceiptController extends Controller
 
     /**
      * GET  ?controller=receipt&action=list
-     * Paginated receipts (admin)
+     * Paginated receipts (admin or members-area sub-admin with fees permission)
      */
     public function list(): void
     {
+        // Allow members-area sub-admin with fees permission
+        if ($this->currentUser['role'] !== 'admin') {
+            $sa = $this->model('SubAdminModel');
+            if (!$sa->hasPermission((int)$this->currentUser['id'], 'members', 'fees')) {
+                Response::error('คุณไม่มีสิทธิ์ดูรายการใบเสร็จ', 403);
+            }
+        }
         $receipts = $this->model('ReceiptModel');
         $result = $receipts->getFilteredList(
             [

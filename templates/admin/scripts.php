@@ -69,6 +69,13 @@ async function adjustSidebarForRole() {
         $('#nav-finance').show();
     }
 
+    // Members area with fees permission: show fees/receipts nav
+    if (areas.members && areas.members.includes('fees')) {
+        $('#nav-header-finance').show();
+        $('#nav-fees').show();
+        $('#nav-receipts').show();
+    }
+
     // Sub-admin: "กลับหน้าเว็บ" goes to member portal (their home base)
     $('#nav-back-web a').attr('href', BASE_PATH + 'member/?page=home');
 

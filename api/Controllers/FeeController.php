@@ -245,6 +245,7 @@ class FeeController extends Controller
      */
     public function list(): void
     {
+        $this->requireFeeManageAccess();
         $fees = $this->model('MembershipFeeModel');
         $result = $fees->getFilteredList(
             [
@@ -289,6 +290,7 @@ class FeeController extends Controller
      */
     public function issueReceipt(): void
     {
+        $this->requireFeeManageAccess();
         $this->requirePost();
         $input = $this->input();
         $feeId = (int)($input['fee_id'] ?? 0);
@@ -337,6 +339,7 @@ class FeeController extends Controller
      */
     public function summary(): void
     {
+        $this->requireFeeManageAccess();
         $year = (int)($this->query('year') ?: (date('Y') + 543));
         $fees = $this->model('MembershipFeeModel');
         $summary = $fees->getYearSummary($year);
@@ -382,6 +385,7 @@ class FeeController extends Controller
      */
     public function approve(): void
     {
+        $this->requireFeeManageAccess();
         $this->requirePost();
         $input = $this->input();
         $feeId = (int)($input['fee_id'] ?? 0);
@@ -450,6 +454,18 @@ class FeeController extends Controller
             default:
                 Response::error('การดำเนินการไม่ถูกต้อง');
         }
+    }
+
+    /**
+     * Check that current user can manage membership fees/receipts.
+     * Allowed: full admin OR members-area sub-admin with 'fees' permission.
+     */
+    private function requireFeeManageAccess(): void
+    {
+        if ($this->currentUser['role'] === 'admin') return;
+        $sa = $this->model('SubAdminModel');
+        if ($sa->hasPermission((int)$this->currentUser['id'], 'members', 'fees')) return;
+        Response::error('คุณไม่มีสิทธิ์จัดการค่าธรรมเนียมสมาชิก', 403);
     }
 
     /**

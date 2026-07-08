@@ -12,7 +12,7 @@ class SubAdminModel extends Model
      * Valid areas and their allowed permissions
      */
     public const AREAS = [
-        'members'    => ['view', 'approve', 'create', 'edit', 'delete'],
+        'members'    => ['view', 'approve', 'create', 'edit', 'delete', 'fees'],
         'news'       => ['create', 'edit', 'delete'],
         'activities' => ['create', 'edit', 'delete'],
         'finance'    => ['view', 'create', 'edit', 'delete', 'export'],
