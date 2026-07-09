@@ -7,6 +7,38 @@ $currentPage = 'home';
 include ROOT_PATH . 'templates/public/header.php';
 ?>
 
+<style>
+.activity-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.activity-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+.activity-cover {
+    position: relative;
+    overflow: hidden;
+}
+.activity-date {
+    background: linear-gradient(135deg, var(--primary-custom), var(--primary-light));
+    color: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    min-width: 50px;
+    font-weight: bold;
+}
+.activity-date .day {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+.activity-date .month {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+</style>
+
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
@@ -85,6 +117,25 @@ include ROOT_PATH . 'templates/public/header.php';
     </div>
 </section>
 
+<!-- Upcoming Activities -->
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="section-title mb-1">กิจกรรมที่กำลังจะมาถึง</h2>
+                <div class="section-divider"></div>
+            </div>
+            <a href="./web/?page=activities" class="btn btn-outline-primary">ดูทั้งหมด <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        <div class="row g-4" id="upcoming-activities">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Latest News -->
 <section class="section-padding bg-white">
     <div class="container">
@@ -97,25 +148,6 @@ include ROOT_PATH . 'templates/public/header.php';
         </div>
 
         <div class="row g-4" id="latest-news">
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status"></div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Upcoming Activities -->
-<section class="section-padding">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="section-title mb-1">กิจกรรมที่กำลังจะมาถึง</h2>
-                <div class="section-divider"></div>
-            </div>
-            <a href="./web/?page=activities" class="btn btn-outline-primary">ดูทั้งหมด <i class="bi bi-arrow-right"></i></a>
-        </div>
-
-        <div class="row g-4" id="upcoming-activities">
             <div class="col-12 text-center py-5">
                 <div class="spinner-border text-primary" role="status"></div>
             </div>
@@ -281,33 +313,43 @@ async function loadUpcomingActivities() {
         result.data.forEach(function(act) {
             const d = new Date(act.start_date);
             const months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+            const coverImg = act.cover_image ? App.imgUrl(act.cover_image) : '';
             const feeBadge = act.has_fee == 1
-                ? `<span class="badge bg-warning activity-fee-badge"><i class="bi bi-cash me-1"></i>${App.formatCurrency(act.fee_amount)}</span>`
-                : `<span class="badge bg-success activity-fee-badge"><i class="bi bi-check-circle me-1"></i>ฟรี</span>`;
+                ? `<span class="badge bg-warning"><i class="bi bi-cash me-1"></i>${App.formatCurrency(act.fee_amount)}</span>`
+                : `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ฟรี</span>`;
 
             html += `
             <div class="col-md-6 col-lg-4">
-                <div class="card activity-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex gap-3">
-                            <div class="activity-date flex-shrink-0">
-                                <div class="day">${d.getDate()}</div>
-                                <div class="month">${months[d.getMonth()]}</div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="fw-bold mb-1">${act.title}</h6>
-                                <p class="text-muted small mb-2">
-                                    <i class="bi bi-geo-alt me-1"></i>${act.location || "ไม่ระบุ"}
-                                </p>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    ${feeBadge}
-                                    <span class="badge bg-info activity-fee-badge">
-                                        <i class="bi bi-people me-1"></i>${act.approved_count || 0}${act.max_participants ? "/" + act.max_participants : ""} คน
-                                    </span>
-                                </div>
-                            </div>
+                <div class="card activity-card h-100 shadow-sm border-0 overflow-hidden">
+                    ${coverImg ? `<div class="activity-cover" style="height:200px;background-image:url('${coverImg}');background-size:cover;background-position:center;position:relative;overflow:hidden;">
+                        <div class="activity-date" style="position:absolute;top:12px;left:12px;">
+                            <div class="day">${d.getDate()}</div>
+                            <div class="month">${months[d.getMonth()]}</div>
                         </div>
-                        <a href="./web/?page=activity-detail&id=${act.id}" class="btn btn-sm btn-primary w-100 mt-3">ดูรายละเอียด</a>
+                        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top, rgba(0,0,0,0.6), transparent);padding:12px;">
+                            <h6 class="fw-bold text-white mb-0" style="font-size:1rem;">${act.title}</h6>
+                        </div>
+                    </div>` : `<div class="activity-cover" style="height:200px;background:linear-gradient(135deg, var(--primary-light), var(--primary-custom));display:flex;align-items:center;justify-content:center;position:relative;">
+                        <div class="activity-date" style="position:absolute;top:12px;left:12px;">
+                            <div class="day">${d.getDate()}</div>
+                            <div class="month">${months[d.getMonth()]}</div>
+                        </div>
+                        <i class="bi bi-calendar-event text-white" style="font-size:3rem;opacity:0.3;"></i>
+                    </div>`}
+                    <div class="card-body">
+                        ${!coverImg ? `<h6 class="fw-bold mb-1">${act.title}</h6>` : ''}
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-geo-alt me-1"></i>${act.location || "ไม่ระบุ"}
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap mb-3">
+                            ${feeBadge}
+                            <span class="badge bg-info">
+                                <i class="bi bi-people me-1"></i>${act.approved_count || 0}${act.max_participants ? "/" + act.max_participants : ""} คน
+                            </span>
+                        </div>
+                        <a href="./web/?page=activity-detail&id=${act.id}" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-arrow-right me-1"></i>ดูรายละเอียด
+                        </a>
                     </div>
                 </div>
             </div>`;
