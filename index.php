@@ -314,6 +314,7 @@ async function loadUpcomingActivities() {
             const d = new Date(act.start_date);
             const months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
             const coverImg = act.cover_image ? App.imgUrl(act.cover_image) : '';
+            const detailUrl = `./web/?page=activity-detail&id=${act.id}`;
             const feeBadge = act.has_fee == 1
                 ? `<span class="badge bg-warning"><i class="bi bi-cash me-1"></i>${App.formatCurrency(act.fee_amount)}</span>`
                 : `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ฟรี</span>`;
@@ -321,16 +322,15 @@ async function loadUpcomingActivities() {
             html += `
             <div class="col-md-6 col-lg-4">
                 <div class="card activity-card h-100 shadow-sm border-0 overflow-hidden">
-                    ${coverImg ? `<div class="activity-cover" style="height:200px;background-image:url('${coverImg}');background-size:cover;background-position:center;position:relative;overflow:hidden;">
-                    </div>` : `<div class="activity-cover" style="height:200px;background:linear-gradient(135deg, var(--primary-light), var(--primary-custom));display:flex;align-items:center;justify-content:center;position:relative;">
-                        <i class="bi bi-calendar-event text-white" style="font-size:3rem;opacity:0.3;"></i>
-                    </div>`}
+                    ${coverImg ? `<a href="${detailUrl}" class="d-block" aria-label="ดูรายละเอียดกิจกรรม ${App.escapeHtml(act.title)}"><div class="activity-cover" style="height:200px;background-image:url('${coverImg}');background-size:cover;background-position:center;position:relative;overflow:hidden;"></div></a>` : `<a href="${detailUrl}" class="d-block" aria-label="ดูรายละเอียดกิจกรรม ${App.escapeHtml(act.title)}"><div class="activity-cover" style="height:200px;background:linear-gradient(135deg, var(--primary-light), var(--primary-custom));display:flex;align-items:center;justify-content:center;position:relative;"><i class="bi bi-calendar-event text-white" style="font-size:3rem;opacity:0.3;"></i></div></a>`}
                     <div class="card-body">
-                        <h6 class="fw-bold mb-1">${act.title}</h6>
-                        <div class="mb-2 p-2 rounded-3" style="background:linear-gradient(135deg,#f8fbff,#eef4ff);border:1px solid rgba(67,97,238,0.15);">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge rounded-pill" style="background:#4f46e5;padding:0.4rem 0.75rem;">วันกิจกรรม</span>
-                                <span class="fw-bold" style="font-size:1.15rem;color:#1f2937;line-height:1.2;">
+                        <a href="${detailUrl}" class="text-decoration-none text-dark" aria-label="ดูรายละเอียดกิจกรรม ${App.escapeHtml(act.title)}">
+                            <h6 class="fw-bold mb-2" style="font-size:1.5rem;line-height:1.3;">${act.title}</h6>
+                        </a>
+                        <div class="mb-3 p-3 rounded-3" style="background:linear-gradient(135deg,#eef2ff,#dbeafe);border:1px solid rgba(79,70,229,0.22);box-shadow:0 8px 24px rgba(79,70,229,0.12);">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge rounded-pill" style="background:#4f46e5;padding:0.45rem 0.85rem;font-size:0.8rem;">วันกิจกรรม</span>
+                                <span class="fw-bold" style="font-size:1.45rem;color:#111827;line-height:1.2;letter-spacing:0.01em;">
                                     <i class="bi bi-calendar-event me-1"></i>${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}
                                 </span>
                             </div>
@@ -344,7 +344,7 @@ async function loadUpcomingActivities() {
                                 <i class="bi bi-people me-1"></i>${act.approved_count || 0}${act.max_participants ? "/" + act.max_participants : ""} คน
                             </span>
                         </div>
-                        <a href="./web/?page=activity-detail&id=${act.id}" class="btn btn-sm btn-primary w-100">
+                        <a href="${detailUrl}" class="btn btn-sm btn-primary w-100">
                             <i class="bi bi-arrow-right me-1"></i>ดูรายละเอียด
                         </a>
                     </div>
