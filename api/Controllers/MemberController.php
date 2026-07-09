@@ -907,31 +907,32 @@ class MemberController extends Controller
      */
     public function confirmFeePayment(): void
     {
-        $this->requirePost();
-        $this->requireMembersAccess('approve');
-        $input  = $this->input();
-        $userId = (int)($input['user_id'] ?? 0);
-        if (!$userId) Response::error('กรุณาระบุ user_id');
+        try {
+            $this->requirePost();
+            $this->requireMembersAccess('approve');
+            $input  = $this->input();
+            $userId = (int)($input['user_id'] ?? 0);
+            if (!$userId) Response::error('กรุณาระบุ user_id');
 
-        $users = $this->model('UserModel');
-        $target = $users->find($userId);
-        if (!$target) Response::error('ไม่พบผู้ใช้', 404);
+            $users = $this->model('UserModel');
+            $target = $users->find($userId);
+            if (!$target) Response::error('ไม่พบผู้ใช้', 404);
 
-        $memberType = $target['member_type'] ?? 'ordinary';
-        $mt         = $this->model('MemberTypeModel');
-        $feeConf    = $mt->getFeeConfig($memberType);
-        $feeMode    = $feeConf['mode']   ?? 'none';
+            $memberType = $target['member_type'] ?? 'ordinary';
+            $mt         = $this->model('MemberTypeModel');
+            $feeConf    = $mt->getFeeConfig($memberType);
+            $feeMode    = $feeConf['mode']   ?? 'none';
 
-        if ($feeMode === 'none') {
-            Response::error('ประเภทสมาชิกนี้ไม่ต้องชำระค่าธรรมเนียม');
-        }
+            if ($feeMode === 'none') {
+                Response::error('ประเภทสมาชิกนี้ไม่ต้องชำระค่าธรรมเนียม');
+            }
 
-        $feeAmount   = $feeConf['amount'] ?? 0;
-        $feeType     = $feeMode === 'onetime' ? 'onetime' : 'annual';
-        $buddhistYear = (int)date('Y') + 543;
+            $feeAmount   = $feeConf['amount'] ?? 0;
+            $feeType     = $feeMode === 'onetime' ? 'onetime' : 'annual';
+            $buddhistYear = (int)date('Y') + 543;
 
-        $fees  = $this->model('MembershipFeeModel');
-        $feeId = $fees->upsertFee($userId, $buddhistYear, $feeAmount, $feeType);
+            $fees  = $this->model('MembershipFeeModel');
+            $feeId = $fees->upsertFee($userId, $buddhistYear, $feeAmount, $feeType);
 
         // Mark as paid + approved by admin
         $adminId = (int)$this->currentUser['id'];
@@ -957,65 +958,85 @@ class MemberController extends Controller
             $fees->update($baseUpdate, ['id' => $feeId]);
         }
 
-        // Auto-generate receipt (only if requested)
-        $issueReceipt = !empty($input['issue_receipt']);
-        $fee = $fees->find($feeId);
-        if ($fee && $issueReceipt) {
-            $receipts = $this->model('ReceiptModel');
-            $existing = $receipts->findByReference('membership_fee', $feeId);
-            if (!$existing) {
-                $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
-                $description = "ค่าธรรมเนียมสมาชิก ({$feeLabel})";
-                $payerAddress = FeeController::buildPayerAddress($target);
-                $settings = $this->model('SettingsModel');
-                $receipts->createReceipt([
-                    'user_id'       => $userId,
-                    'receipt_type'  => 'membership_fee',
-                    'reference_id'  => $feeId,
-                    'title'         => 'ค่าธรรมเนียมสมาชิก',
-                    'payer_name'    => $target['full_name'],
-                    'payer_address' => $payerAddress,
-                    'description'   => $description,
-                    'amount'        => $feeAmount,
-                    'received_by'   => $settings->get('signature_name', ''),
-                    'issued_date'   => $today,
-                ]);
-            }
-        }
+            $warnings = [];
 
-        // Auto-create finance transaction for the confirmed fee
-        if ($fee) {
-            $txnModel = $this->model('FinanceTransactionModel');
-            $referenceNo = 'FEE-' . $feeId;
-            $existingTxn = $txnModel->findBy(['reference_no' => $referenceNo]);
-            if (!$existingTxn) {
-                $catModel = $this->model('FinanceCategoryModel');
-                $feeCategory = $catModel->findBy(['name' => 'ค่าธรรมเนียมสมาชิก', 'type' => 'income']);
-                if ($feeCategory) {
-                    $labelMap = $mt->getLabelMap();
-                    $memberTypeText = isset($labelMap[$memberType]) ? ' (' . $labelMap[$memberType] . ')' : '';
-                    $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
-
-                    $txnModel->create([
-                        'category_id'      => (int)$feeCategory['id'],
-                        'type'             => 'income',
-                        'title'            => "ค่าธรรมเนียมสมาชิก: {$target['full_name']}{$memberTypeText}",
-                        'description'      => "ค่าธรรมเนียมสมาชิก ({$feeLabel})",
-                        'amount'           => $feeAmount,
-                        'transaction_date' => $today,
-                        'reference_no'     => $referenceNo,
-                        'created_by'       => $adminId,
-                        'status'           => 'approved',
-                    ]);
+            // Auto-generate receipt (only if requested)
+            $issueReceipt = !empty($input['issue_receipt']);
+            $fee = $fees->find($feeId);
+            if ($fee && $issueReceipt) {
+                try {
+                    $receipts = $this->model('ReceiptModel');
+                    $existing = $receipts->findByReference('membership_fee', $feeId);
+                    if (!$existing) {
+                        $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
+                        $description = "ค่าธรรมเนียมสมาชิก ({$feeLabel})";
+                        $payerAddress = FeeController::buildPayerAddress($target);
+                        $settings = $this->model('SettingsModel');
+                        $receipts->createReceipt([
+                            'user_id'       => $userId,
+                            'receipt_type'  => 'membership_fee',
+                            'reference_id'  => $feeId,
+                            'title'         => 'ค่าธรรมเนียมสมาชิก',
+                            'payer_name'    => $target['full_name'],
+                            'payer_address' => $payerAddress,
+                            'description'   => $description,
+                            'amount'        => $feeAmount,
+                            'received_by'   => $settings->get('signature_name', ''),
+                            'issued_date'   => $today,
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    $warnings[] = 'ออกใบเสร็จไม่สำเร็จ';
+                    error_log('confirmFeePayment receipt warning: ' . $e->getMessage());
                 }
             }
-        }
+
+            // Auto-create finance transaction for the confirmed fee
+            if ($fee) {
+                try {
+                    $txnModel = $this->model('FinanceTransactionModel');
+                    $referenceNo = 'FEE-' . $feeId;
+                    $existingTxn = $txnModel->findBy(['reference_no' => $referenceNo]);
+                    if (!$existingTxn) {
+                        $catModel = $this->model('FinanceCategoryModel');
+                        $feeCategory = $catModel->findBy(['name' => 'ค่าธรรมเนียมสมาชิก', 'type' => 'income']);
+                        if ($feeCategory) {
+                            $labelMap = $mt->getLabelMap();
+                            $memberTypeText = isset($labelMap[$memberType]) ? ' (' . $labelMap[$memberType] . ')' : '';
+                            $feeLabel = $feeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$buddhistYear}";
+
+                            $txnModel->create([
+                                'category_id'      => (int)$feeCategory['id'],
+                                'type'             => 'income',
+                                'title'            => "ค่าธรรมเนียมสมาชิก: {$target['full_name']}{$memberTypeText}",
+                                'description'      => "ค่าธรรมเนียมสมาชิก ({$feeLabel})",
+                                'amount'           => $feeAmount,
+                                'transaction_date' => $today,
+                                'reference_no'     => $referenceNo,
+                                'created_by'       => $adminId,
+                                'status'           => 'approved',
+                            ]);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $warnings[] = 'บันทึกธุรกรรมการเงินไม่สำเร็จ';
+                    error_log('confirmFeePayment finance warning: ' . $e->getMessage());
+                }
+            }
 
         Auth::logActivity($adminId, 'confirm_fee_payment', 'fee',
             "ยืนยันชำระค่าธรรมเนียม: {$target['full_name']} จำนวน " . number_format($feeAmount, 2) . " บาท",
             $feeId, 'fee');
 
-        Response::success(['fee_id' => $feeId, 'amount' => $feeAmount], 'ยืนยันการชำระค่าธรรมเนียมสำเร็จ');
+            Response::success([
+                'fee_id' => $feeId,
+                'amount' => $feeAmount,
+                'warnings' => $warnings,
+            ], 'ยืนยันการชำระค่าธรรมเนียมสำเร็จ');
+        } catch (\Throwable $e) {
+            error_log('confirmFeePayment fatal: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            Response::error('ไม่สามารถยืนยันการชำระเงินได้ กรุณาลองใหม่อีกครั้ง', 500);
+        }
     }
 
     /**

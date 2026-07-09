@@ -1099,21 +1099,48 @@ function number_format(n) {
     return parseFloat(n || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
+function setApproveInlineAlert(message, type = 'danger') {
+    const body = $('#approveModalBody');
+    body.find('.approve-inline-alert').remove();
+    const html = '<div class="alert alert-' + type + ' approve-inline-alert py-2 mb-3">'
+        + '<i class="bi bi-' + (type === 'success' ? 'check-circle' : (type === 'warning' ? 'exclamation-triangle' : 'x-circle')) + ' me-1"></i>'
+        + App.escapeHtml(message)
+        + '</div>';
+    body.prepend(html);
+}
+
 async function confirmFeePayment(userId) {
     const btn = $('#btnConfirmFeePayment');
-    const ok = window.confirm('ยืนยันว่าจ่ายเงินแล้ว? ระบบจะบันทึกว่าสมาชิกชำระค่าธรรมเนียมแล้ว');
-    if (!ok) return;
+    const ok = await Swal.fire({
+        title: 'ยืนยันว่าจ่ายเงินแล้ว?',
+        html: 'ระบบจะบันทึกว่าสมาชิกชำระค่าธรรมเนียมแล้ว',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยัน',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#28a745',
+        target: document.getElementById('approveModal'),
+        backdrop: false,
+        allowOutsideClick: false
+    });
+    if (!ok.isConfirmed) return;
 
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังดำเนินการ...');
 
     const issueReceipt = $('#chkIssueReceipt').is(':checked');
     const result = await API.confirmFeePayment(userId, issueReceipt);
     if (result.success) {
-        App.success(result.message);
+        App.success(result.message || 'ยืนยันการชำระเงินสำเร็จ');
+        if (result.data && Array.isArray(result.data.warnings) && result.data.warnings.length) {
+            App.toast(result.data.warnings.join(' | '), 'warning');
+            setApproveInlineAlert(result.data.warnings.join(' | '), 'warning');
+        }
         // Refresh the approval modal to show updated fee status
         approveMember(pendingApproveUserId, 'approve');
     } else {
-        App.error(result.message);
+        const msg = result.message || 'ยืนยันการชำระเงินไม่สำเร็จ';
+        App.toast(msg, 'error');
+        setApproveInlineAlert(msg, 'danger');
         btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i> ยืนยันว่าจ่ายเงินแล้ว');
     }
 }
