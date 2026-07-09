@@ -1101,16 +1101,8 @@ function number_format(n) {
 
 async function confirmFeePayment(userId) {
     const btn = $('#btnConfirmFeePayment');
-    const ok = await Swal.fire({
-        title: 'ยืนยันว่าจ่ายเงินแล้ว?',
-        html: 'ระบบจะบันทึกว่าสมาชิกชำระค่าธรรมเนียมแล้ว<br>และออกใบเสร็จอัตโนมัติ',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'ยืนยัน',
-        cancelButtonText: 'ยกเลิก',
-        confirmButtonColor: '#28a745'
-    });
-    if (!ok.isConfirmed) return;
+    const ok = window.confirm('ยืนยันว่าจ่ายเงินแล้ว? ระบบจะบันทึกว่าสมาชิกชำระค่าธรรมเนียมแล้ว');
+    if (!ok) return;
 
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังดำเนินการ...');
 

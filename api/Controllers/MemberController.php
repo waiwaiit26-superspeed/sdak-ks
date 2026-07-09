@@ -938,14 +938,24 @@ class MemberController extends Controller
         $now     = date('Y-m-d H:i:s');
         $today   = date('Y-m-d');
 
-        $fees->update([
+        $baseUpdate = [
             'status'       => 'paid',
             'paid_at'      => $now,
             'approved_by'  => $adminId,
             'approved_at'  => $now,
-            'received_date'=> $today,
             'note'         => 'ยืนยันโดยผู้ดูแลระบบ (จากหน้าอนุมัติสมาชิก)',
-        ], ['id' => $feeId]);
+        ];
+
+        // Some environments may still be missing membership_fees.received_date.
+        // Retry without that column to avoid blocking approval.
+        try {
+            $fees->update($baseUpdate + ['received_date' => $today], ['id' => $feeId]);
+        } catch (\Throwable $e) {
+            if (stripos($e->getMessage(), 'received_date') === false) {
+                throw $e;
+            }
+            $fees->update($baseUpdate, ['id' => $feeId]);
+        }
 
         // Auto-generate receipt (only if requested)
         $issueReceipt = !empty($input['issue_receipt']);
