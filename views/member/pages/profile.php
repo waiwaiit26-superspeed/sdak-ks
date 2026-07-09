@@ -460,6 +460,15 @@
 $(function () {
     App.requireLogin();
 
+    // ─── Activate tab from URL hash ───
+    const _initHash = window.location.hash;
+    if (_initHash && $('a[data-toggle="tab"][href="' + _initHash + '"]').length) {
+        $('a[data-toggle="tab"][href="' + _initHash + '"]').tab('show');
+    }
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        if (history.replaceState) history.replaceState(null, null, e.target.hash);
+    });
+
     // ─── Flatpickr วันเกิด (Buddhist Era) ───
     const profBirthFp = flatpickr('#prof_birth_date', {
         locale: 'th',
