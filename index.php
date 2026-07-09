@@ -322,19 +322,19 @@ async function loadUpcomingActivities() {
             <div class="col-md-6 col-lg-4">
                 <div class="card activity-card h-100 shadow-sm border-0 overflow-hidden">
                     ${coverImg ? `<div class="activity-cover" style="height:200px;background-image:url('${coverImg}');background-size:cover;background-position:center;position:relative;overflow:hidden;">
-                        <div class="activity-date" style="position:absolute;top:12px;left:12px;">
-                            <div class="day">${d.getDate()}</div>
-                            <div class="month">${months[d.getMonth()]}</div>
-                        </div>
                     </div>` : `<div class="activity-cover" style="height:200px;background:linear-gradient(135deg, var(--primary-light), var(--primary-custom));display:flex;align-items:center;justify-content:center;position:relative;">
-                        <div class="activity-date" style="position:absolute;top:12px;left:12px;">
-                            <div class="day">${d.getDate()}</div>
-                            <div class="month">${months[d.getMonth()]}</div>
-                        </div>
                         <i class="bi bi-calendar-event text-white" style="font-size:3rem;opacity:0.3;"></i>
                     </div>`}
                     <div class="card-body">
                         <h6 class="fw-bold mb-1">${act.title}</h6>
+                        <div class="mb-2 p-2 rounded-3" style="background:linear-gradient(135deg,#f8fbff,#eef4ff);border:1px solid rgba(67,97,238,0.15);">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill" style="background:#4f46e5;padding:0.4rem 0.75rem;">วันกิจกรรม</span>
+                                <span class="fw-bold" style="font-size:1.15rem;color:#1f2937;line-height:1.2;">
+                                    <i class="bi bi-calendar-event me-1"></i>${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}
+                                </span>
+                            </div>
+                        </div>
                         <p class="text-muted small mb-2">
                             <i class="bi bi-geo-alt me-1"></i>${act.location || "ไม่ระบุ"}
                         </p>
