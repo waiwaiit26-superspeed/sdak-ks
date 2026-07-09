@@ -113,6 +113,7 @@ let canEdit = false;
 let canViewFull = false;
 let canCreate = false;
 let _memberTypesList = [];
+let _siteName = '';
 
 $(async function () {
     App.requireLogin();
@@ -125,6 +126,12 @@ $(async function () {
     if (!isAdmin) initCalls.push(API.getMySubAdminPermissions());
 
     const [sRes, typesRes, _pRes] = await Promise.all(initCalls);
+
+    // Store site name for modal title
+    if (sRes.success && sRes.data?.site_name) {
+        _siteName = sRes.data.site_name;
+        $('#dirMemberViewModal .modal-title').text('ข้อมูลสมาชิก – ' + _siteName);
+    }
 
     // Feature enabled check
     if (sRes.success && sRes.data?.member_directory_enabled === '0') {
