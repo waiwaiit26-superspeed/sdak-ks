@@ -239,6 +239,131 @@ class MemberController extends Controller
     }
 
     /**
+     * POST  ?controller=member&action=admin-edit-member
+     * Admin/sub-admin ที่มีสิทธิ์ edit: แก้ไขข้อมูลสมาชิกจากหน้า admin (ทั้งหมด)
+     * Replaces old update() for admin panel member editing
+     */
+    public function adminEditMember(): void
+    {
+        try {
+            $this->requirePost();
+            $this->requireMembersAccess('edit');
+            
+            $input  = $this->input();
+            $auth   = new Auth();
+            $users  = $this->model('UserModel');
+            $userId = (int)($input['user_id'] ?? 0);
+            
+            if (!$userId) Response::error('กรุณาระบุ user_id');
+            
+            $member = $users->find($userId, ['id', 'full_name', 'member_number']);
+            if (!$member) Response::error('ไม่พบสมาชิก', 404);
+            
+            $data = [];
+            
+            // All profile fields allowed for admin edit
+            foreach (self::PROFILE_FIELDS as $f) {
+                if (isset($input[$f])) {
+                    $val = $input[$f];
+                    // JSON fields — accept array or string
+                    if (in_array($f, ['home_address','work_address'])) {
+                        $data[$f] = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE) : $val;
+                    } else {
+                        $data[$f] = is_string($val) ? trim($val) : $val;
+                    }
+                }
+            }
+
+            // Admin-only fields (role, status, member_type)
+            foreach (['role','member_type','status'] as $f) {
+                if (isset($input[$f])) {
+                    $old = $users->find($userId, [$f]);
+                    $data[$f] = $input[$f];
+                    if ($f === 'member_type') {
+                        $auth->logAction($userId, 'type_changed', $old[$f] ?? null, $input[$f], null, (int)$this->currentUser['id']);
+                    }
+                }
+            }
+
+            // Password change
+            if (!empty($input['new_password'])) {
+                if (strlen($input['new_password']) < 6) Response::error('รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร');
+                $data['password'] = Auth::hashPassword($input['new_password']);
+            }
+
+            // Auto-generate full_name จาก prefix + first_name + last_name
+            if (isset($data['first_name']) || isset($data['last_name']) || isset($data['prefix'])) {
+                $existingColumns = [];
+                foreach (['prefix', 'first_name', 'last_name'] as $col) {
+                    if ($users->hasColumn($col)) {
+                        $existingColumns[] = $col;
+                    }
+                }
+                $existing = $existingColumns ? $users->find($userId, $existingColumns) : [];
+                $prefix    = $data['prefix']     ?? $existing['prefix']     ?? '';
+                $firstName = $data['first_name'] ?? $existing['first_name'] ?? '';
+                $lastName  = $data['last_name']  ?? $existing['last_name']  ?? '';
+                $data['full_name'] = AuthController::buildFullName($prefix, $firstName, $lastName);
+
+                // Legacy schema may not yet have first_name/last_name columns.
+                if (!$users->hasColumn('first_name') || !$users->hasColumn('last_name')) {
+                    unset($data['first_name'], $data['last_name']);
+                }
+            }
+
+            if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
+            // Normalize member_number (duplicates allowed — no uniqueness check)
+            if (isset($data['member_number']) && $data['member_number'] !== '') {
+                $settings = $this->model('SettingsModel');
+                $digits = (int)$settings->get('member_number_digits', '4');
+                $data['member_number'] = UserModel::normalizeMemberNumber($data['member_number'], $digits);
+                if ($data['member_number'] === '') {
+                    unset($data['member_number']);
+                }
+            }
+
+            $data = $users->filterColumns($data);
+            if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
+            $users->update($data, ['id' => $userId]);
+            $auth->logAction($userId, 'profile_updated', null, json_encode(array_keys($data), JSON_UNESCAPED_UNICODE), null, (int)$this->currentUser['id']);
+
+            $changedFields = implode(', ', array_keys($data));
+            $targetUser = $users->findProfileSafe($userId);
+            $targetName = $targetUser['full_name'] ?? $targetUser['username'] ?? 'ผู้ใช้';
+            
+            Auth::logActivity(
+                (int)$this->currentUser['id'],
+                'update_member',
+                'member',
+                "แก้ไขข้อมูลสมาชิก: {$targetName} ({$changedFields})",
+                $userId, 'user'
+            );
+
+            $updated = $users->findProfileSafe($userId);
+            // Format member_number for display
+            if (!empty($updated['member_number'])) {
+                if (!isset($settings)) $settings = $this->model('SettingsModel');
+                $pfx = $settings->get('member_number_prefix', '');
+                $dgt = (int)$settings->get('member_number_digits', '4');
+                $updated['member_number'] = UserModel::formatMemberNumber($updated['member_number'], $pfx, $dgt);
+            }
+            Response::success($updated, 'อัปเดตข้อมูลสำเร็จ');
+        } catch (\Throwable $e) {
+            $debugInput = '';
+            try {
+                $debugInput = json_encode($input, JSON_UNESCAPED_UNICODE);
+            } catch (\Throwable $jsonEx) {
+                $debugInput = 'could not encode input';
+            }
+            error_log('MemberController adminEditMember error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine() . ' | userId=' . ($userId ?? 'not set') . ' | input=' . $debugInput);
+            error_log($e->getTraceAsString());
+            Response::error('เกิดข้อผิดพลาดในการอัปเดตข้อมูลสมาชิก: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * GET  ?controller=member&action=directory
      * สมาชิกดูทำเนียบสมาชิกที่ได้รับการอนุมัติ (ต้อง login)
      * เปิด/ปิดได้จากการตั้งค่าระบบ member_directory_enabled

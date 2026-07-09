@@ -40,11 +40,12 @@ class RoleAccess
         'member' => [
             'profile'             => ['member', 'admin'],
             'update'              => ['member', 'admin'],
+            'admin-edit-member'   => ['member', 'admin'],
             'notifications'       => ['member', 'admin'],
             'list'                => ['member', 'admin'],
             'directory'           => ['member', 'admin'],
             'directory-export'    => ['member', 'admin'],
-            'directory-edit'     => ['member', 'admin'],
+            'directory-edit'      => ['member', 'admin'],
             'directory-confirm-number' => ['member', 'admin'],
             'approve'             => ['member', 'admin'],
             'create'              => ['member', 'admin'],

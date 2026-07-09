@@ -285,6 +285,10 @@ const API = {
         return this.post(this.apiUrl('member', 'update'), data);
     },
 
+    async adminEditMember(data) {
+        return this.post(this.apiUrl('member', 'admin-edit-member'), data);
+    },
+
     async getMembers(params = {}) {
         return this.get(this.apiUrl('member', 'list'), params);
     },

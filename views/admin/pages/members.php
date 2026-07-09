@@ -875,9 +875,9 @@ async function saveMember() {
     let result;
 
     if (userId) {
-        // Edit
+        // Edit (admin-only edit for admin panel)
         data.user_id = userId;
-        result = await API.updateProfile(data);
+        result = await API.adminEditMember(data);
     } else {
         // Create
         data.username = $('#mf_username').val().trim();
