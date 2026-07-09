@@ -119,7 +119,7 @@ class MemberController extends Controller
             }
         }
 
-        // admin-only fields
+        // admin-only fields (role, status)
         if ($this->currentUser['role'] === 'admin') {
             foreach (['role','member_type','status'] as $f) {
                 if (isset($input[$f])) {
@@ -130,6 +130,11 @@ class MemberController extends Controller
                     }
                 }
             }
+        } elseif ($this->isAdminOrSubAdmin('edit') && isset($input['member_type'])) {
+            // sub-admin with edit permission may change member_type
+            $old = $users->find($userId, ['member_type']);
+            $data['member_type'] = $input['member_type'];
+            $auth->logAction($userId, 'type_changed', $old['member_type'], $input['member_type'], null, (int)$this->currentUser['id']);
         }
 
         // password change
