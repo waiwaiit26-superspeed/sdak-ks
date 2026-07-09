@@ -323,10 +323,13 @@ class MemberController extends Controller
                 }
             }
 
+            error_log('DEBUG adminEditMember - before filterColumns: ' . json_encode(array_keys($data)));
             $data = $users->filterColumns($data);
+            error_log('DEBUG adminEditMember - after filterColumns: ' . json_encode(array_keys($data)));
             if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
-            $users->update($data, ['id' => $userId]);
+            $result = $users->update($data, ['id' => $userId]);
+            error_log('DEBUG adminEditMember - update result: ' . ($result ? 'success' : 'failed/null'));
             $auth->logAction($userId, 'profile_updated', null, json_encode(array_keys($data), JSON_UNESCAPED_UNICODE), null, (int)$this->currentUser['id']);
 
             $changedFields = implode(', ', array_keys($data));
