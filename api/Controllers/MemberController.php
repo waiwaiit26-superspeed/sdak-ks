@@ -725,11 +725,24 @@ class MemberController extends Controller
                     $hasPaidFee = false;
 
                     if ($feeMode === 'onetime') {
+                        // Prefer explicit one-time row when available.
                         $allFees = $fees->getUserFees($userId);
                         foreach ($allFees as $f) {
-                            if ($f['fee_type'] === 'onetime' && $f['status'] === 'paid' && $f['approved_at']) {
+                            $feeType = $f['fee_type'] ?? null;
+                            if (($feeType === 'onetime' || $feeType === null || $feeType === '')
+                                && ($f['status'] ?? '') === 'paid' && !empty($f['approved_at'])) {
                                 $hasPaidFee = true;
                                 break;
+                            }
+                        }
+
+                        // Fallback: legacy schema without fee_type — accept any paid+approved record.
+                        if (!$hasPaidFee) {
+                            foreach ($allFees as $f) {
+                                if (($f['status'] ?? '') === 'paid' && !empty($f['approved_at'])) {
+                                    $hasPaidFee = true;
+                                    break;
+                                }
                             }
                         }
                     } else {
@@ -859,7 +872,8 @@ class MemberController extends Controller
             if ($feeMode === 'onetime') {
                 $allFees = $fees->getUserFees($userId);
                 foreach ($allFees as $f) {
-                    if ($f['fee_type'] === 'onetime') {
+                    $feeType = $f['fee_type'] ?? null;
+                    if ($feeType === 'onetime' || $feeType === null || $feeType === '') {
                         $result['fee_id'] = (int)$f['id'];
                         $result['fee_status'] = $f['status'];
                         $result['fee_paid_at'] = $f['paid_at'];
@@ -870,6 +884,24 @@ class MemberController extends Controller
                             $result['fee_approved'] = true;
                         }
                         break;
+                    }
+                }
+
+                // Legacy fallback: if no explicit onetime row found, use latest paid/approved row.
+                if (!$result['has_fee_record']) {
+                    foreach ($allFees as $f) {
+                        if (($f['status'] ?? '') === 'paid' || !empty($f['payment_slip']) || !empty($f['approved_at'])) {
+                            $result['fee_id'] = (int)$f['id'];
+                            $result['fee_status'] = $f['status'] ?? null;
+                            $result['fee_paid_at'] = $f['paid_at'] ?? null;
+                            $result['fee_payment_slip'] = $f['payment_slip'] ?? null;
+                            $result['fee_amount'] = (float)($f['amount'] ?? $feeAmount);
+                            $result['has_fee_record'] = true;
+                            if (($f['status'] ?? '') === 'paid' && !empty($f['approved_at'])) {
+                                $result['fee_approved'] = true;
+                            }
+                            break;
+                        }
                     }
                 }
             } else {
