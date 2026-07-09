@@ -467,6 +467,13 @@ const FIELD_MAP = [
 $(async function () {
     if (!await App.requireAdminOrSubAdmin()) return;
 
+    // Set modal title with site name from settings
+    API.getSettings().then(res => {
+        if (res.success && res.data?.site_name) {
+            $('#memberViewModal .modal-title').text('ข้อมูลสมาชิก – ' + res.data.site_name);
+        }
+    });
+
     // Determine delete permission
     if (API.isAdmin()) {
         _canDeleteMember = true;
@@ -914,7 +921,9 @@ async function viewMember(id) {
                 a.province ? 'จ.' + a.province : '', a.postal_code || ''].filter(Boolean).join(' ');
     };
 
-    const displayName = (u.prefix || '') + (u.first_name && u.last_name ? u.first_name + ' ' + u.last_name : u.full_name);
+    const displayName = (u.prefix || '') + (u.first_name && u.last_name
+        ? u.first_name + ' ' + u.last_name
+        : ((u.prefix && u.full_name?.startsWith(u.prefix)) ? u.full_name.slice(u.prefix.length).trim() : (u.full_name || '')));
 
     body.html(
         '<div class="row">' +
@@ -985,7 +994,9 @@ async function approveMember(userId, action) {
 
         const u = profileResult.data;
         const f = feeResult.data;
-        const displayName = (u.prefix || '') + (u.first_name && u.last_name ? u.first_name + ' ' + u.last_name : u.full_name);
+        const displayName = (u.prefix || '') + (u.first_name && u.last_name
+            ? u.first_name + ' ' + u.last_name
+            : ((u.prefix && u.full_name?.startsWith(u.prefix)) ? u.full_name.slice(u.prefix.length).trim() : (u.full_name || '')));
         const typeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         const feeLabels = { none: 'ไม่ต้องชำระ', onetime: 'จ่ายครั้งเดียว', annual: 'จ่ายรายปี' };
 
