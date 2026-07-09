@@ -758,11 +758,24 @@ class MemberController extends Controller
                 }
 
                 // Handle member number — normalize to numeric-only
+                $currentMemberNumber = trim((string)($target['member_number'] ?? ''));
                 $memberNumber = trim($input['member_number'] ?? '');
                 if ($memberNumber) {
                     $mnDigits = (int)$settings->get('member_number_digits', '4');
                     $memberNumber = UserModel::normalizeMemberNumber($memberNumber, $mnDigits);
                 }
+
+                // Auto-assign next member number when approving and no number was provided.
+                if (!$memberNumber) {
+                    if ($currentMemberNumber !== '') {
+                        $memberNumber = $currentMemberNumber;
+                    } else {
+                        $mnDigits = (int)$settings->get('member_number_digits', '4');
+                        $startNumber = (int)$settings->get('member_start_number', '1');
+                        $memberNumber = $users->getNextMemberNumber($mnDigits, $startNumber);
+                    }
+                }
+
                 if ($memberNumber && $users->memberNumberExists($memberNumber, $userId)) {
                     Response::error('เลขสมาชิก "' . $memberNumber . '" ถูกใช้แล้ว กรุณาระบุเลขอื่น');
                 }
