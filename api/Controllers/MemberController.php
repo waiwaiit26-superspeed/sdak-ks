@@ -105,8 +105,10 @@ class MemberController extends Controller
             if (isset($input['user_id'])) {
                 $targetId = (int)$input['user_id'];
                 if ($targetId !== $userId) {
-                    // Editing another user's profile requires admin or sub-admin edit permission
-                    if (!($this->currentUser['role'] === 'admin' || $this->isAdminOrSubAdmin('edit'))) {
+                    // Editing another user's profile requires admin, or sub-admin with edit OR approve permission
+                    if (!($this->currentUser['role'] === 'admin'
+                        || $this->isAdminOrSubAdmin('edit')
+                        || $this->isAdminOrSubAdmin('approve'))) {
                         Response::error('ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกอื่น', 403);
                     }
                     $userId = $targetId;
@@ -137,7 +139,7 @@ class MemberController extends Controller
                     }
                 }
             }
-        } elseif ($this->isAdminOrSubAdmin('edit') && isset($input['member_type'])) {
+        } elseif (($this->isAdminOrSubAdmin('edit') || $this->isAdminOrSubAdmin('approve')) && isset($input['member_type'])) {
             // sub-admin with edit permission may change member_type
             $old = $users->find($userId, ['member_type']);
             $data['member_type'] = $input['member_type'];
