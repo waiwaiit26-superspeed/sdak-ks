@@ -766,6 +766,7 @@ class MemberController extends Controller
     public function confirmFeePayment(): void
     {
         $this->requirePost();
+        $this->requireMembersAccess('approve');
         $input  = $this->input();
         $userId = (int)($input['user_id'] ?? 0);
         if (!$userId) Response::error('กรุณาระบุ user_id');

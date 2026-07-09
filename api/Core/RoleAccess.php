@@ -53,7 +53,7 @@ class RoleAccess
             'statistics'          => ['member', 'admin'],
             'next-member-number'      => ['member', 'admin'],
             'check-fee-status'        => ['member', 'admin'],
-            'confirm-fee-payment'     => ['admin'],
+            'confirm-fee-payment'     => ['member', 'admin'],
             'admin-reset-password'    => ['member', 'admin'],
         ],
         'news' => [
