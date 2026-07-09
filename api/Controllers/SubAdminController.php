@@ -352,12 +352,29 @@ class SubAdminController extends Controller
             'is_staff'  => 1,
         ]);
 
+        // Set password (provided or auto-generated)
+        $passwordPlain = trim($input['password'] ?? '');
+        if ($passwordPlain && strlen($passwordPlain) < 6) Response::error('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+        if (!$passwordPlain) {
+            $chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            $passwordPlain = '';
+            for ($i = 0; $i < 10; $i++) {
+                $passwordPlain .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+        }
+        $users->update(['password' => Auth::hashPassword($passwordPlain)], ['id' => $userId]);
+
         Auth::logActivity(
             (int)$this->currentUser['id'], 'create', 'staff_user',
             "สร้างบัญชีผู้ดูแล: {$fullName} ({$email})",
             $userId, 'user'
         );
-        Response::success(['id' => $userId, 'username' => $username], 'สร้างบัญชีผู้ดูแลสำเร็จ');
+        Response::success([
+            'id'             => $userId,
+            'full_name'      => $fullName,
+            'username'       => $username,
+            'password_plain' => $passwordPlain,
+        ], 'สร้างบัญชีผู้ดูแลสำเร็จ');
     }
 
     // ──────────────────────────────────────────────────────

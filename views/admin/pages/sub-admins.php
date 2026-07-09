@@ -218,26 +218,123 @@
                 <h5 class="modal-title"><i class="bi bi-person-plus me-1"></i>สร้างบัญชีผู้ดูแล</h5>
                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body">
-                <div class="callout callout-info py-2 mb-3">
-                    <small><i class="bi bi-info-circle me-1"></i>
-                    สร้างบัญชีสำหรับผู้ดูแลที่ไม่ใช่สมาชิก หลังสร้างแล้วให้ไปมอบสิทธิ์ในแต่ละแท็บ ผู้ดูแลสามารถ login ด้วย Google โดยใช้อีเมลที่ระบุไว้</small>
+            <!-- Form view -->
+            <div id="staffModalForm">
+                <div class="modal-body">
+                    <div class="callout callout-info py-2 mb-3">
+                        <small><i class="bi bi-info-circle me-1"></i>
+                        สร้างบัญชีสำหรับผู้ดูแลที่ไม่ใช่สมาชิก หลังสร้างแล้วให้ไปมอบสิทธิ์ในแต่ละแท็บ ผู้ดูแลสามารถ login ด้วย Google โดยใช้อีเมลที่ระบุไว้</small>
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="staffFullName" placeholder="ชื่อ-นามสกุล">
+                    </div>
+                    <div class="form-group">
+                        <label>อีเมล (Google) <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="staffEmail" placeholder="example@gmail.com">
+                        <small class="form-text text-muted">ต้องตรงกับ Google Account ที่จะใช้ login</small>
+                    </div>
+                    <div class="form-group">
+                        <label>รหัสผ่าน <small class="text-muted font-weight-normal">(ไม่กรอก = สร้างอัตโนมัติ)</small></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="staffPassword" placeholder="ปล่อยว่างเพื่อสร้างอัตโนมัติ" autocomplete="new-password">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="genStaffPassword()" title="สร้างรหัสผ่านสุ่ม">
+                                    <i class="bi bi-shuffle"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">ใช้สำหรับ login ด้วย username/password (นอกเหนือจาก Google)</small>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>ชื่อ-นามสกุล <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="staffFullName" placeholder="ชื่อ-นามสกุล">
-                </div>
-                <div class="form-group">
-                    <label>อีเมล (Google) <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" id="staffEmail" placeholder="example@gmail.com">
-                    <small class="form-text text-muted">ต้องตรงกับ Google Account ที่จะใช้ login</small>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                    <button class="btn btn-success" id="staffModalSaveBtn" onclick="saveStaffUser()">
+                        <i class="bi bi-check-lg me-1"></i>สร้างบัญชี
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
-                <button class="btn btn-success" id="staffModalSaveBtn" onclick="saveStaffUser()">
-                    <i class="bi bi-check-lg me-1"></i>สร้างบัญชี
+            <!-- Credentials view (shown after creation) -->
+            <div id="staffModalCredentials" style="display:none;">
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size:2rem;"></i>
+                        <h6 class="mt-2 mb-0">สร้างบัญชีสำเร็จ</h6>
+                        <small class="text-muted">บันทึกข้อมูลนี้ไว้ก่อนปิดหน้าต่าง</small>
+                    </div>
+                    <table class="table table-sm table-bordered mb-2">
+                        <tr>
+                            <td class="text-muted bg-light" width="35%">ชื่อ-นามสกุล</td>
+                            <td id="credName" class="font-weight-bold"></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted bg-light">Username</td>
+                            <td>
+                                <code id="credUsername"></code>
+                                <button class="btn btn-xs btn-outline-secondary ml-2" onclick="copyText('credUsername')" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted bg-light">Password</td>
+                            <td>
+                                <code id="credPassword"></code>
+                                <button class="btn btn-xs btn-outline-secondary ml-2" onclick="copyText('credPassword')" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted bg-light">อีเมล</td>
+                            <td>
+                                <code id="credEmail"></code>
+                                <button class="btn btn-xs btn-outline-secondary ml-2" onclick="copyText('credEmail')" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+                            </td>
+                        </tr>
+                    </table>
+                    <button class="btn btn-sm btn-outline-primary w-100" onclick="copyAllCreds()">
+                        <i class="bi bi-clipboard-check me-1"></i>คัดลอกข้อมูลทั้งหมด
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal">ปิด</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: Staff Reset Password Credentials                      -->
+<!-- ============================================================ -->
+<div class="modal fade" id="staffResetModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="bi bi-key me-1"></i>รีเซ็ตรหัสผ่าน</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2">รหัสผ่านใหม่ของ <strong id="resetCredName"></strong></p>
+                <table class="table table-sm table-bordered mb-2">
+                    <tr>
+                        <td class="text-muted bg-light" width="40%">Username</td>
+                        <td>
+                            <code id="resetCredUsername"></code>
+                            <button class="btn btn-xs btn-outline-secondary ml-1" onclick="copyText('resetCredUsername')" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted bg-light">Password</td>
+                        <td>
+                            <code id="resetCredPassword"></code>
+                            <button class="btn btn-xs btn-outline-secondary ml-1" onclick="copyText('resetCredPassword')" title="คัดลอก"><i class="bi bi-clipboard"></i></button>
+                        </td>
+                    </tr>
+                </table>
+                <button class="btn btn-sm btn-outline-primary w-100" onclick="copyResetCreds()">
+                    <i class="bi bi-clipboard-check me-1"></i>คัดลอกทั้งหมด
                 </button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-dismiss="modal">ปิด</button>
             </div>
         </div>
     </div>
@@ -506,6 +603,9 @@ async function loadStaffList() {
             <td>${statusBadge}</td>
             <td><small>${date}</small></td>
             <td>
+                <button class="btn btn-outline-warning btn-xs mr-1" onclick="resetStaffPassword(${r.id}, '${App.escHtml(r.full_name)}')" title="รีเซ็ตรหัสผ่าน">
+                    <i class="bi bi-key"></i>
+                </button>
                 <button class="btn btn-outline-danger btn-xs" onclick="deleteStaffUser(${r.id}, '${App.escHtml(r.full_name)}')" title="ลบบัญชีนี้">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -517,25 +617,86 @@ async function loadStaffList() {
 function showCreateStaffModal() {
     $('#staffFullName').val('');
     $('#staffEmail').val('');
+    $('#staffPassword').val('');
+    $('#staffModalForm').show();
+    $('#staffModalCredentials').hide();
     $('#staffModalSaveBtn').prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i>สร้างบัญชี');
     $('#staffModal').modal('show');
+}
+
+function genStaffPassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let pw = '';
+    for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    $('#staffPassword').val(pw);
 }
 
 async function saveStaffUser() {
     const fullName = $('#staffFullName').val().trim();
     const email    = $('#staffEmail').val().trim();
+    const password = $('#staffPassword').val().trim();
     if (!fullName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
     if (!email)    { App.error('กรุณาระบุอีเมล'); return; }
 
     const btn = document.getElementById('staffModalSaveBtn');
     btn.disabled = true;
-    const res = await API.createStaffUser(fullName, email);
+    const res = await API.createStaffUser(fullName, email, password);
     btn.disabled = false;
 
     if (res.success) {
-        App.success(res.message || 'สร้างบัญชีสำเร็จ');
-        $('#staffModal').modal('hide');
+        // Show credentials instead of closing
+        $('#credName').text(res.data.full_name || fullName);
+        $('#credUsername').text(res.data.username || '');
+        $('#credPassword').text(res.data.password_plain || '');
+        $('#credEmail').text(email);
+        $('#staffModalForm').hide();
+        $('#staffModalCredentials').show();
         loadStaffList();
+    } else {
+        App.error(res.message || 'เกิดข้อผิดพลาด');
+    }
+}
+
+function copyText(elementId) {
+    const text = document.getElementById(elementId)?.innerText || '';
+    navigator.clipboard.writeText(text).then(() => App.toast('คัดลอกแล้ว')).catch(() => {
+        const el = document.getElementById(elementId);
+        const range = document.createRange();
+        range.selectNode(el);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        App.toast('คัดลอกแล้ว');
+    });
+}
+
+function copyAllCreds() {
+    const name = document.getElementById('credName')?.innerText || '';
+    const user = document.getElementById('credUsername')?.innerText || '';
+    const pass = document.getElementById('credPassword')?.innerText || '';
+    const email = document.getElementById('credEmail')?.innerText || '';
+    const text = `ชื่อ: ${name}\nUsername: ${user}\nPassword: ${pass}\nอีเมล: ${email}`;
+    navigator.clipboard.writeText(text).then(() => App.toast('คัดลอกข้อมูลทั้งหมดแล้ว'))
+        .catch(() => App.error('ไม่สามารถคัดลอกได้'));
+}
+
+function copyResetCreds() {
+    const user = document.getElementById('resetCredUsername')?.innerText || '';
+    const pass = document.getElementById('resetCredPassword')?.innerText || '';
+    const text = `Username: ${user}\nPassword: ${pass}`;
+    navigator.clipboard.writeText(text).then(() => App.toast('คัดลอกแล้ว'))
+        .catch(() => App.error('ไม่สามารถคัดลอกได้'));
+}
+
+async function resetStaffPassword(userId, name) {
+    const confirmed = await App.confirm('รีเซ็ตรหัสผ่าน', `รีเซ็ตรหัสผ่านของ "${name}" และสร้างรหัสใหม่อัตโนมัติ?`, 'warning');
+    if (!confirmed) return;
+    const res = await API.adminResetPassword(userId);
+    if (res.success) {
+        $('#resetCredName').text(res.data.full_name || name);
+        $('#resetCredUsername').text(res.data.username || '');
+        $('#resetCredPassword').text(res.data.password_plain || '');
+        $('#staffResetModal').modal('show');
     } else {
         App.error(res.message || 'เกิดข้อผิดพลาด');
     }

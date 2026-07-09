@@ -717,8 +717,8 @@ const API = {
     async getMySubAdminPermissions() {
         return this.get(this.apiUrl('sub-admin', 'my-permissions'));
     },
-    async createStaffUser(fullName, email) {
-        return this.post(this.apiUrl('sub-admin', 'create-staff-user'), { full_name: fullName, email });
+    async createStaffUser(fullName, email, password = '') {
+        return this.post(this.apiUrl('sub-admin', 'create-staff-user'), { full_name: fullName, email, password });
     },
     async listStaffUsers() {
         return this.get(this.apiUrl('sub-admin', 'list-staff-users'));
