@@ -10,6 +10,34 @@ use App\Core\Model;
 class MembershipFeeModel extends Model
 {
     protected string $table = 'membership_fees';
+    private ?bool $hasFeeType = null;
+    private ?bool $hasReceivedDate = null;
+
+    private function hasColumn(string $column): bool
+    {
+        try {
+            $row = $this->db->query("SHOW COLUMNS FROM `{$this->table}` LIKE :col", [':col' => $column])->fetch();
+            return (bool)$row;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    private function hasFeeTypeColumn(): bool
+    {
+        if ($this->hasFeeType === null) {
+            $this->hasFeeType = $this->hasColumn('fee_type');
+        }
+        return $this->hasFeeType;
+    }
+
+    private function hasReceivedDateColumn(): bool
+    {
+        if ($this->hasReceivedDate === null) {
+            $this->hasReceivedDate = $this->hasColumn('received_date');
+        }
+        return $this->hasReceivedDate;
+    }
 
     /**
      * Get fees for a specific user
@@ -47,11 +75,14 @@ class MembershipFeeModel extends Model
      */
     public function hasOnetimePaid(int $userId): bool
     {
-        $record = $this->db->get($this->table, '*', [
+        $where = [
             'user_id' => $userId,
-            'fee_type' => 'onetime',
             'status' => 'paid',
-        ]);
+        ];
+        if ($this->hasFeeTypeColumn()) {
+            $where['fee_type'] = 'onetime';
+        }
+        $record = $this->db->get($this->table, '*', $where);
         return (bool)$record;
     }
 
@@ -60,11 +91,14 @@ class MembershipFeeModel extends Model
      */
     public function getOnetimeFee(int $userId): ?array
     {
-        return $this->db->get($this->table, '*', [
+        $where = [
             'user_id' => $userId,
-            'fee_type' => 'onetime',
             'ORDER' => ['created_at' => 'DESC'],
-        ]);
+        ];
+        if ($this->hasFeeTypeColumn()) {
+            $where['fee_type'] = 'onetime';
+        }
+        return $this->db->get($this->table, '*', $where);
     }
 
     /**
@@ -80,12 +114,18 @@ class MembershipFeeModel extends Model
 
         $pdo = $this->db->pdo;
         $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $receivedExpr = $this->hasReceivedDateColumn() ? 'received_date' : 'NULL AS received_date';
+        $priorityExpr = $this->hasFeeTypeColumn()
+            ? "(fee_type = 'annual' AND year = {$currentYear})"
+            : "(year = {$currentYear})";
         $stmt = $pdo->prepare(
-            "SELECT user_id, id, status, payment_slip, year, fee_type, received_date, approved_at
+            "SELECT user_id, id, status, payment_slip, year, "
+            . ($this->hasFeeTypeColumn() ? 'fee_type' : "'annual' AS fee_type")
+            . ", {$receivedExpr}, approved_at
                FROM membership_fees
               WHERE user_id IN ({$placeholders})
               ORDER BY user_id,
-                        (fee_type = 'annual' AND year = {$currentYear}) DESC,
+                        {$priorityExpr} DESC,
                         year DESC"
         );
         $stmt->execute(array_values($userIds));
@@ -107,20 +147,23 @@ class MembershipFeeModel extends Model
      */
     public function upsertFee(int $userId, int $year, float $amount, string $feeType = 'annual'): int
     {
+        $hasFeeType = $this->hasFeeTypeColumn();
+
         // For one-time: check if record already exists (any year)
-        if ($feeType === 'onetime') {
+        if ($feeType === 'onetime' && $hasFeeType) {
             $existing = $this->getOnetimeFee($userId);
             if ($existing) {
                 $this->update(['amount' => $amount], ['id' => $existing['id']]);
                 return (int)$existing['id'];
             }
-            return (int)$this->create([
+            $data = [
                 'user_id' => $userId,
                 'year' => $year,
                 'amount' => $amount,
-                'fee_type' => 'onetime',
                 'status' => 'pending',
-            ]);
+            ];
+            if ($hasFeeType) $data['fee_type'] = 'onetime';
+            return (int)$this->create($data);
         }
 
         // For annual:
@@ -129,13 +172,15 @@ class MembershipFeeModel extends Model
             $this->update(['amount' => $amount], ['id' => $existing['id']]);
             return (int)$existing['id'];
         }
-        return (int)$this->create([
+
+        $data = [
             'user_id' => $userId,
             'year' => $year,
             'amount' => $amount,
-            'fee_type' => 'annual',
             'status' => 'pending',
-        ]);
+        ];
+        if ($hasFeeType) $data['fee_type'] = 'annual';
+        return (int)$this->create($data);
     }
 
     /**
@@ -160,7 +205,7 @@ class MembershipFeeModel extends Model
             'approved_by' => $adminId,
             'approved_at' => date('Y-m-d H:i:s'),
         ];
-        if ($receivedDate) $data['received_date'] = $receivedDate;
+        if ($receivedDate && $this->hasReceivedDateColumn()) $data['received_date'] = $receivedDate;
         if ($note) $data['note'] = $note;
         $this->update($data, ['id' => $feeId]);
     }
