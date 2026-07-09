@@ -32,7 +32,7 @@ class UserModel extends Model
     public const SAFE_COLUMNS = [
         'id','username','email','role','member_type','member_number','member_number_confirmed','status','is_staff',
         'prefix','full_name','phone','school_organization','position','academic_rank',
-        'profile_image','google_picture','bio',
+        'profile_image','google_id','google_picture','bio',
         'national_id','first_name','last_name','birth_date',
         'home_address','work_address','education_area','region','work_phone',
         'approved_by','approved_at','cancelled_at',
@@ -152,6 +152,14 @@ class UserModel extends Model
         $filtered = $this->filterColumns($data);
         if (empty($filtered)) return null;
         return $this->db->update($this->table, $filtered, $where);
+    }
+
+    /**
+     * Set a user's password hash directly (bypasses SAFE_COLUMNS filter).
+     */
+    public function setPassword(int $userId, string $hashedPassword): void
+    {
+        $this->db->update($this->table, ['password' => $hashedPassword], ['id' => $userId]);
     }
 
     /**

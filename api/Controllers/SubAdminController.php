@@ -362,7 +362,7 @@ class SubAdminController extends Controller
                 $passwordPlain .= $chars[random_int(0, strlen($chars) - 1)];
             }
         }
-        $users->update(['password' => Auth::hashPassword($passwordPlain)], ['id' => $userId]);
+        $users->setPassword($userId, Auth::hashPassword($passwordPlain));
 
         Auth::logActivity(
             (int)$this->currentUser['id'], 'create', 'staff_user',

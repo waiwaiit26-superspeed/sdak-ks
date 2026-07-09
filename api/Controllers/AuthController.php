@@ -97,7 +97,6 @@ class AuthController extends Controller
         $userId = $users->create([
             'username'            => $username,
             'email'               => $email,
-            'password'            => Auth::hashPassword($password),
             'role'                => 'member',
             'member_type'         => $memberType,
             'status'              => 'pending',
@@ -118,6 +117,9 @@ class AuthController extends Controller
             'home_address'        => !empty($input['home_address']) ? json_encode($input['home_address'], JSON_UNESCAPED_UNICODE) : null,
             'work_address'        => !empty($input['work_address']) ? json_encode($input['work_address'], JSON_UNESCAPED_UNICODE) : null,
         ]);
+
+        // Set password separately (bypasses SAFE_COLUMNS filter)
+        $users->setPassword((int)$userId, Auth::hashPassword($password));
 
         (new Auth())->logAction((int)$userId, 'registered', null, null, "สมัครสมาชิกใหม่ ประเภท: {$memberType}");
         Auth::logActivity((int)$userId, 'register', 'auth', "สมัครสมาชิกใหม่ ประเภท: {$memberType}", (int)$userId, 'user');
@@ -586,10 +588,7 @@ class AuthController extends Controller
         }
 
         // อัปเดตรหัสผ่าน
-        $users->update(
-            ['password' => Auth::hashPassword($newPassword)],
-            ['id' => $user['id']]
-        );
+        $users->setPassword((int)$user['id'], Auth::hashPassword($newPassword));
 
         // ทำเครื่องหมาย token ว่าใช้แล้ว
         $resets->markUsed((int)$reset['id']);
@@ -674,10 +673,7 @@ class AuthController extends Controller
             Response::error('รหัสผ่านปัจจุบันไม่ถูกต้อง', 400);
         }
 
-        $users->update(
-            ['password' => Auth::hashPassword($newPassword)],
-            ['id' => $user['id']]
-        );
+        $users->setPassword((int)$user['id'], Auth::hashPassword($newPassword));
 
         Auth::logActivity(
             (int)$user['id'],

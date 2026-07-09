@@ -1033,10 +1033,7 @@ class MemberController extends Controller
             }
         }
 
-        $users->update(
-            ['password' => Auth::hashPassword($passwordPlain)],
-            ['id' => $userId]
-        );
+        $users->setPassword((int)$userId, Auth::hashPassword($passwordPlain));
 
         Auth::logActivity(
             (int)$this->currentUser['id'], 'admin_reset_password', 'member',
