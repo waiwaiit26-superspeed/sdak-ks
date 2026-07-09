@@ -123,7 +123,9 @@ class UserModel extends Model
 
     public function hasColumn(string $column): bool
     {
-        return in_array($column, $this->getColumns(), true);
+        // Use SAFE_COLUMNS to avoid SHOW COLUMNS prepared-statement issues
+        // on older MySQL/MariaDB with PDO EMULATE_PREPARES=false (same reason as filterColumns).
+        return in_array($column, self::SAFE_COLUMNS, true);
     }
 
     public function filterColumns(array $data): array
