@@ -154,6 +154,7 @@ class ActivityController extends Controller
             'location'         => $input['location'] ?? '',
             'start_date'       => $input['start_date'],
             'end_date'         => $input['end_date'] ?? null,
+            'event_date'       => $input['event_date'] ?? null,
             'max_participants' => (int)($input['max_participants'] ?? 0) ?: null,
             'has_fee'          => $feeAmount > 0 ? 1 : 0,
             'fee_amount'       => $feeAmount,
@@ -186,7 +187,7 @@ class ActivityController extends Controller
         $activity = $this->model('ActivityModel');
         if (!$activity->has(['id' => $id])) Response::error('ไม่พบกิจกรรม', 404);
 
-        $allowed = ['title','description','location','start_date','end_date',
+        $allowed = ['title','description','location','start_date','end_date','event_date',
                      'max_participants','has_fee','fee_amount','fee_description','cover_image','status',
                      'visibility','visibility_text','allowed_member_types','access_code','show_registrations'];
         $data = [];

@@ -109,8 +109,12 @@ $(function () {
         const a = activityData;
         const startDate = App.formatDateTime(a.start_date);
         const endDate = a.end_date ? App.formatDateTime(a.end_date) : '-';
+        const eventDate = a.event_date ? App.formatDateTime(a.event_date) : App.formatDateTime(a.start_date);
         const fee = a.has_fee && a.fee_amount > 0 ? App.formatCurrency(a.fee_amount) : 'ฟรี';
         const coverImg = a.cover_image ? `<img src="${App.imgUrl(a.cover_image)}" class="img-fluid rounded mb-4" alt="${a.title}" onerror="this.style.display='none'">` : '';
+        const registrationStatusText = (a.status === 'open' && a.registration_open)
+            ? 'เปิดรับสมัคร'
+            : ((a.status === 'open' && !a.registration_open) ? 'ปิดรับสมัครแล้ว' : (a.status === 'closed' ? 'กิจกรรมจบแล้ว' : 'กิจกรรมถูกยกเลิก'));
 
         // ─── Restricted content for non-members ───
         if (a.is_restricted) {
@@ -152,8 +156,10 @@ $(function () {
                             <div class="card-body">
                                 <h6><i class="bi bi-info-circle me-1"></i> ข้อมูลกิจกรรม</h6>
                                 <ul class="list-unstyled mb-0">
+                                    <li class="mb-2"><i class="bi bi-calendar-event text-primary me-2"></i><strong>วันจัดกิจกรรม:</strong> ${eventDate}</li>
                                     <li class="mb-2"><i class="bi bi-calendar text-primary me-2"></i><strong>เริ่ม:</strong> ${startDate}</li>
                                     <li class="mb-2"><i class="bi bi-calendar-check text-primary me-2"></i><strong>สิ้นสุด:</strong> ${endDate}</li>
+                                    <li class="mb-2"><i class="bi bi-door-open text-primary me-2"></i><strong>การรับสมัคร:</strong> ${registrationStatusText}</li>
                                     <li class="mb-2"><i class="bi bi-geo-alt text-primary me-2"></i><strong>สถานที่:</strong> ${a.location || '-'}</li>
                                     <li class="mb-2"><i class="bi bi-person-badge text-primary me-2"></i><strong>รับสมาชิก:</strong> ${(() => {
                                         const mtl = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
@@ -293,8 +299,10 @@ $(function () {
                         <div class="card-body">
                             <h6><i class="bi bi-info-circle me-1"></i> ข้อมูลกิจกรรม</h6>
                             <ul class="list-unstyled mb-0">
+                                <li class="mb-2"><i class="bi bi-calendar-event text-primary me-2"></i><strong>วันจัดกิจกรรม:</strong> ${eventDate}</li>
                                 <li class="mb-2"><i class="bi bi-calendar text-primary me-2"></i><strong>เริ่ม:</strong> ${startDate}</li>
                                 <li class="mb-2"><i class="bi bi-calendar-check text-primary me-2"></i><strong>สิ้นสุด:</strong> ${endDate}</li>
+                                <li class="mb-2"><i class="bi bi-door-open text-primary me-2"></i><strong>การรับสมัคร:</strong> ${registrationStatusText}</li>
                                 <li class="mb-2"><i class="bi bi-geo-alt text-primary me-2"></i><strong>สถานที่:</strong> ${a.location || '-'}</li>
                                 <li class="mb-2"><i class="bi bi-cash text-primary me-2"></i><strong>ค่าลงทะเบียน:</strong> ${fee}</li>
                                 <li class="mb-2"><i class="bi bi-people text-primary me-2"></i><strong>ผู้เข้าร่วม:</strong> ${a.approved_count || 0}${a.max_participants > 0 ? '/' + a.max_participants : ''} คน</li>

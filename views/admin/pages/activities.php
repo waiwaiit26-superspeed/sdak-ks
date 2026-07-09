@@ -105,6 +105,10 @@
                             <input type="datetime-local" class="form-control" name="end_date" id="actEnd">
                         </div>
                         <div class="col-md-4 mb-3">
+                            <label class="form-label">วันจัดกิจกรรม</label>
+                            <input type="datetime-local" class="form-control" name="event_date" id="actEventDate">
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">สถานที่</label>
                             <input type="text" class="form-control" name="location" id="actLocation">
                         </div>
@@ -351,6 +355,7 @@ function openActivityForm(data = null) {
         $('#actLocation').val(data.location);
         $('#actStart').val(data.start_date ? data.start_date.replace(' ', 'T').substring(0, 16) : '');
         $('#actEnd').val(data.end_date ? data.end_date.replace(' ', 'T').substring(0, 16) : '');
+        $('#actEventDate').val(data.event_date ? data.event_date.replace(' ', 'T').substring(0, 16) : '');
         $('#actMax').val(data.max_participants || 0);
         $('#actFee').val(data.fee_amount || 0);
         $('#actFeeDesc').val(data.fee_description || '');
@@ -431,6 +436,7 @@ $('#btnSaveActivity').on('click', async function () {
         location: $('#actLocation').val(),
         start_date: startDate.replace('T', ' ') + ':00',
         end_date: $('#actEnd').val() ? $('#actEnd').val().replace('T', ' ') + ':00' : null,
+        event_date: $('#actEventDate').val() ? $('#actEventDate').val().replace('T', ' ') + ':00' : null,
         max_participants: parseInt($('#actMax').val()) || 0,
         fee_amount: parseFloat($('#actFee').val()) || 0,
         fee_description: $('#actFeeDesc').val(),

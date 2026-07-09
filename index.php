@@ -315,6 +315,15 @@ async function loadUpcomingActivities() {
             const months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
             const coverImg = act.cover_image ? App.imgUrl(act.cover_image) : '';
             const detailUrl = `./web/?page=activity-detail&id=${act.id}`;
+            const eventDateText = act.event_date ? App.formatDateTime(act.event_date) : App.formatDateTime(act.start_date);
+            const startDateText = App.formatDateTime(act.start_date);
+            const endDateText = act.end_date ? App.formatDateTime(act.end_date) : '-';
+            const regStatusText = (act.status === 'open' && act.registration_open)
+                ? 'เปิดรับสมัคร'
+                : ((act.status === 'open' && !act.registration_open) ? 'ปิดรับสมัคร' : (act.status === 'closed' ? 'จบกิจกรรม' : 'ยกเลิก'));
+            const regStatusClass = (act.status === 'open' && act.registration_open)
+                ? 'text-success'
+                : ((act.status === 'open' && !act.registration_open) ? 'text-warning' : 'text-secondary');
             const feeBadge = act.has_fee == 1
                 ? `<span class="badge bg-warning"><i class="bi bi-cash me-1"></i>${App.formatCurrency(act.fee_amount)}</span>`
                 : `<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>ฟรี</span>`;
@@ -331,10 +340,15 @@ async function loadUpcomingActivities() {
                             <div class="d-flex align-items-center gap-2 flex-wrap">
                                 <span class="badge rounded-pill" style="background:#4f46e5;padding:0.45rem 0.85rem;font-size:0.8rem;">วันกิจกรรม</span>
                                 <span class="fw-bold" style="font-size:1.45rem;color:#111827;line-height:1.2;letter-spacing:0.01em;">
-                                    <i class="bi bi-calendar-event me-1"></i>${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}
+                                    <i class="bi bi-calendar-event me-1"></i>${eventDateText}
                                 </span>
                             </div>
                         </div>
+                        <p class="small mb-2" style="color:#374151;">
+                            <span class="d-block mb-1"><i class="bi bi-calendar-plus me-1"></i><strong>วันเริ่มต้น:</strong> ${startDateText}</span>
+                            <span class="d-block mb-1"><i class="bi bi-calendar-check me-1"></i><strong>วันสิ้นสุด:</strong> ${endDateText}</span>
+                            <span class="d-block ${regStatusClass}"><i class="bi bi-door-open me-1"></i><strong>การรับสมัคร:</strong> ${regStatusText}</span>
+                        </p>
                         <p class="text-muted small mb-2">
                             <i class="bi bi-geo-alt me-1"></i>${act.location || "ไม่ระบุ"}
                         </p>
