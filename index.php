@@ -326,9 +326,6 @@ async function loadUpcomingActivities() {
                             <div class="day">${d.getDate()}</div>
                             <div class="month">${months[d.getMonth()]}</div>
                         </div>
-                        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top, rgba(0,0,0,0.6), transparent);padding:12px;">
-                            <h6 class="fw-bold text-white mb-0" style="font-size:1rem;">${act.title}</h6>
-                        </div>
                     </div>` : `<div class="activity-cover" style="height:200px;background:linear-gradient(135deg, var(--primary-light), var(--primary-custom));display:flex;align-items:center;justify-content:center;position:relative;">
                         <div class="activity-date" style="position:absolute;top:12px;left:12px;">
                             <div class="day">${d.getDate()}</div>
@@ -337,7 +334,7 @@ async function loadUpcomingActivities() {
                         <i class="bi bi-calendar-event text-white" style="font-size:3rem;opacity:0.3;"></i>
                     </div>`}
                     <div class="card-body">
-                        ${!coverImg ? `<h6 class="fw-bold mb-1">${act.title}</h6>` : ''}
+                        <h6 class="fw-bold mb-1">${act.title}</h6>
                         <p class="text-muted small mb-2">
                             <i class="bi bi-geo-alt me-1"></i>${act.location || "ไม่ระบุ"}
                         </p>
