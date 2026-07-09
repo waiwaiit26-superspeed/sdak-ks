@@ -307,4 +307,101 @@ class SubAdminController extends Controller
             'activities' => 'จัดการกิจกรรม',
         ][$area] ?? $area;
     }
+
+    // ──────────────────────────────────────────────────────
+    // STAFF USERS — CREATE  (admin only)
+    // ──────────────────────────────────────────────────────
+
+    /**
+     * POST  ?controller=sub-admin&action=create-staff-user
+     * สร้างบัญชีผู้ดูแล (is_staff=1) โดยไม่ต้องสมัครสมาชิก
+     */
+    public function createStaffUser(): void
+    {
+        $this->requirePost();
+        $this->requireAdmin();
+
+        $input    = $this->input();
+        $fullName = trim($input['full_name'] ?? '');
+        $email    = trim($input['email'] ?? '');
+
+        if ($fullName === '') Response::error('กรุณาระบุชื่อ-นามสกุล');
+        if ($email === '')    Response::error('กรุณาระบุอีเมล');
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) Response::error('รูปแบบอีเมลไม่ถูกต้อง');
+
+        $users = $this->model('UserModel');
+
+        // Reject duplicates
+        if ($users->findByEmail($email)) Response::error('อีเมลนี้ถูกใช้งานแล้ว');
+
+        // Generate unique username from email prefix
+        $emailPrefix = strtolower(preg_replace('/[^a-z0-9]/i', '', explode('@', $email)[0]));
+        if ($emailPrefix === '') $emailPrefix = 'staff';
+        $username = $emailPrefix;
+        $suffix   = 1;
+        while ($users->findBy(['username' => $username])) {
+            $username = $emailPrefix . $suffix++;
+        }
+
+        $userId = $users->create([
+            'username'  => $username,
+            'email'     => $email,
+            'full_name' => $fullName,
+            'role'      => 'member',
+            'status'    => 'active',
+            'is_staff'  => 1,
+        ]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'create', 'staff_user',
+            "สร้างบัญชีผู้ดูแล: {$fullName} ({$email})",
+            $userId, 'user'
+        );
+        Response::success(['id' => $userId, 'username' => $username], 'สร้างบัญชีผู้ดูแลสำเร็จ');
+    }
+
+    // ──────────────────────────────────────────────────────
+    // STAFF USERS — LIST  (admin only)
+    // ──────────────────────────────────────────────────────
+
+    /**
+     * GET  ?controller=sub-admin&action=list-staff-users
+     */
+    public function listStaffUsers(): void
+    {
+        $this->requireAdmin();
+        $model = $this->model('SubAdminModel');
+        Response::success($model->getStaffUsers());
+    }
+
+    // ──────────────────────────────────────────────────────
+    // STAFF USERS — DELETE  (admin only)
+    // ──────────────────────────────────────────────────────
+
+    /**
+     * POST  ?controller=sub-admin&action=delete-staff-user
+     */
+    public function deleteStaffUser(): void
+    {
+        $this->requirePost();
+        $this->requireAdmin();
+
+        $userId = (int)($this->input()['user_id'] ?? 0);
+        if (!$userId) Response::error('กรุณาระบุ user_id');
+
+        $users = $this->model('UserModel');
+        $user  = $users->find($userId, ['id', 'full_name', 'email', 'is_staff']);
+        if (!$user || !(int)($user['is_staff'] ?? 0)) Response::error('ไม่พบบัญชีผู้ดูแล', 404);
+
+        // Remove all sub-admin assignments first, then delete user
+        $this->model('SubAdminModel')->deleteAllForUser($userId);
+        $users->delete(['id' => $userId]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'], 'delete', 'staff_user',
+            "ลบบัญชีผู้ดูแล: " . ($user['full_name'] ?? '') . " ({$userId})",
+            $userId, 'user'
+        );
+        Response::success(null, 'ลบบัญชีผู้ดูแลสำเร็จ');
+    }
 }

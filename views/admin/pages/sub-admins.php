@@ -21,7 +21,12 @@
 
             <ul class="nav nav-tabs mb-3" id="subAdminTabs" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="tab-members" data-toggle="tab" href="#pane-members" role="tab">
+                    <a class="nav-link active" id="tab-staff" data-toggle="tab" href="#pane-staff" role="tab">
+                        <i class="bi bi-person-badge me-1"></i>บัญชีผู้ดูแล
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-members" data-toggle="tab" href="#pane-members" role="tab">
                         <i class="bi bi-people me-1"></i>ข้อมูลสมาชิก
                     </a>
                 </li>
@@ -45,9 +50,53 @@
             <div class="tab-content" id="subAdminTabContent">
 
                 <!-- ======================================================= -->
-                <!-- TAB: MEMBERS                                             -->
+                <!-- TAB: STAFF ACCOUNTS                                      -->
                 <!-- ======================================================= -->
-                <div class="tab-pane fade show active" id="pane-members" role="tabpanel">
+                <div class="tab-pane fade show active" id="pane-staff" role="tabpanel">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-7">
+                                    <h3 class="card-title"><i class="bi bi-person-badge me-1"></i>บัญชีผู้ดูแลระบบ</h3>
+                                    <p class="mb-0 small text-muted">บัญชีที่สร้างขึ้นสำหรับผู้ดูแลที่ไม่ใช่สมาชิก สามารถ login ด้วย Google ผ่านอีเมลที่ลงทะเบียน</p>
+                                </div>
+                                <div class="col-md-5 text-md-right">
+                                    <button class="btn btn-primary btn-sm" onclick="showCreateStaffModal()">
+                                        <i class="bi bi-person-plus me-1"></i>สร้างบัญชีผู้ดูแล
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th width="4%">#</th>
+                                            <th width="28%">ชื่อ-นามสกุล / อีเมล</th>
+                                            <th width="30%">สิทธิ์ที่มีอยู่</th>
+                                            <th width="10%">สถานะ</th>
+                                            <th width="13%">สร้างเมื่อ</th>
+                                            <th width="15%">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sa-tbody-staff">
+                                        <tr><td colspan="6" class="text-center py-3 text-muted">กำลังโหลด...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="callout callout-info mt-3">
+                        <h5><i class="bi bi-info-circle me-1"></i>วิธีการใช้งาน</h5>
+                        <ol class="mb-0">
+                            <li>สร้างบัญชีผู้ดูแลด้วยชื่อและอีเมล</li>
+                            <li>ไปที่แท็บ <strong>ข้อมูลสมาชิก / ข่าวสาร / กิจกรรม / การเงิน</strong> แล้วมอบสิทธิ์ให้บัญชีนี้</li>
+                            <li>ผู้ดูแลสามารถเข้าสู่ระบบผ่าน <strong>Google</strong> โดยใช้อีเมลที่ลงทะเบียนไว้</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="pane-members" role="tabpanel">
                     <?php echo buildAreaPane('members', 'บริหารจัดการสมาชิก',
                         '<i class="bi bi-people me-1"></i>',
                         'มอบสิทธิ์ให้สมาชิกช่วยบริหารจัดการข้อมูลสมาชิก',
@@ -153,6 +202,41 @@
                 <button class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
                 <button class="btn btn-primary" id="saModalSaveBtn" onclick="saveSaModal()">
                     <i class="bi bi-check-lg me-1"></i>มอบสิทธิ์
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: Create Staff User                                     -->
+<!-- ============================================================ -->
+<div class="modal fade" id="staffModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-1"></i>สร้างบัญชีผู้ดูแล</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="callout callout-info py-2 mb-3">
+                    <small><i class="bi bi-info-circle me-1"></i>
+                    สร้างบัญชีสำหรับผู้ดูแลที่ไม่ใช่สมาชิก หลังสร้างแล้วให้ไปมอบสิทธิ์ในแต่ละแท็บ ผู้ดูแลสามารถ login ด้วย Google โดยใช้อีเมลที่ระบุไว้</small>
+                </div>
+                <div class="form-group">
+                    <label>ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="staffFullName" placeholder="ชื่อ-นามสกุล">
+                </div>
+                <div class="form-group">
+                    <label>อีเมล (Google) <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="staffEmail" placeholder="example@gmail.com">
+                    <small class="form-text text-muted">ต้องตรงกับ Google Account ที่จะใช้ login</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button class="btn btn-success" id="staffModalSaveBtn" onclick="saveStaffUser()">
+                    <i class="bi bi-check-lg me-1"></i>สร้างบัญชี
                 </button>
             </div>
         </div>
@@ -374,13 +458,111 @@ async function deleteSa(id, area) {
 }
 
 // ================================================================
+// STAFF ACCOUNTS
+// ================================================================
+const SA_AREA_LABELS = {
+    members:    'ข้อมูลสมาชิก',
+    news:       'ข่าวสาร',
+    activities: 'กิจกรรม',
+    finance:    'การเงิน',
+};
+
+async function loadStaffList() {
+    const tbody = document.getElementById('sa-tbody-staff');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> กำลังโหลด...</td></tr>';
+
+    const res = await API.listStaffUsers();
+    if (!res.success) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">' + (res.message || 'โหลดข้อมูลล้มเหลว') + '</td></tr>';
+        return;
+    }
+
+    const rows = res.data || [];
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีบัญชีผู้ดูแล</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map((r, i) => {
+        const areasBadges = (r.areas || []).map(a => {
+            const cls = a.is_active ? 'badge-primary' : 'badge-secondary';
+            return `<span class="badge ${cls} mr-1">${SA_AREA_LABELS[a.area] || a.area}</span>`;
+        }).join('') || '<span class="text-muted small">ยังไม่มีสิทธิ์</span>';
+
+        const statusBadge = r.status === 'active'
+            ? '<span class="badge badge-success">ใช้งาน</span>'
+            : `<span class="badge badge-secondary">${r.status}</span>`;
+
+        const date = r.created_at ? r.created_at.split(' ')[0] : '-';
+
+        return `<tr>
+            <td>${i + 1}</td>
+            <td>
+                <strong>${App.escapeHtml(r.full_name || '-')}</strong>
+                <br><small class="text-muted">${App.escapeHtml(r.email || '')}</small>
+                <br><small class="text-muted text-truncate d-block">@${App.escapeHtml(r.username || '')}</small>
+            </td>
+            <td>${areasBadges}</td>
+            <td>${statusBadge}</td>
+            <td><small>${date}</small></td>
+            <td>
+                <button class="btn btn-outline-danger btn-xs" onclick="deleteStaffUser(${r.id}, '${App.escHtml(r.full_name)}')" title="ลบบัญชีนี้">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function showCreateStaffModal() {
+    $('#staffFullName').val('');
+    $('#staffEmail').val('');
+    $('#staffModalSaveBtn').prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i>สร้างบัญชี');
+    $('#staffModal').modal('show');
+}
+
+async function saveStaffUser() {
+    const fullName = $('#staffFullName').val().trim();
+    const email    = $('#staffEmail').val().trim();
+    if (!fullName) { App.error('กรุณาระบุชื่อ-นามสกุล'); return; }
+    if (!email)    { App.error('กรุณาระบุอีเมล'); return; }
+
+    const btn = document.getElementById('staffModalSaveBtn');
+    btn.disabled = true;
+    const res = await API.createStaffUser(fullName, email);
+    btn.disabled = false;
+
+    if (res.success) {
+        App.success(res.message || 'สร้างบัญชีสำเร็จ');
+        $('#staffModal').modal('hide');
+        loadStaffList();
+    } else {
+        App.error(res.message || 'เกิดข้อผิดพลาด');
+    }
+}
+
+async function deleteStaffUser(userId, name) {
+    const confirmed = await App.confirm('ลบบัญชีผู้ดูแล', `ต้องการลบบัญชี "${name}" หรือไม่? สิทธิ์ทั้งหมดจะถูกลบด้วย`, 'warning');
+    if (!confirmed) return;
+    const res = await API.deleteStaffUser(userId);
+    if (res.success) {
+        App.success('ลบบัญชีสำเร็จ');
+        loadStaffList();
+    } else {
+        App.error(res.message || 'เกิดข้อผิดพลาด');
+    }
+}
+
+// ================================================================
 // INIT — load first tab, lazy-load others
 // ================================================================
 $(function() {
-    loadSaList('members');
+    loadStaffList();
 
     $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
         const target = $(e.target).attr('href');
+        if (target === '#pane-staff')      loadStaffList();
+        if (target === '#pane-members')    loadSaList('members');
         if (target === '#pane-news')       loadSaList('news');
         if (target === '#pane-activities') loadSaList('activities');
         if (target === '#pane-finance')    loadSaList('finance');

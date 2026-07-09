@@ -150,6 +150,44 @@ class SubAdminModel extends Model
     }
 
     /**
+     * Remove all sub-admin records for a given user (used when deleting staff account)
+     */
+    public function deleteAllForUser(int $userId): void
+    {
+        $this->delete(['user_id' => $userId]);
+    }
+
+    /**
+     * Get all staff (is_staff=1) users with their sub-admin area info
+     */
+    public function getStaffUsers(): array
+    {
+        $sql = "SELECT u.id, u.full_name, u.email, u.username, u.status, u.created_at,
+                       GROUP_CONCAT(DISTINCT CONCAT(sa.area, ':', IF(sa.is_active,1,0)) ORDER BY sa.area SEPARATOR ',') AS area_status
+                FROM users u
+                LEFT JOIN sub_admins sa ON sa.user_id = u.id
+                WHERE u.is_staff = 1
+                GROUP BY u.id
+                ORDER BY u.full_name ASC";
+
+        $rows = $this->db->query($sql)->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        foreach ($rows as &$row) {
+            $areas = [];
+            if (!empty($row['area_status'])) {
+                foreach (explode(',', $row['area_status']) as $part) {
+                    [$a, $active] = explode(':', $part);
+                    $areas[] = ['area' => $a, 'is_active' => (bool)(int)$active];
+                }
+            }
+            $row['areas'] = $areas;
+            unset($row['area_status']);
+        }
+
+        return $rows;
+    }
+
+    /**
      * Update permissions for a specific record
      */
     public function updatePermissions(int $userId, string $area, array $permissions): void

@@ -193,6 +193,9 @@ class RoleAccess
             'update-permissions'  => ['admin'],
             'my-permissions'      => ['member', 'admin'],
             'area-definitions'    => ['admin'],
+            'create-staff-user'   => ['admin'],
+            'list-staff-users'    => ['admin'],
+            'delete-staff-user'   => ['admin'],
         ],
     ];
 

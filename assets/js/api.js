@@ -717,4 +717,13 @@ const API = {
     async getMySubAdminPermissions() {
         return this.get(this.apiUrl('sub-admin', 'my-permissions'));
     },
+    async createStaffUser(fullName, email) {
+        return this.post(this.apiUrl('sub-admin', 'create-staff-user'), { full_name: fullName, email });
+    },
+    async listStaffUsers() {
+        return this.get(this.apiUrl('sub-admin', 'list-staff-users'));
+    },
+    async deleteStaffUser(userId) {
+        return this.post(this.apiUrl('sub-admin', 'delete-staff-user'), { user_id: userId });
+    },
 };

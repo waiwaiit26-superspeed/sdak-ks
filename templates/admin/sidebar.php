@@ -103,10 +103,12 @@ $page = $page ?? '';
                         <p>บริหารการเงิน</p>
                     </a>
                 </li>
+
+                <li class="nav-header" id="nav-header-system">ระบบบริหารจัดการ</li>
                 <li class="nav-item" id="nav-sub-admins">
                     <a href="./?page=sub-admins" class="nav-link <?= $page === 'sub-admins' ? 'active' : '' ?>">
                         <i class="nav-icon bi bi-person-gear"></i>
-                        <p>จัดการสิทธิ์ผู้ดูแล</p>
+                        <p>จัดการ Admin / Sub-Admin</p>
                     </a>
                 </li>
 
