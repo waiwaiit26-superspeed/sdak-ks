@@ -198,6 +198,10 @@ class RoleAccess
             'list-staff-users'    => ['admin'],
             'delete-staff-user'   => ['admin'],
         ],
+        'membertype' => [
+            'list'   => ['*'],
+            'detail' => ['*'],
+        ],
     ];
 
     /**

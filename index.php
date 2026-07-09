@@ -77,42 +77,9 @@ include ROOT_PATH . 'templates/public/header.php';
             <p class="section-subtitle" id="about-subtitle"><?php echo htmlspecialchars(siteConfig('site_name_short') . ' ' . siteConfig('site_name')); ?></p>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100">
-                    <div class="icon-wrapper bg-primary-custom text-white">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <h5>สมาชิกสามัญ</h5>
-                    <p class="text-muted">บุคคล/นิติบุคคลที่มีคุณสมบัติตามข้อบังคับ มีสิทธิ์ออกเสียงลงคะแนน สามารถสมัครเป็นสมาชิกตลอดชีพได้</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:var(--primary-light);color:#fff;">
-                        <i class="bi bi-person-badge"></i>
-                    </div>
-                    <h5>สมาชิกวิสามัญ</h5>
-                    <p class="text-muted">บุคคลทั่วไปหรือผู้สนใจที่มีคุณสมบัติไม่ครบ แต่อยากเข้าร่วมกิจกรรม สมัครรายปี</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:var(--primary-very-light);color:#fff;">
-                        <i class="bi bi-heart-fill"></i>
-                    </div>
-                    <h5>สมาชิกสมทบ</h5>
-                    <p class="text-muted">ผู้สนใจสนับสนุนกิจกรรมสมาคม หรือคู่สมรส/บุตรของสมาชิกสามัญ</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100">
-                    <div class="icon-wrapper" style="background:var(--primary-very-light);color:var(--primary-dark);opacity:.85;">
-                        <i class="bi bi-award-fill"></i>
-                    </div>
-                    <h5>สมาชิกกิตติมศักดิ์</h5>
-                    <p class="text-muted">ผู้ทรงคุณวุฒิ ทรงเกียรติ หรือผู้มีอุปการคุณแก่สมาคม ซึ่งคณะกรรมการเชิญ</p>
-                </div>
+        <div class="row g-4" id="member-types-container">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
             </div>
         </div>
     </div>
@@ -172,10 +139,38 @@ include ROOT_PATH . 'templates/public/header.php';
 <script>
 $(document).ready(function() {
     loadHeroFromSettings();
+    loadMemberTypesSection();
     loadLatestNews();
     loadUpcomingActivities();
     loadPublicStats();
 });
+
+async function loadMemberTypesSection() {
+    try {
+        const res = await API.getMemberTypes();
+        if (!res.success || !Array.isArray(res.data)) return;
+        
+        let html = '';
+        res.data.forEach(function(type) {
+            html += `
+                <div class="col-md-6 col-lg-3">
+                    <div class="feature-card h-100">
+                        <div class="icon-wrapper" style="background:${type.icon_bg || '#a78bfa'};color:${type.icon_color || '#3b0764'};">
+                            <i class="bi ${type.icon || 'bi-person-fill'}"></i>
+                        </div>
+                        <h5>${type.label}</h5>
+                        <p class="text-muted">${type.description || ''}</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        const container = document.getElementById('member-types-container');
+        if (container) container.innerHTML = html;
+    } catch (e) {
+        console.error('Error loading member types:', e);
+    }
+}
 
 async function loadHeroFromSettings() {
     try {
