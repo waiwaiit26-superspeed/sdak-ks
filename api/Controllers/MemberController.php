@@ -123,7 +123,13 @@ class MemberController extends Controller
                 if (in_array($f, ['home_address','work_address'])) {
                     $data[$f] = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE) : $val;
                 } else {
-                    $data[$f] = is_string($val) ? trim($val) : $val;
+                    // Trim and convert empty strings to null for nullable fields
+                    if (is_string($val)) {
+                        $trimmed = trim($val);
+                        $data[$f] = ($trimmed === '' && in_array($f, ['email', 'phone', 'work_phone', 'national_id'])) ? null : $trimmed;
+                    } else {
+                        $data[$f] = $val;
+                    }
                 }
             }
         }
@@ -269,7 +275,13 @@ class MemberController extends Controller
                     if (in_array($f, ['home_address','work_address'])) {
                         $data[$f] = is_array($val) ? json_encode($val, JSON_UNESCAPED_UNICODE) : $val;
                     } else {
-                        $data[$f] = is_string($val) ? trim($val) : $val;
+                        // Trim and convert empty strings to null for nullable fields
+                        if (is_string($val)) {
+                            $trimmed = trim($val);
+                            $data[$f] = ($trimmed === '' && in_array($f, ['email', 'phone', 'work_phone', 'national_id'])) ? null : $trimmed;
+                        } else {
+                            $data[$f] = $val;
+                        }
                     }
                 }
             }
