@@ -51,6 +51,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th>ชื่อกิจกรรม</th>
+                                    <th>วันจัดกิจกรรม</th>
                                     <th>วันที่</th>
                                     <th>สถานที่</th>
                                     <th>ค่าลงทะเบียน</th>
@@ -61,7 +62,7 @@
                                 </tr>
                             </thead>
                             <tbody id="activitiesTable">
-                                <tr><td colspan="9" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+                                <tr><td colspan="10" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -284,7 +285,7 @@ $(async function () {
 async function loadActivities(page = 1) {
     currentPage = page;
     const tbody = $('#activitiesTable');
-    tbody.html('<tr><td colspan="9" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>');
+    tbody.html('<tr><td colspan="10" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>');
 
     const params = { page, per_page: 20 };
     const status = $('#filterStatus').val();
@@ -294,7 +295,7 @@ async function loadActivities(page = 1) {
 
     const result = await API.getActivities(params);
     if (!result.success || !result.data || result.data.length === 0) {
-        tbody.html('<tr><td colspan="9" class="text-center py-4 text-muted">ไม่พบกิจกรรม</td></tr>');
+        tbody.html('<tr><td colspan="10" class="text-center py-4 text-muted">ไม่พบกิจกรรม</td></tr>');
         return;
     }
 
@@ -303,6 +304,7 @@ async function loadActivities(page = 1) {
         const idx = (currentPage - 1) * 20 + i + 1;
         const statusMap = { 'open': '<span class="badge bg-success">เปิดรับ</span>', 'closed': '<span class="badge bg-danger">ปิดรับ</span>', 'draft': '<span class="badge bg-secondary">แบบร่าง</span>', 'cancelled': '<span class="badge bg-dark">ยกเลิก</span>' };
         const statusBadge = statusMap[a.status] || '<span class="badge bg-secondary">' + a.status + '</span>';
+        const eventDate = a.event_date ? App.formatDateTime(a.event_date) : App.formatDateTime(a.start_date);
         const fee = a.has_fee && a.fee_amount > 0 ? App.formatCurrency(a.fee_amount) : 'ฟรี';
         const spots = a.max_participants > 0 ? `${a.approved_count || 0}/${a.max_participants}` : (a.approved_count || 0) + ' คน';
         const visBadge = a.visibility === 'members_only' ? '<span class="badge bg-warning text-dark"><i class="bi bi-lock me-1"></i>สมาชิก</span>'
@@ -316,6 +318,7 @@ async function loadActivities(page = 1) {
         html += `<tr>
             <td>${idx}</td>
             <td>${a.title}</td>
+            <td>${eventDate}</td>
             <td>${App.formatDate(a.start_date)}</td>
             <td>${a.location || '-'}</td>
             <td>${fee}</td>
