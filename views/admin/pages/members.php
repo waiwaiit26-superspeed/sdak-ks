@@ -1113,7 +1113,7 @@ async function confirmFeePayment(userId) {
     const btn = $('#btnConfirmFeePayment');
     const ok = await Swal.fire({
         title: 'ยืนยันว่าจ่ายเงินแล้ว?',
-        html: 'ระบบจะบันทึกการชำระเงิน และดำเนินการอนุมัติสมาชิกต่อทันที',
+        html: 'ระบบจะบันทึกการชำระเงิน แล้วแสดงขั้นตอนกำหนดเลขสมาชิกเพื่อยืนยันอนุมัติต่อ',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'ยืนยัน',
@@ -1135,32 +1135,11 @@ async function confirmFeePayment(userId) {
             App.toast(result.data.warnings.join(' | '), 'warning');
             setApproveInlineAlert(result.data.warnings.join(' | '), 'warning');
         }
-
-        // Continue to approve member automatically using next member number.
-        const feeStatus = await API.checkFeeStatus(userId);
-        const memberNumber = (feeStatus && feeStatus.success && feeStatus.data && feeStatus.data.next_member_number)
-            ? String(feeStatus.data.next_member_number).trim()
-            : '';
-
-        if (!memberNumber) {
-            setApproveInlineAlert('ยืนยันการชำระแล้ว แต่ไม่พบเลขสมาชิกถัดไป กรุณากดอนุมัติด้วยตนเอง', 'warning');
-            btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i> ยืนยันว่าจ่ายเงินแล้ว');
-            approveMember(pendingApproveUserId, 'approve');
-            return;
-        }
-
-        const approveResult = await API.approveMember(userId, 'approve', '', memberNumber);
-        if (approveResult.success) {
-            App.success(approveResult.message || 'อนุมัติสมาชิกสำเร็จ');
-            $('#approveModal').modal('hide');
-            membersTable.ajax.reload(null, false);
-            return;
-        }
-
-        setApproveInlineAlert('ยืนยันชำระแล้ว แต่อนุมัติสมาชิกไม่สำเร็จ: ' + (approveResult.message || 'กรุณาลองอีกครั้ง'), 'warning');
-        App.toast(approveResult.message || 'อนุมัติสมาชิกไม่สำเร็จ', 'warning');
-        approveMember(pendingApproveUserId, 'approve');
+        setApproveInlineAlert('ยืนยันการชำระเงินแล้ว กรุณาตรวจสอบเลขสมาชิกและกด "ยืนยันอนุมัติ"', 'success');
         btn.prop('disabled', false).html('<i class="bi bi-check2-circle me-1"></i> ยืนยันว่าจ่ายเงินแล้ว');
+
+        // Refresh modal content to show approved-fee state + member number input for manual final confirmation.
+        approveMember(pendingApproveUserId, 'approve');
     } else {
         const msg = result.message || 'ยืนยันการชำระเงินไม่สำเร็จ';
         App.toast(msg, 'error');
