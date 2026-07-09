@@ -361,6 +361,16 @@ class MemberController extends Controller
             $data['email'] = $emailVal !== '' ? $emailVal : null;
         }
 
+        // member_type — admin/sub-admin with edit permission may change
+        if (array_key_exists('member_type', $input)) {
+            $mt = trim((string)$input['member_type']);
+            if ($mt !== '') {
+                $validKeys = array_column($this->model('MemberTypeModel')->getActive(), 'type_key');
+                if (!in_array($mt, $validKeys, true)) Response::error('ประเภทสมาชิกไม่ถูกต้อง');
+            }
+            $data['member_type'] = $mt !== '' ? $mt : null;
+        }
+
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
 
         $filtered = $users->filterColumns($data);
@@ -397,6 +407,7 @@ class MemberController extends Controller
         if (isset($data['academic_rank']))  $result['academic_rank'] = $data['academic_rank'];
         if (isset($data['school_organization'])) $result['school_organization'] = $data['school_organization'];
         if (array_key_exists('email', $data)) $result['email'] = $data['email'] ?? '';
+        if (array_key_exists('member_type', $data)) $result['member_type'] = $data['member_type'] ?? '';
 
         Response::success($result, 'อัปเดตข้อมูลสำเร็จ');
     }

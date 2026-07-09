@@ -192,7 +192,8 @@ $(async function () {
             $b.data('position'),
             $b.data('rank'),
             $b.data('school') || '',
-            $b.data('email') || ''
+            $b.data('email') || '',
+            $b.data('member-type') || ''
         );
     });
 
@@ -334,7 +335,8 @@ async function loadDirectory(page = 1) {
                     data-position="${App.escapeHtml(m.position || '')}"
                     data-rank="${App.escapeHtml(m.academic_rank || '')}"
                     data-school="${App.escapeHtml(m.school_organization || '')}"
-                    data-email="${App.escapeHtml(m.email || '')}">
+                    data-email="${App.escapeHtml(m.email || '')}"
+                    data-member-type="${App.escapeHtml(m.member_type || '')}">
                     <i class="bi bi-pencil"></i></button>
                <button class="btn btn-xs btn-outline-warning dir-reset-btn" title="รีเซ็ตรหัสผ่าน"
                     data-id="${m.id}" data-name="${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}">
@@ -472,6 +474,12 @@ async function loadDirectory(page = 1) {
                     <label class="font-weight-bold">อีเมล <small class="text-muted font-weight-normal">(ไม่บังคับกรอก)</small></label>
                     <input type="email" class="form-control" id="dirEditEmail" placeholder="example@email.com" autocomplete="off">
                 </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">ประเภทสมาชิก</label>
+                    <select class="form-control" id="dirEditMemberType">
+                        <option value="">— ไม่ระบุ —</option>
+                    </select>
+                </div>
                 <!-- Summary preview -->
                 <div class="callout callout-info py-2 px-3 mb-0" id="dirEditSummaryBox">
                     <small class="text-muted d-block mb-1">ตัวอย่างการแสดงผล</small>
@@ -568,11 +576,17 @@ $('#dirEditPosition').on('change', function () {
     updateDirEditSummary();
 });
 
-function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school, email) {
+function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school, email, memberType) {
     _dirEditUserId = userId;
     $('#dirEditMemberNumber').val(memberNumber);
     $('#dirEditSchool').val(school || '');
     $('#dirEditEmail').val(email || '');
+    // Member type dropdown — populate from _memberTypesList then select current value
+    let mtOpts = '<option value="">— ไม่ระบุ —</option>';
+    (_memberTypesList || []).forEach(function(t) {
+        mtOpts += '<option value="' + App.escapeHtml(t.type_key) + '">' + App.escapeHtml(t.label_short || t.label) + '</option>';
+    });
+    $('#dirEditMemberType').html(mtOpts).val(memberType || '');
     // Prefix dropdown
     if (prefix && !$('#dirEditPrefix option[value="' + prefix + '"]').length) {
         $('#dirEditPrefix').val('other');
@@ -634,6 +648,7 @@ async function saveDirectoryEdit() {
         academic_rank:       academicRank,
         school_organization: school,
         email:               email,
+        member_type:         $('#dirEditMemberType').val(),
     });
 
     btn.prop('disabled', false).html('<i class="bi bi-check-lg me-1"></i> บันทึก');
@@ -682,6 +697,12 @@ async function saveDirectoryEdit() {
         }
         if (res.data.email !== undefined) {
             $editBtn.data('email', res.data.email || '');
+        }
+        // member_type — update badge and data attribute
+        if (res.data.member_type !== undefined) {
+            const newType = res.data.member_type || '';
+            $editBtn.data('member-type', newType);
+            row.find('td:nth-child(4)').html(App.getMemberTypeBadge(newType));
         }
     }
     _dirEditUserId = null;
