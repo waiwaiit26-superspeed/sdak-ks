@@ -819,7 +819,18 @@ $(async function () {
 
         updateData.payer_address = collectEditAddressJson();
         updateData.address_source = getEditAddressSource();
-        updateData.sync_profile_address = $('#editSyncProfileAddress').is(':checked') ? 1 : 0;
+        const syncProfileAddress = $('#editSyncProfileAddress').is(':checked');
+        updateData.sync_profile_address = syncProfileAddress ? 1 : 0;
+
+        if (syncProfileAddress) {
+            const sourceLabel = getEditAddressSource() === 'current' ? 'ที่อยู่ปัจจุบัน' : 'ที่อยู่ที่ทำงาน';
+            const ok = await App.confirm(
+                'ยืนยันอัปเดตโปรไฟล์สมาชิก',
+                `การบันทึกครั้งนี้จะอัปเดต ${sourceLabel} ในโปรไฟล์สมาชิกด้วย ต้องการดำเนินการต่อหรือไม่?`,
+                'warning'
+            );
+            if (!ok) return;
+        }
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
