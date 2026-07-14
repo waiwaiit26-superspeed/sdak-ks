@@ -273,6 +273,26 @@
                 </div>
                 <hr>
                 <h6 class="mb-3"><i class="bi bi-geo-alt me-1"></i>ที่อยู่ผู้ชำระเงิน</h6>
+                <div class="mb-3" id="editAddressSourceWrap">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <div class="form-check form-check-inline mb-0">
+                            <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceWork" value="work" checked>
+                            <label class="form-check-label" for="editAddressSourceWork">ใช้ที่อยู่ที่ทำงาน</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0">
+                            <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceCurrent" value="current">
+                            <label class="form-check-label" for="editAddressSourceCurrent">ใช้ที่อยู่ปัจจุบัน</label>
+                        </div>
+                        <button type="button" class="btn btn-outline-info btn-sm" id="btnLoadAddressFromProfile">
+                            <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
+                        </button>
+                    </div>
+                    <small class="text-muted">ใช้ข้อมูลที่อยู่เดียวกับหน้าโปรไฟล์สมาชิก</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">หน่วยงาน/สถานที่ทำงาน</label>
+                    <input type="text" id="editAddrOrg" class="form-control form-control-sm" placeholder="หน่วยงาน">
+                </div>
                 <div class="row mb-3">
                     <div class="col-4">
                         <label class="form-label small text-muted">เลขที่</label>
@@ -386,6 +406,7 @@ let currentPage = 1;
 let modalReceiptData = null;
 let membersCache = [];
 let categoriesCache = [];
+let profileAddressCache = {};
 
 function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
     const modalBody = document.getElementById(bodyId);
@@ -454,6 +475,143 @@ function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
 
 function getCreateAddressSource() {
     return $('input[name="createAddressSource"]:checked').val() || 'work';
+}
+
+function getEditAddressSource() {
+    return $('input[name="editAddressSource"]:checked').val() || 'work';
+}
+
+function parseAddressForEditFields(raw) {
+    let addr = {};
+    try {
+        addr = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+    } catch(e) {
+        addr = {};
+    }
+    if (!addr || typeof addr !== 'object') addr = {};
+
+    let detail = addr.detail || '';
+    let no = '', moo = '', soi = '', road = '';
+
+    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+    no = detail.trim();
+
+    return {
+        organization: addr.organization || '',
+        no,
+        moo,
+        soi,
+        road,
+        subdistrict: addr.subdistrict || '',
+        district: addr.district || '',
+        province: addr.province || '',
+        zipcode: addr.zipcode || ''
+    };
+}
+
+function fillEditAddressFields(raw) {
+    const f = parseAddressForEditFields(raw);
+    $('#editAddrOrg').val(f.organization);
+    $('#editAddrNo').val(f.no);
+    $('#editAddrMoo').val(f.moo);
+    $('#editAddrSoi').val(f.soi);
+    $('#editAddrRoad').val(f.road);
+    $('#editAddrSub').val(f.subdistrict);
+    $('#editAddrDist').val(f.district);
+    $('#editAddrProv').val(f.province);
+    $('#editAddrZip').val(f.zipcode);
+}
+
+function collectEditAddressJson() {
+    const org  = $('#editAddrOrg').val().trim();
+    const no   = $('#editAddrNo').val().trim();
+    const moo  = $('#editAddrMoo').val().trim();
+    const soi  = $('#editAddrSoi').val().trim();
+    const road = $('#editAddrRoad').val().trim();
+    const sub  = $('#editAddrSub').val().trim();
+    const dist = $('#editAddrDist').val().trim();
+    const prov = $('#editAddrProv').val().trim();
+    const zip  = $('#editAddrZip').val().trim();
+
+    let detail = no && no !== '-' ? no : '';
+    if (moo && moo !== '-') detail += '   หมู่ ' + moo;
+    if (soi && soi !== '-') detail += '   ซอย ' + soi;
+    if (road && road !== '-') detail += '   ถนน ' + road;
+    detail = detail.trim();
+
+    if (org || detail || sub || dist || prov || zip) {
+        return JSON.stringify({
+            organization: org,
+            detail,
+            subdistrict: sub,
+            district: dist,
+            province: prov,
+            zipcode: zip
+        });
+    }
+    return null;
+}
+
+function memberHasAddressFields(member) {
+    if (!member) return false;
+    return !!(member.work_address || member.home_address || member.school_organization);
+}
+
+async function getMemberAddressProfile(userId) {
+    if (!userId) return null;
+    const uid = String(userId);
+    if (profileAddressCache[uid]) return profileAddressCache[uid];
+
+    const cachedMember = membersCache.find(m => String(m.id) === uid);
+    if (memberHasAddressFields(cachedMember)) {
+        profileAddressCache[uid] = cachedMember;
+        return cachedMember;
+    }
+
+    const result = await API.getProfile(parseInt(uid, 10));
+    if (result.success && result.data) {
+        profileAddressCache[uid] = result.data;
+        return result.data;
+    }
+    return null;
+}
+
+function toggleEditAddressSourceUI(enabled) {
+    $('input[name="editAddressSource"]').prop('disabled', !enabled);
+    $('#btnLoadAddressFromProfile').prop('disabled', !enabled);
+    if (!enabled) {
+        $('#editAddressSourceWrap small').text('ใบเสร็จนี้ไม่ได้ผูกกับสมาชิกในระบบ');
+    } else {
+        $('#editAddressSourceWrap small').text('ใช้ข้อมูลที่อยู่เดียวกับหน้าโปรไฟล์สมาชิก');
+    }
+}
+
+async function applyProfileAddressToEdit(showSuccess = false) {
+    if (!modalReceiptData || !modalReceiptData.user_id) {
+        toggleEditAddressSourceUI(false);
+        return;
+    }
+
+    const member = await getMemberAddressProfile(modalReceiptData.user_id);
+    if (!member) {
+        App.error('ไม่สามารถโหลดที่อยู่จากโปรไฟล์สมาชิกได้');
+        return;
+    }
+
+    const source = getEditAddressSource();
+    const addrJson = buildPayerAddress(member, source);
+    if (!addrJson) {
+        App.error('ไม่พบข้อมูลที่อยู่ตามตัวเลือกที่เลือก');
+        return;
+    }
+
+    fillEditAddressFields(addrJson);
+    if (showSuccess) App.success('โหลดที่อยู่จากโปรไฟล์สมาชิกแล้ว');
 }
 
 function applyMemberAddressForCreate(member) {
@@ -634,27 +792,7 @@ $(async function () {
             updateData.description = desc;
         }
 
-        // Build structured address JSON
-        const no   = $('#editAddrNo').val().trim();
-        const moo  = $('#editAddrMoo').val().trim();
-        const soi  = $('#editAddrSoi').val().trim();
-        const road = $('#editAddrRoad').val().trim();
-        const sub  = $('#editAddrSub').val().trim();
-        const dist = $('#editAddrDist').val().trim();
-        const prov = $('#editAddrProv').val().trim();
-        const zip  = $('#editAddrZip').val().trim();
-
-        let detail = no && no !== '-' ? no : '';
-        if (moo && moo !== '-') detail += '   หมู่ ' + moo;
-        if (soi && soi !== '-') detail += '   ซอย ' + soi;
-        if (road && road !== '-') detail += '   ถนน ' + road;
-        detail = detail.trim();
-
-        if (detail || sub || dist || prov) {
-            updateData.payer_address = JSON.stringify({ detail, subdistrict: sub, district: dist, province: prov, zipcode: zip });
-        } else {
-            updateData.payer_address = null;
-        }
+        updateData.payer_address = collectEditAddressJson();
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
@@ -680,6 +818,14 @@ $(async function () {
     $('#editReceiptNumber, #editIssuedDate').on('input change', function() {
         clearTimeout(editDupTimer);
         editDupTimer = setTimeout(checkEditDuplicate, 400);
+    });
+
+    $('input[name="editAddressSource"]').on('change', function() {
+        applyProfileAddressToEdit(false);
+    });
+
+    $('#btnLoadAddressFromProfile').on('click', function() {
+        applyProfileAddressToEdit(true);
     });
 });
 
@@ -821,29 +967,9 @@ function openEditReceiptNumber() {
     $('#editPayerName').val(modalReceiptData.payer_name || '');
     $('#editDescription').val(modalReceiptData.description || '');
 
-    // Parse payer_address into structured fields
-    let addr = {};
-    try { addr = JSON.parse(modalReceiptData.payer_address); } catch(e) {}
-    if (!addr || typeof addr !== 'object') addr = {};
-
-    let detail = addr.detail || '';
-    let no = '', moo = '', soi = '', road = '';
-    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
-    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
-    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
-    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
-    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
-    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
-    no = detail.trim();
-
-    $('#editAddrNo').val(no);
-    $('#editAddrMoo').val(moo);
-    $('#editAddrSoi').val(soi);
-    $('#editAddrRoad').val(road);
-    $('#editAddrSub').val(addr.subdistrict || '');
-    $('#editAddrDist').val(addr.district || '');
-    $('#editAddrProv').val(addr.province || '');
-    $('#editAddrZip').val(addr.zipcode || '');
+    fillEditAddressFields(modalReceiptData.payer_address || '');
+    $('#editAddressSourceWork').prop('checked', true);
+    toggleEditAddressSourceUI(!!modalReceiptData.user_id);
 
     // Update book number info display
     updateEditReceiptInfo();
@@ -1058,7 +1184,7 @@ async function loadReceipts(page = 1) {
                 <button class="btn btn-outline-primary btn-sm" onclick="viewReceipt(${r.id})" title="ดูใบเสร็จ">
                     <i class="bi bi-eye"></i>
                 </button>
-                ${canEdit ? `<button class="btn btn-outline-warning btn-sm" onclick="quickEditReceipt(${r.id})" title="แก้ไข" data-receipt='${JSON.stringify({id:r.id, receipt_number:r.receipt_number, book_number:r.book_number, issued_date:r.issued_date, payer_name:r.payer_name||r.full_name||'', payer_address:r.payer_address||'', receipt_type:r.receipt_type||'other', reference_id:r.reference_id||null, description:r.description||''}).replace(/'/g, "&#39;")}'>
+                ${canEdit ? `<button class="btn btn-outline-warning btn-sm" onclick="quickEditReceipt(${r.id})" title="แก้ไข" data-receipt='${JSON.stringify({id:r.id, user_id:r.user_id||null, receipt_number:r.receipt_number, book_number:r.book_number, issued_date:r.issued_date, payer_name:r.payer_name||r.full_name||'', payer_address:r.payer_address||'', receipt_type:r.receipt_type||'other', reference_id:r.reference_id||null, description:r.description||''}).replace(/'/g, "&#39;")}'>
                     <i class="bi bi-pencil"></i>
                 </button>` : ''}
             </td>
@@ -1578,30 +1704,9 @@ function applyRefDataToEditForm(refData) {
         home_address: refData.home_address || '',
         school_organization: refData.school_organization || ''
     };
-    const addrJson = buildPayerAddress(fakeMember, 'work');
+    const addrJson = buildPayerAddress(fakeMember, getEditAddressSource());
     if (addrJson) {
-        try {
-            const addr = JSON.parse(addrJson);
-            let detail = addr.detail || '';
-            let no = '', moo = '', soi = '', road = '';
-
-            const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
-            if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
-            const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
-            if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
-            const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
-            if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
-            no = detail.trim();
-
-            $('#editAddrNo').val(no);
-            $('#editAddrMoo').val(moo);
-            $('#editAddrSoi').val(soi);
-            $('#editAddrRoad').val(road);
-            $('#editAddrSub').val(addr.subdistrict || '');
-            $('#editAddrDist').val(addr.district || '');
-            $('#editAddrProv').val(addr.province || '');
-            $('#editAddrZip').val(addr.zipcode || '');
-        } catch(e) {}
+        fillEditAddressFields(addrJson);
     }
 }
 
