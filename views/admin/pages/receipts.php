@@ -283,11 +283,8 @@
                             <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceCurrent" value="current">
                             <label class="form-check-label" for="editAddressSourceCurrent">ใช้ที่อยู่ปัจจุบัน</label>
                         </div>
-                        <button type="button" class="btn btn-outline-info btn-sm" id="btnLoadAddressFromProfile">
-                            <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
-                        </button>
                     </div>
-                    <small class="text-muted">ใช้ข้อมูลที่อยู่เดียวกับหน้าโปรไฟล์สมาชิก</small>
+                    <small class="text-muted">ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small text-muted">หน่วยงาน/สถานที่ทำงาน</label>
@@ -583,11 +580,10 @@ async function getMemberAddressProfile(userId) {
 
 function toggleEditAddressSourceUI(enabled) {
     $('input[name="editAddressSource"]').prop('disabled', !enabled);
-    $('#btnLoadAddressFromProfile').prop('disabled', !enabled);
     if (!enabled) {
         $('#editAddressSourceWrap small').text('ใบเสร็จนี้ไม่ได้ผูกกับสมาชิกในระบบ');
     } else {
-        $('#editAddressSourceWrap small').text('ใช้ข้อมูลที่อยู่เดียวกับหน้าโปรไฟล์สมาชิก');
+        $('#editAddressSourceWrap small').text('ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ');
     }
 }
 
@@ -837,10 +833,6 @@ $(async function () {
 
     $('input[name="editAddressSource"]').on('change', function() {
         applyProfileAddressToEdit(false);
-    });
-
-    $('#btnLoadAddressFromProfile').on('click', function() {
-        applyProfileAddressToEdit(true);
     });
 });
 
