@@ -166,16 +166,16 @@
                     <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
                     <div class="mb-2">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourceOrg" value="organization" checked>
-                            <label class="form-check-label" for="createAddressSourceOrg">ใช้ที่อยู่หน่วยงาน/โรงเรียน</label>
+                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourceOrg" value="work" checked>
+                            <label class="form-check-label" for="createAddressSourceOrg">ใช้ที่อยู่ที่ทำงาน</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourcePersonal" value="personal">
-                            <label class="form-check-label" for="createAddressSourcePersonal">ใช้ที่อยู่ส่วนตัว</label>
+                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourcePersonal" value="current">
+                            <label class="form-check-label" for="createAddressSourcePersonal">ใช้ที่อยู่ปัจจุบัน</label>
                         </div>
                     </div>
                     <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
-                    <small class="text-muted">ค่าเริ่มต้นเป็นที่อยู่หน่วยงาน และสามารถแก้ไขเองได้</small>
+                    <small class="text-muted">ค่าเริ่มต้นเป็นที่อยู่ที่ทำงาน และสามารถแก้ไขเองได้</small>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -453,7 +453,7 @@ function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
 }
 
 function getCreateAddressSource() {
-    return $('input[name="createAddressSource"]:checked').val() || 'organization';
+    return $('input[name="createAddressSource"]:checked').val() || 'work';
 }
 
 function applyMemberAddressForCreate(member) {
@@ -896,10 +896,10 @@ function toBase64(url) {
 }
 
 // Build payer address from member data → returns JSON string (mirrors PHP FeeController::buildPayerAddress)
-function buildPayerAddress(member, source = 'organization') {
+function buildPayerAddress(member, source = 'work') {
     if (!member) return '';
     const organization = (member.school_organization || '').trim();
-    const fields = source === 'personal' ? ['home_address'] : ['work_address', 'home_address'];
+    const fields = source === 'current' ? ['home_address'] : ['work_address', 'home_address'];
 
     for (const field of fields) {
         let wa = member[field];
@@ -923,10 +923,10 @@ function buildPayerAddress(member, source = 'organization') {
             const subdistrict = (wa.subdistrict || '').trim();
             const district    = (wa.district || '').trim();
             const province    = (wa.province || '').trim();
-            const zipcode     = (wa.zipcode || '').trim();
+            const zipcode     = (wa.zipcode || wa.postal_code || '').trim();
             if (detail || subdistrict || district || province || organization) {
                 return JSON.stringify({
-                    organization: source === 'organization' ? organization : '',
+                    organization: source === 'work' ? organization : '',
                     detail,
                     subdistrict,
                     district,
@@ -937,7 +937,7 @@ function buildPayerAddress(member, source = 'organization') {
         }
     }
 
-    if (source === 'organization' && organization) {
+    if (source === 'work' && organization) {
         return JSON.stringify({
             organization,
             detail: '',
@@ -1520,7 +1520,7 @@ function applyRefDataToEditForm(refData) {
         home_address: refData.home_address || '',
         school_organization: refData.school_organization || ''
     };
-    const addrJson = buildPayerAddress(fakeMember, 'organization');
+    const addrJson = buildPayerAddress(fakeMember, 'work');
     if (addrJson) {
         try {
             const addr = JSON.parse(addrJson);

@@ -208,7 +208,10 @@ class ReceiptController extends Controller
         $users = $this->model('UserModel');
         $user = null;
         $userId = !empty($input['user_id']) ? (int)$input['user_id'] : null;
-        $addressSource = ($input['address_source'] ?? 'organization') === 'personal' ? 'personal' : 'organization';
+        $rawAddressSource = strtolower(trim((string)($input['address_source'] ?? 'work')));
+        $addressSource = in_array($rawAddressSource, ['current', 'home', 'personal'], true)
+            ? 'personal'
+            : 'organization';
 
         if ($userId) {
             $user = $users->find($userId);
