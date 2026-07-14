@@ -23,6 +23,34 @@ class ActivityController extends Controller
         }
     }
 
+    private function hasActivitiesManageAccess(): bool
+    {
+        if (!$this->currentUser) return false;
+        if ($this->currentUser['role'] === 'admin') return true;
+        $sa = $this->model('SubAdminModel');
+        $uid = (int)$this->currentUser['id'];
+        return $sa->hasPermission($uid, 'activities', 'create')
+            || $sa->hasPermission($uid, 'activities', 'edit')
+            || $sa->hasPermission($uid, 'activities', 'delete');
+    }
+
+    private function hasFinanceManageAccess(): bool
+    {
+        if (!$this->currentUser) return false;
+        if ($this->currentUser['role'] === 'admin') return true;
+        $fm = $this->model('FinanceManagerModel');
+        $manager = $fm->getByUserId((int)$this->currentUser['id']);
+        return (bool)($manager && !empty($manager['is_active']));
+    }
+
+    private function requireActivityOrFinanceManageAccess(): void
+    {
+        if ($this->hasActivitiesManageAccess() || $this->hasFinanceManageAccess()) {
+            return;
+        }
+        Response::error('คุณไม่มีสิทธิ์เข้าถึงส่วนนี้', 403);
+    }
+
     /* ------------------------------------------------------------------ */
     /*  PUBLIC                                                             */
     /* ------------------------------------------------------------------ */
@@ -344,7 +372,7 @@ class ActivityController extends Controller
     public function approveRegistration(): void
     {
         $this->requirePost();
-        $this->requireFinanceOrAdmin();
+        $this->requireActivityOrFinanceManageAccess();
         $input = $this->input();
         $regId  = (int)($input['registration_id'] ?? 0);
         $status = $input['status'] ?? '';
@@ -471,7 +499,7 @@ class ActivityController extends Controller
      */
     public function registrations(): void
     {
-        $this->requireFinanceOrAdmin();
+        $this->requireActivityOrFinanceManageAccess();
 
         $actId = (int)$this->query('id');
         if (!$actId) Response::error('กรุณาระบุ id กิจกรรม');
@@ -480,6 +508,370 @@ class ActivityController extends Controller
         $list = $reg->getByActivity($actId);
 
         Response::success($list);
+    }
+
+    /**
+     * GET  ?controller=activity&action=search-members&id=ACTIVITY_ID&q=...
+     * Search approved members not yet registered in this activity
+     */
+    public function searchMembers(): void
+    {
+        $this->requireActivityOrFinanceManageAccess();
+
+        $actId = (int)$this->query('id');
+        if (!$actId) Response::error('กรุณาระบุ id กิจกรรม');
+
+        $activity = $this->model('ActivityModel');
+        $act = $activity->find($actId);
+        if (!$act) Response::error('ไม่พบกิจกรรม', 404);
+
+        $users = $this->model('UserModel');
+        $reg = $this->model('ActivityRegistrationModel');
+        $db = $users->getDB();
+        $q = trim((string)$this->query('q', ''));
+
+        $alreadyRows = $reg->all(['user_id'], ['activity_id' => $actId]);
+        $excludeIds = array_map(static function ($r) {
+            return (int)($r['user_id'] ?? 0);
+        }, $alreadyRows ?: []);
+
+        $where = [
+            'role' => 'member',
+            'status' => 'active',
+            'ORDER' => ['full_name' => 'ASC'],
+            'LIMIT' => 30,
+        ];
+
+        if (!empty($excludeIds)) {
+            $where['id[!]'] = $excludeIds;
+        }
+
+        if ($q !== '') {
+            $where['OR'] = [
+                'full_name[~]' => '%' . $q . '%',
+                'email[~]' => '%' . $q . '%',
+            ];
+            if ($users->hasColumn('first_name')) {
+                $where['OR']['first_name[~]'] = '%' . $q . '%';
+            }
+            if ($users->hasColumn('last_name')) {
+                $where['OR']['last_name[~]'] = '%' . $q . '%';
+            }
+            if ($users->hasColumn('member_number')) {
+                $where['OR']['member_number[~]'] = '%' . $q . '%';
+            }
+        }
+
+        $columns = ['id', 'full_name', 'email', 'school_organization', 'member_type'];
+        if ($users->hasColumn('member_number')) {
+            $columns[] = 'member_number';
+        }
+
+        $data = $db->select('users', $columns, $where) ?: [];
+        Response::success($data);
+    }
+
+    /**
+     * POST  ?controller=activity&action=add-member-registration
+     * Admin/sub-admin adds a member into activity registration list
+     */
+    public function addMemberRegistration(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $actId = (int)($input['activity_id'] ?? 0);
+        $userId = (int)($input['user_id'] ?? 0);
+        if (!$actId || !$userId) Response::error('กรุณาระบุ activity_id และ user_id');
+
+        $activity = $this->model('ActivityModel');
+        $act = $activity->find($actId);
+        if (!$act) Response::error('ไม่พบกิจกรรม', 404);
+
+        $users = $this->model('UserModel');
+        $user = $users->find($userId, ['id', 'full_name', 'role', 'status']);
+        if (!$user || ($user['role'] ?? '') !== 'member') Response::error('ไม่พบสมาชิก', 404);
+        if (($user['status'] ?? '') !== 'active') Response::error('สมาชิกยังไม่พร้อมลงทะเบียน', 400);
+
+        $reg = $this->model('ActivityRegistrationModel');
+        if ($reg->findUserRegistration($actId, $userId)) {
+            Response::error('สมาชิกท่านนี้ลงทะเบียนกิจกรรมนี้แล้ว');
+        }
+
+        $paymentStatus = $act['has_fee'] ? 'pending' : 'not_required';
+        $id = $reg->create([
+            'activity_id' => $actId,
+            'user_id' => $userId,
+            'status' => 'pending',
+            'payment_status' => $paymentStatus,
+            'payment_proof' => null,
+            'note' => $input['note'] ?? null,
+        ]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'add_registration',
+            'activity',
+            "เพิ่มสมาชิกเข้ากิจกรรม: {$user['full_name']}",
+            $actId,
+            'activity'
+        );
+
+        Response::success(['id' => $id], 'เพิ่มสมาชิกเข้าร่วมกิจกรรมสำเร็จ', 201);
+    }
+
+    /**
+     * GET  ?controller=activity&action=registration-detail&registration_id=X
+     */
+    public function registrationDetail(): void
+    {
+        $this->requireActivityOrFinanceManageAccess();
+
+        $regId = (int)$this->query('registration_id');
+        if (!$regId) Response::error('กรุณาระบุ registration_id');
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $row = $reg->getJoin(
+            [
+                '[>]users' => ['user_id' => 'id'],
+                '[>]activities' => ['activity_id' => 'id'],
+            ],
+            [
+                'activity_registrations.id',
+                'activity_registrations.activity_id',
+                'activity_registrations.user_id',
+                'activity_registrations.status',
+                'activity_registrations.payment_status',
+                'activity_registrations.payment_proof',
+                'activity_registrations.note',
+                'activity_registrations.registered_at',
+                'activity_registrations.approved_at',
+                'users.full_name',
+                'users.email',
+                'users.school_organization',
+                'users.work_address',
+                'users.home_address',
+                'activities.title(activity_title)',
+                'activities.has_fee',
+                'activities.fee_amount',
+            ],
+            ['activity_registrations.id' => $regId]
+        );
+
+        if (!$row) Response::error('ไม่พบข้อมูลการลงทะเบียน', 404);
+
+        $receipts = $this->model('ReceiptModel');
+        $receipt = $receipts->findByReference('activity_fee', (int)$row['id']);
+        $row['receipt'] = $receipt ? [
+            'id' => (int)$receipt['id'],
+            'book_number' => $receipt['book_number'],
+            'receipt_number' => $receipt['receipt_number'],
+        ] : null;
+
+        Response::success($row);
+    }
+
+    /**
+     * POST  ?controller=activity&action=manage-registration
+     * Update registration status/payment/slip/note by admin or assigned sub-admin
+     */
+    public function manageRegistration(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $regId = (int)($input['registration_id'] ?? 0);
+        if (!$regId) Response::error('กรุณาระบุ registration_id');
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $item = $reg->find($regId);
+        if (!$item) Response::error('ไม่พบข้อมูลการลงทะเบียน', 404);
+
+        $data = [];
+        if (isset($input['status'])) {
+            $status = trim((string)$input['status']);
+            if (!in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
+                Response::error('สถานะการเข้าร่วมไม่ถูกต้อง');
+            }
+            $data['status'] = $status;
+            if (in_array($status, ['approved', 'rejected'], true)) {
+                $data['approved_by'] = (int)$this->currentUser['id'];
+                $data['approved_at'] = date('Y-m-d H:i:s');
+            }
+        }
+
+        if (isset($input['payment_status'])) {
+            $pay = trim((string)$input['payment_status']);
+            if (!in_array($pay, ['not_required', 'pending', 'paid', 'refunded'], true)) {
+                Response::error('สถานะการชำระเงินไม่ถูกต้อง');
+            }
+            $data['payment_status'] = $pay;
+        }
+
+        if (array_key_exists('payment_proof', $input)) {
+            $data['payment_proof'] = $input['payment_proof'] ?: null;
+        }
+
+        if (array_key_exists('note', $input)) {
+            $data['note'] = $input['note'] ?: null;
+        }
+
+        if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องบันทึก');
+
+        $reg->update($data, ['id' => $regId]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'manage_registration',
+            'activity',
+            "จัดการข้อมูลผู้ลงทะเบียน #{$regId}",
+            (int)$item['activity_id'],
+            'activity'
+        );
+
+        Response::success(null, 'บันทึกข้อมูลผู้ลงทะเบียนสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=activity&action=update-registration-address
+     * Update member address info for a registration
+     */
+    public function updateRegistrationAddress(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $regId = (int)($input['registration_id'] ?? 0);
+        if (!$regId) Response::error('กรุณาระบุ registration_id');
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $item = $reg->find($regId);
+        if (!$item) Response::error('ไม่พบข้อมูลการลงทะเบียน', 404);
+
+        $users = $this->model('UserModel');
+        $user = $users->find((int)$item['user_id']);
+        if (!$user) Response::error('ไม่พบสมาชิก', 404);
+
+        $data = [];
+        if (array_key_exists('school_organization', $input)) {
+            $data['school_organization'] = trim((string)$input['school_organization']) ?: null;
+        }
+        if (array_key_exists('work_address', $input)) {
+            $workAddress = is_array($input['work_address'])
+                ? json_encode($input['work_address'], JSON_UNESCAPED_UNICODE)
+                : (string)$input['work_address'];
+            $data['work_address'] = $workAddress !== '' ? $workAddress : null;
+        }
+        if (array_key_exists('home_address', $input)) {
+            $homeAddress = is_array($input['home_address'])
+                ? json_encode($input['home_address'], JSON_UNESCAPED_UNICODE)
+                : (string)$input['home_address'];
+            $data['home_address'] = $homeAddress !== '' ? $homeAddress : null;
+        }
+
+        if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องอัปเดต');
+
+        $users->update($data, ['id' => (int)$item['user_id']]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'update_member_address',
+            'activity',
+            "แก้ไขที่อยู่สมาชิกจากกิจกรรม #{$regId}",
+            (int)$item['activity_id'],
+            'activity'
+        );
+
+        Response::success(null, 'บันทึกที่อยู่สมาชิกสำเร็จ');
+    }
+
+    /**
+     * POST  ?controller=activity&action=create-registration-receipt
+     * Create activity receipt independently from approval status
+     */
+    public function createRegistrationReceipt(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $regId = (int)($input['registration_id'] ?? 0);
+        if (!$regId) Response::error('กรุณาระบุ registration_id');
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $registration = $reg->find($regId);
+        if (!$registration) Response::error('ไม่พบข้อมูลการลงทะเบียน', 404);
+
+        $receipts = $this->model('ReceiptModel');
+        $existing = $receipts->findByReference('activity_fee', $regId);
+        if ($existing) {
+            Response::success([
+                'receipt_id' => (int)$existing['id'],
+                'receipt_book' => $existing['book_number'] ?? null,
+                'receipt_number' => $existing['receipt_number'] ?? null,
+            ], 'มีใบเสร็จสำหรับรายการนี้แล้ว');
+            return;
+        }
+
+        $activity = $this->model('ActivityModel');
+        $act = $activity->find((int)$registration['activity_id']);
+        if (!$act) Response::error('ไม่พบกิจกรรม', 404);
+        if (empty($act['has_fee']) || (float)($act['fee_amount'] ?? 0) <= 0) {
+            Response::error('กิจกรรมนี้ไม่มีค่าลงทะเบียน จึงไม่สามารถออกใบเสร็จได้');
+        }
+
+        $users = $this->model('UserModel');
+        $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address', 'home_address']);
+        if (!$user) Response::error('ไม่พบข้อมูลสมาชิก', 404);
+
+        $rawSource = strtolower(trim((string)($input['address_source'] ?? 'work')));
+        $addressSource = in_array($rawSource, ['current', 'home', 'personal'], true) ? 'personal' : 'organization';
+        $payerAddress = $input['payer_address'] ?? null;
+        if (!$payerAddress) {
+            $payerAddress = FeeController::buildPayerAddress($user, $addressSource);
+        }
+
+        $settings = $this->model('SettingsModel');
+        $description = $act['fee_description']
+            ? "ค่าลงทะเบียนเข้าร่วม \"{$act['title']}\" ({$act['fee_description']})"
+            : "ค่าลงทะเบียนเข้าร่วม \"{$act['title']}\"";
+
+        try {
+            $receiptId = $receipts->createReceipt([
+                'user_id'       => (int)$registration['user_id'],
+                'receipt_type'  => 'activity_fee',
+                'reference_id'  => (int)$registration['id'],
+                'title'         => 'ค่าลงทะเบียนกิจกรรม',
+                'payer_name'    => $user['full_name'],
+                'payer_address' => $payerAddress,
+                'description'   => $description,
+                'amount'        => (float)$act['fee_amount'],
+                'received_by'   => $settings->get('signature_name', ''),
+                'issued_date'   => date('Y-m-d'),
+            ]);
+        } catch (\Throwable $e) {
+            Response::error($e->getMessage() ?: 'ไม่สามารถสร้างใบเสร็จได้');
+        }
+
+        $newReceipt = $receipts->find((int)$receiptId);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'create_receipt',
+            'activity',
+            "ออกใบเสร็จกิจกรรมจากการลงทะเบียน #{$regId}",
+            (int)$registration['activity_id'],
+            'activity'
+        );
+
+        Response::success([
+            'receipt_id' => (int)$receiptId,
+            'receipt_book' => $newReceipt['book_number'] ?? null,
+            'receipt_number' => $newReceipt['receipt_number'] ?? null,
+        ], 'สร้างใบเสร็จสำเร็จ', 201);
     }
 
     /**
@@ -520,7 +912,7 @@ class ActivityController extends Controller
      */
     public function pendingPayments(): void
     {
-        $this->requireFinanceOrAdmin();
+        $this->requireActivityOrFinanceManageAccess();
 
         $reg = $this->model('ActivityRegistrationModel');
         $activity = $this->model('ActivityModel');
@@ -538,7 +930,7 @@ class ActivityController extends Controller
     public function verifyPayment(): void
     {
         $this->requirePost();
-        $this->requireFinanceOrAdmin();
+        $this->requireActivityOrFinanceManageAccess();
 
         $input  = $this->input();
         $regId  = (int)($input['registration_id'] ?? 0);

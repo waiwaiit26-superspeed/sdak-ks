@@ -39,25 +39,29 @@ class ActivityRegistrationModel extends Model
      */
     public function getByActivity(int $activityId): array
     {
-        return $this->selectJoin(
-            ['[>]users' => ['user_id' => 'id']],
-            [
-                'activity_registrations.id',
-                'activity_registrations.user_id',
-                'activity_registrations.status',
-                'activity_registrations.payment_status',
-                'activity_registrations.payment_proof',
-                'activity_registrations.note',
-                'activity_registrations.registered_at',
-                'activity_registrations.approved_at',
-                'users.full_name', 'users.email', 'users.phone',
-                'users.school_organization', 'users.profile_image',
-            ],
-            [
-                'activity_registrations.activity_id' => $activityId,
-                'ORDER' => ['activity_registrations.registered_at' => 'DESC'],
-            ]
-        );
+        $join = ['[>]users' => ['user_id' => 'id']];
+        $baseColumns = [
+            'activity_registrations.id',
+            'activity_registrations.user_id',
+            'activity_registrations.status',
+            'activity_registrations.payment_status',
+            'activity_registrations.payment_proof',
+            'activity_registrations.note',
+            'activity_registrations.registered_at',
+            'activity_registrations.approved_at',
+            'users.full_name', 'users.email', 'users.phone',
+            'users.school_organization', 'users.profile_image',
+        ];
+        $where = [
+            'activity_registrations.activity_id' => $activityId,
+            'ORDER' => ['activity_registrations.registered_at' => 'DESC'],
+        ];
+
+        try {
+            return $this->selectJoin($join, array_merge($baseColumns, ['users.member_number']), $where);
+        } catch (\Throwable $e) {
+            return $this->selectJoin($join, $baseColumns, $where);
+        }
     }
 
     /**

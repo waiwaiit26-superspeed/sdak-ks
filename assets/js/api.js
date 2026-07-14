@@ -422,6 +422,30 @@ const API = {
         if (status) params.status = status;
         return this.get(this.apiUrl('activity', 'registrations'), params);
     },
+    async searchActivityMembers(activityId, q = '') {
+        return this.get(this.apiUrl('activity', 'search-members'), { id: activityId, q });
+    },
+    async addActivityMemberRegistration(activityId, userId, note = '') {
+        return this.post(this.apiUrl('activity', 'add-member-registration'), {
+            activity_id: activityId,
+            user_id: userId,
+            note
+        });
+    },
+    async getActivityRegistrationDetail(registrationId) {
+        return this.get(this.apiUrl('activity', 'registration-detail'), { registration_id: registrationId });
+    },
+    async manageActivityRegistration(data) {
+        return this.post(this.apiUrl('activity', 'manage-registration'), data);
+    },
+    async updateActivityRegistrationAddress(data) {
+        return this.post(this.apiUrl('activity', 'update-registration-address'), data);
+    },
+    async createActivityRegistrationReceipt(registrationId, addressSource = 'work', payerAddress = null) {
+        const body = { registration_id: registrationId, address_source: addressSource };
+        if (payerAddress) body.payer_address = payerAddress;
+        return this.post(this.apiUrl('activity', 'create-registration-receipt'), body);
+    },
     async getPublicRegistrations(activityId, code) {
         return this.get(this.apiUrl('activity', 'public-registrations'), { id: activityId, code: code });
     },
