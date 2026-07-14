@@ -142,8 +142,18 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">ที่อยู่ผู้ชำระเงิน</label>
+                    <div class="mb-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourceOrg" value="organization" checked>
+                            <label class="form-check-label" for="createAddressSourceOrg">ใช้ที่อยู่หน่วยงาน/โรงเรียน</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourcePersonal" value="personal">
+                            <label class="form-check-label" for="createAddressSourcePersonal">ใช้ที่อยู่ส่วนตัว</label>
+                        </div>
+                    </div>
                     <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
-                    <small class="text-muted">ที่อยู่จะแสดงในใบเสร็จ (ไม่ระบุก็ได้)</small>
+                    <small class="text-muted">ค่าเริ่มต้นเป็นที่อยู่หน่วยงาน และสามารถแก้ไขเองได้</small>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -469,6 +479,20 @@ function scaleModalReceipt(bodyId, canvasId, loadingId, percentId) {
     }, 5000);
 }
 
+function getCreateAddressSource() {
+    return $('input[name="createAddressSource"]:checked').val() || 'organization';
+}
+
+function applyMemberAddressForCreate(member) {
+    if (!member) return;
+    const addrJson = buildPayerAddress(member, getCreateAddressSource());
+    if (addrJson) {
+        $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
+    } else {
+        $('#createPayerAddress').val('').removeData('addrJson');
+    }
+}
+
 $(function () {
     App.requireLogin();
     loadReceipts();
@@ -545,6 +569,7 @@ $(function () {
 
         if (userId) {
             data.user_id = userId;
+            data.address_source = getCreateAddressSource();
         } else {
             data.payer_name = payerName;
         }
@@ -712,8 +737,7 @@ function initPayerSelect2() {
             if (member) {
                 $('#createPayerName').val(member.full_name).prop('readonly', true);
                 $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
-                const addrJson = buildPayerAddress(member);
-                $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
+                applyMemberAddressForCreate(member);
             }
         } else {
             // Non-member (custom tag)
@@ -731,6 +755,13 @@ function initPayerSelect2() {
         $('#createPayerName').val('').prop('readonly', true);
         $('#createPayerAddress').val('').removeData('addrJson');
         $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
+    });
+
+    $('input[name="createAddressSource"]').on('change', function() {
+        const userId = $('#createUserId').val();
+        if (!userId) return;
+        const member = membersCache.find(m => String(m.id) === String(userId));
+        if (member) applyMemberAddressForCreate(member);
     });
 }
 
@@ -766,6 +797,7 @@ function resetCreateForm() {
     $('#createUserId').val('');
     $('#createPayerName').val('').prop('readonly', true);
     $('#createPayerAddress').val('').removeData('addrJson');
+    $('#createAddressSourceOrg').prop('checked', true);
     $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
     $('#createIssuedDate').val(new Date().toISOString().split('T')[0]);
     $('#createBookNumberDisplay').text('-');
@@ -901,13 +933,15 @@ function toBase64(url) {
 }
 
 // Build payer address from member data → returns JSON string (mirrors PHP FeeController::buildPayerAddress)
-function buildPayerAddress(member) {
+function buildPayerAddress(member, source = 'organization') {
     if (!member) return '';
-    // Try work_address first, then home_address
-    for (const field of ['work_address', 'home_address']) {
+    const organization = (member.school_organization || '').trim();
+    const fields = source === 'personal' ? ['home_address'] : ['work_address', 'home_address'];
+
+    for (const field of fields) {
         let wa = member[field];
         if (typeof wa === 'string' && wa) {
-            try { wa = JSON.parse(wa); } catch(e) { if (field === 'work_address') return wa; continue; }
+            try { wa = JSON.parse(wa); } catch(e) { continue; }
         }
         if (wa && typeof wa === 'object') {
             // Build detail from individual parts (no, moo, soi, road) or combined address/detail
@@ -927,12 +961,31 @@ function buildPayerAddress(member) {
             const district    = (wa.district || '').trim();
             const province    = (wa.province || '').trim();
             const zipcode     = (wa.zipcode || '').trim();
-            if (detail || subdistrict || district || province) {
-                return JSON.stringify({ detail, subdistrict, district, province, zipcode });
+            if (detail || subdistrict || district || province || organization) {
+                return JSON.stringify({
+                    organization: source === 'organization' ? organization : '',
+                    detail,
+                    subdistrict,
+                    district,
+                    province,
+                    zipcode
+                });
             }
         }
     }
-    return member.school_organization || '';
+
+    if (source === 'organization' && organization) {
+        return JSON.stringify({
+            organization,
+            detail: '',
+            subdistrict: '',
+            district: '',
+            province: '',
+            zipcode: ''
+        });
+    }
+
+    return '';
 }
 
 // Flat display for form inputs
@@ -940,8 +993,9 @@ function flatPayerAddress(val) {
     if (!val) return '';
     try {
         const a = typeof val === 'string' ? JSON.parse(val) : val;
-        if (a && typeof a === 'object' && (a.detail || a.subdistrict)) {
+        if (a && typeof a === 'object' && (a.organization || a.detail || a.subdistrict)) {
             const parts = [];
+            if (a.organization) parts.push(a.organization);
             if (a.detail) parts.push(a.detail);
             if (a.subdistrict) parts.push('ต.' + a.subdistrict);
             if (a.district) parts.push('อ.' + a.district);
@@ -956,11 +1010,12 @@ function flatPayerAddress(val) {
 // Render structured address for receipt preview (multi-line like SAAK paper receipt)
 function renderPayerAddressHtml(raw, fontSize) {
     fontSize = fontSize || '18px';
-    let detail = '-', sub = '-', dist = '-', prov = '-';
+    let org = '-', detail = '-', sub = '-', dist = '-', prov = '-';
     if (raw) {
         try {
             const a = JSON.parse(raw);
             if (a && typeof a === 'object') {
+                org = a.organization || '-';
                 detail = a.detail || '-';
                 sub = a.subdistrict || '-';
                 dist = a.district || '-';
@@ -975,6 +1030,9 @@ function renderPayerAddressHtml(raw, fontSize) {
         }
     }
     let html = '';
+    html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};">`;
+    html += `<strong style="white-space:nowrap">หน่วยงาน</strong><span class="dotted-line" style="flex:1">${App.escapeHtml(org)}</span>`;
+    html += `</div>`;
     html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:${fontSize};">`;
     html += `<strong style="white-space:nowrap">ที่อยู่</strong><span class="dotted-line" style="flex:3">${App.escapeHtml(detail)}</span>`;
     html += `<strong style="white-space:nowrap">ตำบล</strong><span class="dotted-line" style="flex:2">${App.escapeHtml(sub)}</span>`;
@@ -1240,7 +1298,7 @@ async function loadReferenceData() {
             home_address: ref.home_address || '',
             school_organization: ref.school_organization || ''
         };
-        const addrJson = buildPayerAddress(fakeMember);
+        const addrJson = buildPayerAddress(fakeMember, getCreateAddressSource());
         if (addrJson) {
             $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
         }
@@ -1448,7 +1506,7 @@ function applyRefDataToEditForm(refData) {
         home_address: refData.home_address || '',
         school_organization: refData.school_organization || ''
     };
-    const addrJson = buildPayerAddress(fakeMember);
+    const addrJson = buildPayerAddress(fakeMember, 'organization');
     if (addrJson) {
         try {
             const addr = JSON.parse(addrJson);

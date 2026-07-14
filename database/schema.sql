@@ -267,5 +267,6 @@ CREATE TABLE IF NOT EXISTS `receipts` (
     INDEX `idx_user` (`user_id`),
     INDEX `idx_type` (`receipt_type`),
     INDEX `idx_reference` (`receipt_type`, `reference_id`),
+    UNIQUE KEY `uq_receipt_book_number` (`book_number`, `receipt_number`),
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;

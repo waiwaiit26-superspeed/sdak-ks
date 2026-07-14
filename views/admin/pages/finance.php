@@ -1560,11 +1560,12 @@ async function generateFinancePDF(transactions, summary, label, exported_at, exp
 // === RECEIPT ADDRESS HELPER ===
 function renderPayerAddressFinance(raw, fontSize) {
     fontSize = fontSize || '13px';
-    let detail = '-', sub = '-', dist = '-', prov = '-';
+    let org = '-', detail = '-', sub = '-', dist = '-', prov = '-';
     if (raw) {
         try {
             const a = JSON.parse(raw);
             if (a && typeof a === 'object') {
+                org = a.organization || '-';
                 detail = a.detail || '-';
                 sub = a.subdistrict || '-';
                 dist = a.district || '-';
@@ -1579,6 +1580,7 @@ function renderPayerAddressFinance(raw, fontSize) {
         }
     }
     let html = '';
+    html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">หน่วยงาน</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:1;padding:0 2px 0 1.5em;">${App.escHtml(org)}</span></div>`;
     html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">ที่อยู่</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:3;padding:0 2px 0 1.5em;">${App.escHtml(detail)}</span>`;
     html += `<strong style="white-space:nowrap">ตำบล</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:2;padding:0 2px 0 1.5em;">${App.escHtml(sub)}</span></div>`;
     html += `<div style="display:flex;align-items:baseline;margin-bottom:8px;"><strong style="white-space:nowrap">อำเภอ</strong><span style="border-bottom:1px dotted #555;display:inline-block;flex:3;padding:0 2px 0 1.5em;">${App.escHtml(dist)}</span>`;

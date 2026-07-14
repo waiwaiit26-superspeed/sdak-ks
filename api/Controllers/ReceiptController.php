@@ -208,6 +208,7 @@ class ReceiptController extends Controller
         $users = $this->model('UserModel');
         $user = null;
         $userId = !empty($input['user_id']) ? (int)$input['user_id'] : null;
+        $addressSource = ($input['address_source'] ?? 'organization') === 'personal' ? 'personal' : 'organization';
 
         if ($userId) {
             $user = $users->find($userId);
@@ -228,7 +229,19 @@ class ReceiptController extends Controller
         // Auto-fill payer_address from member data if not provided
         $payerAddress = $input['payer_address'] ?? null;
         if (!$payerAddress && $user) {
-            $payerAddress = FeeController::buildPayerAddress($user);
+            $payerAddress = FeeController::buildPayerAddress($user, $addressSource);
+        }
+
+        // Validate custom receipt_number for duplicate before create
+        if (!empty($input['receipt_number'])) {
+            $settings = $this->model('SettingsModel');
+            $prefix = trim($settings->get('receipt_book_number', SITE_NAME_SHORT));
+            $issuedDate = $input['issued_date'] ?? date('Y-m-d');
+            $bookNum = $receipts::buildBookNumber($prefix, $issuedDate);
+            $duplicate = $receipts->findDuplicate($bookNum, $input['receipt_number']);
+            if ($duplicate) {
+                Response::error('เลขที่ใบเสร็จ ' . $input['receipt_number'] . ' ในเล่ม ' . $bookNum . ' ซ้ำกับใบเสร็จที่มีอยู่แล้ว');
+            }
         }
 
         $receiptData = [
@@ -250,7 +263,15 @@ class ReceiptController extends Controller
             $receiptData['receipt_number'] = $input['receipt_number'];
         }
 
-        $id = $receipts->createReceipt($receiptData);
+        try {
+            $id = $receipts->createReceipt($receiptData);
+        } catch (\Throwable $e) {
+            $msg = $e->getMessage() ?: 'ไม่สามารถออกใบเสร็จได้';
+            if (stripos($msg, 'duplicate') !== false || stripos($msg, 'ซ้ำ') !== false) {
+                Response::error('เลขที่ใบเสร็จซ้ำ กรุณาลองใหม่อีกครั้ง');
+            }
+            Response::error($msg);
+        }
 
         Auth::logActivity(
             (int)$this->currentUser['id'], 'create_receipt', 'receipt',

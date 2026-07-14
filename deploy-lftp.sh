@@ -170,13 +170,23 @@ if [[ "$DB_CHANGED" -eq 1 ]]; then
     echo "Migrate result (site 1):"
     cat /tmp/migrate-result.txt
   fi
-  if [[ -n "${MIGRATE_URL_2:-}" ]]; then
-    echo "Running migrate (site 2)..."
-    _secret2="${DEPLOY_SECRET_2:-${DEPLOY_SECRET}}"
-    curl -fsS "${MIGRATE_URL_2}?key=${_secret2}" -o /tmp/migrate-result-2.txt
-    echo "Migrate result (site 2):"
-    cat /tmp/migrate-result-2.txt
-  fi
+
+  # Optional additional sites: MIGRATE_URL_2..MIGRATE_URL_10
+  # Secret fallback order per site: DEPLOY_SECRET_N -> DEPLOY_SECRET
+  for _idx in {2..10}; do
+    _url_var="MIGRATE_URL_${_idx}"
+    _secret_var="DEPLOY_SECRET_${_idx}"
+    _migrate_url="${!_url_var:-}"
+
+    if [[ -n "${_migrate_url}" ]]; then
+      _site_secret="${!_secret_var:-${DEPLOY_SECRET}}"
+      _out_file="/tmp/migrate-result-${_idx}.txt"
+      echo "Running migrate (site ${_idx})..."
+      curl -fsS "${_migrate_url}?key=${_site_secret}" -o "${_out_file}"
+      echo "Migrate result (site ${_idx}):"
+      cat "${_out_file}"
+    fi
+  done
 fi
 
 # Update local baseline if deploy succeeded

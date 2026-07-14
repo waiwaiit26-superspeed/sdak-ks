@@ -3,6 +3,9 @@
 > **ใช้เป็นคำสั่งให้ AI ตั้งค่าโปรเจกต์ใหม่** — อ้างอิงจากโปรเจกต์ sdak-ks  
 > ครอบคลุม 3 ส่วน: **Webhook Deploy** → **Backup DB** → **Migrate DB**
 
+> สถานะการใช้งานปัจจุบัน: ใช้ `lftp` deploy เป็นวิธีหลักผ่าน `deploy-lftp.sh`
+> และใช้ webhook flow เป็นแนวทางเสริม/อ้างอิง
+
 ---
 
 ## ภาพรวมการทำงาน
@@ -97,6 +100,20 @@ git rev-parse HEAD > .deploy.git_hash
 6. ถ้าต้องการตรวจ remote state ก่อน deploy
 - ตั้ง `REMOTE_STATE_URL` เป็น URL ที่ตอบค่าธรรมดา เช่น `deploy-state.php`
 - สคริปต์จะตรวจว่า `remote hash == .deploy.git_hash`
+
+### 0.4 Multi-site Deploy Checklist (ต้องรับทราบก่อน deploy)
+
+- โปรเจกต์นี้เป็น multi-site และใช้ database แยกกัน
+- โดเมนที่มีในโค้ดปัจจุบัน: `sdak.obec.in`, `saak.obec.in`
+- Database mapping ปัจจุบัน:
+    - `sdak.obec.in` -> `obecin_sdakks`
+    - `saak.obec.in` -> `obecin_saak`
+- ถ้า deploy มีไฟล์ใน `migrations/` ให้ตั้งอย่างน้อย `MIGRATE_URL` และ `MIGRATE_URL_2`
+- ถ้ามีโดเมนเพิ่มในอนาคตที่ใช้ web root เดียวกัน:
+    - เพิ่มไฟล์ `config/sites/{domain}.php`
+    - เพิ่ม `MIGRATE_URL_3` / `DEPLOY_SECRET_3` (และลำดับถัดไป)
+    - สคริปต์ `deploy-lftp.sh` รองรับ `MIGRATE_URL_2..MIGRATE_URL_10`
+- อ้างอิงผลตรวจล่าสุด: [MULTISITE_AUDIT_2026-07-14.md](MULTISITE_AUDIT_2026-07-14.md)
 
 ---
 

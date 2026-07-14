@@ -539,12 +539,17 @@ class FeeController extends Controller
      * Auto-create a finance transaction when a membership fee is approved
      */
     /**
-     * Build payer address string from member's work_address or school_organization
+     * Build payer address for receipts.
+     * $source: organization (default) or personal
      */
-    public static function buildPayerAddress(array $member): ?string
+    public static function buildPayerAddress(array $member, string $source = 'organization'): ?string
     {
-        // Try work_address JSON first, then home_address as fallback
-        foreach (['work_address', 'home_address'] as $field) {
+        $orgName = trim((string)($member['school_organization'] ?? ''));
+        $source = $source === 'personal' ? 'personal' : 'organization';
+        $addressFields = $source === 'personal' ? ['home_address'] : ['work_address', 'home_address'];
+
+        // Try configured address source first
+        foreach ($addressFields as $field) {
             $raw = $member[$field] ?? null;
             if ($raw) {
                 $addr = is_string($raw) ? json_decode($raw, true) : $raw;
@@ -568,8 +573,9 @@ class FeeController extends Controller
                     $zipcode     = trim($addr['zipcode'] ?? $addr['postal_code'] ?? '');
 
                     // Return structured JSON so receipt renderer can display multi-line
-                    if ($detail || $subdistrict || $district || $province) {
+                    if ($detail || $subdistrict || $district || $province || $orgName) {
                         return json_encode([
+                            'organization' => $source === 'organization' ? $orgName : '',
                             'detail'      => $detail,
                             'subdistrict' => $subdistrict,
                             'district'    => $district,
@@ -580,9 +586,20 @@ class FeeController extends Controller
                 }
             }
         }
-        // Fallback to school/organization name (plain string)
-        $org = $member['school_organization'] ?? '';
-        return $org ?: null;
+
+        // Fallback when no structured address exists
+        if ($source === 'organization' && $orgName !== '') {
+            return json_encode([
+                'organization' => $orgName,
+                'detail' => '',
+                'subdistrict' => '',
+                'district' => '',
+                'province' => '',
+                'zipcode' => '',
+            ], JSON_UNESCAPED_UNICODE);
+        }
+
+        return null;
     }
 
     private function generateFeeTransaction(array $fee, array $member, ?string $receivedDate = null): void

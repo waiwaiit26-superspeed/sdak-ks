@@ -27,18 +27,47 @@ class ReceiptModel extends Model
         $bookNum = self::buildBookNumber($prefix, $issuedDate);
         $data['book_number'] = $bookNum;
 
-        // Use custom receipt_number if provided, otherwise auto-generate
-        if (empty($data['receipt_number'])) {
-            $startNumber = (int)$settings->get('receipt_start_number', '1');
-            $data['receipt_number'] = $this->getNextNumber($bookNum, $startNumber);
-        }
+        $isAutoNumber = empty($data['receipt_number']);
 
         // Convert amount to Thai text
         if (empty($data['amount_text'])) {
             $data['amount_text'] = self::amountToThaiText((float)$data['amount']);
         }
 
-        return (int)$this->create($data);
+        $pdo = $this->db->pdo;
+
+        // Retry a few times for auto-numbered receipts in case of rare concurrent collisions.
+        $attempts = $isAutoNumber ? 3 : 1;
+        for ($i = 0; $i < $attempts; $i++) {
+            try {
+                if ($isAutoNumber) {
+                    $pdo->beginTransaction();
+                    $startNumber = (int)$settings->get('receipt_start_number', '1');
+                    $data['receipt_number'] = $this->getNextNumberAtomic($bookNum, $startNumber);
+                    $id = (int)$this->create($data);
+                    if ($pdo->inTransaction()) {
+                        $pdo->commit();
+                    }
+                    return $id;
+                }
+
+                return (int)$this->create($data);
+            } catch (\PDOException $e) {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+
+                if (!$this->isDuplicateReceiptNumberError($e)) {
+                    throw $e;
+                }
+
+                if (!$isAutoNumber || $i === $attempts - 1) {
+                    throw new \RuntimeException('เลขที่ใบเสร็จซ้ำ กรุณาลองใหม่อีกครั้ง');
+                }
+            }
+        }
+
+        throw new \RuntimeException('ไม่สามารถออกเลขใบเสร็จได้');
     }
 
     /**
@@ -48,16 +77,77 @@ class ReceiptModel extends Model
      */
     public function getNextNumber(string $bookNumber, int $startNumber = 1): int
     {
-        $max = $this->db->max($this->table, 'receipt_number', [
-            'book_number' => $bookNumber,
-        ]);
-        $maxInt = (int)$max;
+        $maxInt = $this->getMaxNumberForBook($bookNumber);
         // If no receipts yet, use start number; otherwise max + 1
         // If max already exceeds start, just continue from max + 1
         if ($maxInt === 0) {
             return max($startNumber, 1);
         }
         return $maxInt + 1;
+    }
+
+    /**
+     * Get next receipt number with row lock to reduce concurrent duplicate allocations.
+     */
+    public function getNextNumberAtomic(string $bookNumber, int $startNumber = 1): int
+    {
+        $pdo = $this->db->pdo;
+        $startedTx = false;
+
+        if (!$pdo->inTransaction()) {
+            $pdo->beginTransaction();
+            $startedTx = true;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT MAX(CAST(receipt_number AS UNSIGNED)) AS max_num
+                   FROM receipts
+                  WHERE book_number = :book_number
+                  FOR UPDATE"
+            );
+            $stmt->execute([':book_number' => $bookNumber]);
+            $maxInt = (int)($stmt->fetchColumn() ?: 0);
+
+            $next = $maxInt === 0 ? max($startNumber, 1) : ($maxInt + 1);
+
+            if ($startedTx && $pdo->inTransaction()) {
+                $pdo->commit();
+            }
+
+            return $next;
+        } catch (\Throwable $e) {
+            if ($startedTx && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Returns current max receipt_number (numeric) for a book.
+     */
+    private function getMaxNumberForBook(string $bookNumber): int
+    {
+        $pdo = $this->db->pdo;
+        $stmt = $pdo->prepare(
+            "SELECT MAX(CAST(receipt_number AS UNSIGNED)) AS max_num
+               FROM receipts
+              WHERE book_number = :book_number"
+        );
+        $stmt->execute([':book_number' => $bookNumber]);
+        return (int)($stmt->fetchColumn() ?: 0);
+    }
+
+    /**
+     * Detect duplicate key error for (book_number, receipt_number) conflict.
+     */
+    private function isDuplicateReceiptNumberError(\PDOException $e): bool
+    {
+        $sqlState = $e->getCode();
+        if ($sqlState === '23000') return true;
+        $message = strtolower($e->getMessage());
+        return strpos($message, 'duplicate') !== false && strpos($message, 'receipt') !== false;
     }
 
     /**
