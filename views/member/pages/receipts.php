@@ -152,7 +152,12 @@
                             <label class="form-check-label" for="createAddressSourcePersonal">ใช้ที่อยู่ปัจจุบัน</label>
                         </div>
                     </div>
-                    <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
+                    <div class="input-group">
+                        <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
+                        <button type="button" class="btn btn-outline-info" onclick="openCreateAddressModal()" title="แก้ไขที่อยู่ผ่านฟอร์ม">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                    </div>
                     <small class="text-muted">ค่าเริ่มต้นเป็นที่อยู่ที่ทำงาน และสามารถแก้ไขเองได้</small>
                 </div>
                 <div class="row">
@@ -195,6 +200,64 @@
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" id="btnCreateReceipt"><i class="bi bi-check-circle me-1"></i> ออกใบเสร็จ</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Create Address -->
+<div class="modal fade" id="createAddressModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-geo-alt me-2"></i>แก้ไขที่อยู่สำหรับออกใบเสร็จ</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="createAddressForm">
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-4">
+                        <label class="form-label fw-bold">เลขที่</label>
+                        <input type="text" id="createAddrNo" class="form-control" placeholder="เลขที่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">หมู่ที่</label>
+                        <input type="text" id="createAddrMoo" class="form-control" placeholder="หมู่">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold">ซอย</label>
+                        <input type="text" id="createAddrSoi" class="form-control" placeholder="ซอย">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">ถนน</label>
+                    <input type="text" id="createAddrRoad" class="form-control" placeholder="ถนน">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">ตำบล</label>
+                        <input type="text" id="createAddrSub" class="form-control" placeholder="ตำบล">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">อำเภอ</label>
+                        <input type="text" id="createAddrDist" class="form-control" placeholder="อำเภอ">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">จังหวัด</label>
+                        <input type="text" id="createAddrProv" class="form-control" placeholder="จังหวัด">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">รหัสไปรษณีย์</label>
+                        <input type="text" id="createAddrZip" class="form-control" placeholder="รหัสไปรษณีย์">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" id="btnSaveCreateAddr"><i class="bi bi-check me-1"></i> ใช้ที่อยู่นี้</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
             </div>
             </form>
@@ -493,6 +556,38 @@ function applyMemberAddressForCreate(member) {
     }
 }
 
+function splitAddressDetail(detail) {
+    detail = detail || '';
+    let no = '', moo = '', soi = '', road = '';
+    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+    no = detail.trim();
+    return { no, moo, soi, road };
+}
+
+function openCreateAddressModal() {
+    let addr = {};
+    const raw = $('#createPayerAddress').data('addrJson') || $('#createPayerAddress').val().trim();
+    try { addr = JSON.parse(raw); } catch(e) { addr = {}; }
+    if (!addr || typeof addr !== 'object') addr = {};
+
+    const parts = splitAddressDetail(addr.detail || '');
+    $('#createAddrNo').val(parts.no || '');
+    $('#createAddrMoo').val(parts.moo || '');
+    $('#createAddrSoi').val(parts.soi || '');
+    $('#createAddrRoad').val(parts.road || '');
+    $('#createAddrSub').val(addr.subdistrict || '');
+    $('#createAddrDist').val(addr.district || '');
+    $('#createAddrProv').val(addr.province || '');
+    $('#createAddrZip').val(addr.zipcode || '');
+
+    $('#createAddressModal').modal('show');
+}
+
 $(function () {
     App.requireLogin();
     loadReceipts();
@@ -693,6 +788,45 @@ $(function () {
         } else {
             App.error(result.message || 'เกิดข้อผิดพลาด');
         }
+    });
+
+    // Create-flow address modal submit
+    $('#createAddressForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const no   = $('#createAddrNo').val().trim();
+        const moo  = $('#createAddrMoo').val().trim();
+        const soi  = $('#createAddrSoi').val().trim();
+        const road = $('#createAddrRoad').val().trim();
+        const sub  = $('#createAddrSub').val().trim();
+        const dist = $('#createAddrDist').val().trim();
+        const prov = $('#createAddrProv').val().trim();
+        const zip  = $('#createAddrZip').val().trim();
+
+        let detail = no && no !== '-' ? no : '';
+        if (moo && moo !== '-') detail += '   หมู่ ' + moo;
+        if (soi && soi !== '-') detail += '   ซอย ' + soi;
+        if (road && road !== '-') detail += '   ถนน ' + road;
+        detail = detail.trim();
+
+        const current = $('#createPayerAddress').data('addrJson');
+        let organization = '';
+        try {
+            const c = typeof current === 'string' ? JSON.parse(current) : current;
+            if (c && typeof c === 'object') organization = c.organization || '';
+        } catch(e) {}
+
+        const addrJson = JSON.stringify({
+            organization,
+            detail,
+            subdistrict: sub,
+            district: dist,
+            province: prov,
+            zipcode: zip
+        });
+
+        $('#createPayerAddress').val(flatPayerAddress(addrJson)).data('addrJson', addrJson);
+        $('#createAddressModal').modal('hide');
     });
 });
 
