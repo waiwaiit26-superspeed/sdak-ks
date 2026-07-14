@@ -591,6 +591,21 @@ function toggleEditAddressSourceUI(enabled) {
     }
 }
 
+function hasEditAddressValue() {
+    const vals = [
+        $('#editAddrOrg').val(),
+        $('#editAddrNo').val(),
+        $('#editAddrMoo').val(),
+        $('#editAddrSoi').val(),
+        $('#editAddrRoad').val(),
+        $('#editAddrSub').val(),
+        $('#editAddrDist').val(),
+        $('#editAddrProv').val(),
+        $('#editAddrZip').val(),
+    ].map(v => (v || '').trim());
+    return vals.some(v => v !== '');
+}
+
 async function applyProfileAddressToEdit(showSuccess = false) {
     if (!modalReceiptData || !modalReceiptData.user_id) {
         toggleEditAddressSourceUI(false);
@@ -985,6 +1000,11 @@ function openEditReceiptNumber() {
     }
 
     $('#editReceiptNumModal').modal('show');
+
+    // If receipt has no stored address, auto-load from profile using selected source.
+    if (modalReceiptData.user_id && !hasEditAddressValue()) {
+        applyProfileAddressToEdit(false);
+    }
 }
 
 // Update receipt info text when date changes
