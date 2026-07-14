@@ -1408,7 +1408,7 @@ async function showReferenceInfo() {
 
         if (refData.payment_slip) {
             const slipUrl = refData.payment_slip.startsWith('http') ? refData.payment_slip : (BASE_PATH + refData.payment_slip);
-            html += `<div class="text-center"><a href="${slipUrl}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a></div>`;
+            html += `<div class="text-center"><button type="button" class="btn btn-outline-primary btn-sm" onclick='openPaymentProofSlider(${JSON.stringify([slipUrl])})'><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</button></div>`;
         }
     } else if (refData.source_type === 'activity_fee') {
         const payBadge = refData.payment_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>' : `<span class="badge bg-warning">${refData.payment_status}</span>`;
@@ -1423,7 +1423,7 @@ async function showReferenceInfo() {
 
         if (refData.payment_proof) {
             const proofUrl = refData.payment_proof.startsWith('http') ? refData.payment_proof : (BASE_PATH + refData.payment_proof);
-            html += `<div class="text-center"><a href="${proofUrl}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</a></div>`;
+            html += `<div class="text-center"><button type="button" class="btn btn-outline-primary btn-sm" onclick='openPaymentProofSlider(${JSON.stringify([proofUrl])})'><i class="bi bi-image me-1"></i>ดูหลักฐานการชำระ</button></div>`;
         }
     }
 
@@ -1457,6 +1457,64 @@ async function showReferenceInfo() {
     }
     $('#referenceInfoBody').html(html);
     $('#referenceInfoModal').modal('show');
+}
+
+function openPaymentProofSlider(urls) {
+    const list = (urls || []).filter(Boolean);
+    if (!list.length) {
+        App.error('ไม่พบรูปหลักฐานการชำระ');
+        return;
+    }
+
+    if ($('#paymentProofSliderModal').length === 0) {
+        $('body').append(`
+            <div class="modal fade" id="paymentProofSliderModal" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title"><i class="bi bi-images me-2"></i>หลักฐานการชำระ</h5>
+                            <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                        </div>
+                        <div class="modal-body" style="background:#111;">
+                            <div id="paymentProofCarousel" class="carousel slide" data-ride="carousel" data-interval="false">
+                                <ol class="carousel-indicators" id="paymentProofIndicators"></ol>
+                                <div class="carousel-inner" id="paymentProofSlides"></div>
+                                <a class="carousel-control-prev" href="#paymentProofCarousel" role="button" data-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                                <a class="carousel-control-next" href="#paymentProofCarousel" role="button" data-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">ปิด</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    const indicators = $('#paymentProofIndicators');
+    const slides = $('#paymentProofSlides');
+    indicators.empty();
+    slides.empty();
+
+    list.forEach((u, i) => {
+        indicators.append(`<li data-target="#paymentProofCarousel" data-slide-to="${i}" class="${i === 0 ? 'active' : ''}"></li>`);
+        slides.append(`
+            <div class="carousel-item ${i === 0 ? 'active' : ''}">
+                <div class="text-center">
+                    <img src="${u}" alt="หลักฐานการชำระ ${i + 1}" style="max-width:100%;max-height:75vh;object-fit:contain;">
+                </div>
+            </div>
+        `);
+    });
+
+    $('#paymentProofSliderModal').modal('show');
 }
 
 // Reload reference data into the edit form
