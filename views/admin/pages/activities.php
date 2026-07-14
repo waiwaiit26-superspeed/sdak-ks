@@ -618,46 +618,105 @@ $('#btnSaveActivity').on('click', async function () {
 // View registrations
 let currentRegActivityId = null;
 let currentRegActivityData = null;
+let currentRegistrationsData = [];
+let currentRegPaymentFilter = 'all';
 
-async function viewRegistrations(activityId) {
-    currentRegActivityId = activityId;
-    $('#regsModal').modal('show');
-    const body = $('#regsModalBody');
-    body.html('<div class="text-center py-4"><span class="spinner-border"></span></div>');
+function getPaymentStatusBadge(paymentStatus) {
+    if (paymentStatus === 'paid') return '<span class="badge bg-success">ชำระแล้ว</span>';
+    if (paymentStatus === 'pending') return '<span class="badge bg-warning text-dark">รอตรวจสอบ</span>';
+    if (paymentStatus === 'refunded') return '<span class="badge bg-danger">คืนเงินแล้ว</span>';
+    return '<span class="badge bg-secondary">ไม่ต้องชำระ</span>';
+}
 
-    // Load activity detail for access code
-    const actResult = await API.getActivityDetail(activityId);
-    if (actResult.success && actResult.data) {
-        currentRegActivityData = actResult.data;
-        updateAccessCodeUI(actResult.data.access_code);
+function applyRegistrationPaymentFilter() {
+    currentRegPaymentFilter = $('#regPaymentFilter').val() || 'all';
+    renderRegistrationsTable(currentRegActivityId);
+}
+
+function toggleSelectAllRegs() {
+    const checked = $('#regSelectAll').is(':checked');
+    $('.reg-select').prop('checked', checked);
+}
+
+function getSelectedPendingRegIds() {
+    const ids = [];
+    $('.reg-select:checked').each(function () {
+        const status = String($(this).data('status') || '');
+        if (status === 'pending') {
+            ids.push(parseInt($(this).val(), 10));
+        }
+    });
+    return ids.filter(Boolean);
+}
+
+async function bulkApproveSelected() {
+    const ids = getSelectedPendingRegIds();
+    if (ids.length === 0) {
+        App.error('กรุณาเลือกรายการที่สถานะรออนุมัติ');
+        return;
     }
 
-    const result = await API.getActivityRegistrations(activityId);
-    if (!result.success || !result.data || result.data.length === 0) {
-        body.html('<p class="text-center text-muted py-3">ยังไม่มีผู้ลงทะเบียน</p>');
+    const ok = await App.confirm('ยืนยันการอนุมัติหลายรายการ', `ต้องการอนุมัติ ${ids.length} รายการที่เลือกใช่หรือไม่?`, 'question');
+    if (!ok) return;
+
+    const btn = $('#btnBulkApprove');
+    btn.prop('disabled', true);
+
+    let successCount = 0;
+    for (const regId of ids) {
+        const result = await API.approveRegistration(regId, 'approved', 'paid');
+        if (result.success) successCount += 1;
+    }
+
+    btn.prop('disabled', false);
+    if (successCount > 0) {
+        App.success(`อนุมัติสำเร็จ ${successCount} รายการ`);
+        await viewRegistrations(currentRegActivityId);
+        loadActivities(currentPage);
+    } else {
+        App.error('ไม่สามารถอนุมัติรายการที่เลือกได้');
+    }
+}
+
+function renderRegistrationsTable(activityId) {
+    const body = $('#regsModalBody');
+    const allRows = currentRegistrationsData || [];
+    const rows = currentRegPaymentFilter === 'all'
+        ? allRows
+        : allRows.filter(r => (r.payment_status || '') === currentRegPaymentFilter);
+
+    if (rows.length === 0) {
+        body.html('<p class="text-center text-muted py-3">ไม่พบรายการตามตัวกรองที่เลือก</p>');
         return;
     }
 
     let html = `<div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="text-muted">ทั้งหมด ${result.data.length} คน</span>
+        <span class="text-muted">ทั้งหมด ${rows.length} คน</span>
         <div class="d-flex gap-2">
+            <select id="regPaymentFilter" class="form-control form-control-sm" style="min-width:180px" onchange="applyRegistrationPaymentFilter()">
+                <option value="all">การชำระทั้งหมด</option>
+                <option value="pending">รอตรวจสอบ</option>
+                <option value="paid">ชำระแล้ว</option>
+                <option value="not_required">ไม่ต้องชำระ</option>
+                <option value="refunded">คืนเงินแล้ว</option>
+            </select>
             <button class="btn btn-outline-primary btn-sm" onclick="openMemberPicker()"><i class="bi bi-person-plus me-1"></i>เลือกสมาชิก</button>
+            <button class="btn btn-outline-success btn-sm" id="btnBulkApprove" onclick="bulkApproveSelected()"><i class="bi bi-check2-all me-1"></i>ยืนยันหลายคน</button>
             <button class="btn btn-success btn-sm" onclick="exportRegistrationsExcel()"><i class="bi bi-file-earmark-excel me-1"></i>Export Excel</button>
         </div>
     </div>`;
     html += `<div class="table-responsive"><table class="table table-sm table-hover" id="regsTable">
-        <thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>เลขสมาชิก</th><th>โรงเรียน/หน่วยงาน</th><th>การชำระเงิน</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>`;
+        <thead><tr><th width="4%"><input type="checkbox" id="regSelectAll" onchange="toggleSelectAllRegs()"></th><th>#</th><th>ชื่อ-สกุล</th><th>เลขสมาชิก</th><th>โรงเรียน/หน่วยงาน</th><th>การชำระเงิน</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>`;
 
-    result.data.forEach((r, i) => {
-        const payBadge = r.payment_status === 'paid' ? '<span class="badge bg-success">ชำระแล้ว</span>'
-            : r.payment_status === 'pending' ? '<span class="badge bg-warning text-dark">รอตรวจสอบ</span>'
-            : r.payment_status === 'refunded' ? '<span class="badge bg-danger">คืนเงินแล้ว</span>'
-            : '<span class="badge bg-secondary">ไม่ต้องชำระ</span>';
+    rows.forEach((r, i) => {
+        const payBadge = getPaymentStatusBadge(r.payment_status);
         const stBadge = App.getStatusBadge(r.status);
         const slip = r.payment_proof ? `<button class="btn btn-outline-info btn-sm" onclick="previewSlip('${App.escHtml(r.payment_proof)}', ${r.id}, '${r.status}', '${r.payment_status}', ${activityId})" title="ดูสลิป"><i class="bi bi-receipt"></i></button>` : '';
         const memberNo = r.member_number ? App.escapeHtml(r.member_number) : '-';
+        const canSelect = r.status === 'pending';
 
         html += `<tr>
+            <td>${canSelect ? `<input type="checkbox" class="reg-select" value="${r.id}" data-status="${r.status}">` : ''}</td>
             <td>${i + 1}</td>
             <td>${r.full_name || ''}</td>
             <td>${memberNo}</td>
@@ -675,6 +734,31 @@ async function viewRegistrations(activityId) {
 
     html += '</tbody></table></div>';
     body.html(html);
+    $('#regPaymentFilter').val(currentRegPaymentFilter);
+}
+
+async function viewRegistrations(activityId) {
+    currentRegActivityId = activityId;
+    $('#regsModal').modal('show');
+    const body = $('#regsModalBody');
+    body.html('<div class="text-center py-4"><span class="spinner-border"></span></div>');
+
+    // Load activity detail for access code
+    const actResult = await API.getActivityDetail(activityId);
+    if (actResult.success && actResult.data) {
+        currentRegActivityData = actResult.data;
+        updateAccessCodeUI(actResult.data.access_code);
+    }
+
+    const result = await API.getActivityRegistrations(activityId);
+    if (!result.success || !result.data || result.data.length === 0) {
+        currentRegistrationsData = [];
+        body.html('<p class="text-center text-muted py-3">ยังไม่มีผู้ลงทะเบียน</p>');
+        return;
+    }
+    currentRegistrationsData = result.data;
+    currentRegPaymentFilter = 'all';
+    renderRegistrationsTable(activityId);
 }
 
 function updateAccessCodeUI(code) {
@@ -734,7 +818,7 @@ function exportRegistrationsExcel() {
         const cells = row.querySelectorAll('th, td');
         const rowData = [];
         cells.forEach((cell, idx) => {
-            if (idx === cells.length - 1) return; // Skip last column (จัดการ)
+            if (idx === 0 || idx === cells.length - 1) return; // Skip select + action columns
             rowData.push('"' + cell.textContent.trim().replace(/"/g, '""') + '"');
         });
         csv += rowData.join(',') + '\n';
