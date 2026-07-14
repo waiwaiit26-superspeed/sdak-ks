@@ -251,7 +251,7 @@ const App = {
         const $userNav = $('#user-nav');
 
         if (user) {
-            $authNav.hide();
+            $authNav.removeClass('d-flex').addClass('d-none').hide();
             $userNav.show();
             $('#nav-username').text(user.full_name || user.username);
             const avatarSrc = App.getProfileImage(user, true);
@@ -289,7 +289,7 @@ const App = {
                 this._notifInterval = setInterval(() => this.loadNotifications(), 60000);
             }
         } else {
-            $authNav.show();
+            $authNav.removeClass('d-none').addClass('d-flex').show();
             $userNav.hide();
         }
     },
