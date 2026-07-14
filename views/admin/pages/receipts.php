@@ -240,9 +240,6 @@
                     <div class="alert alert-info py-2 mb-0">
                         <i class="bi bi-link-45deg me-1"></i>
                         <span id="editRefLabel">ใบเสร็จนี้อ้างอิงจากระบบ</span>
-                        <button type="button" class="btn btn-outline-info btn-sm ms-2" onclick="reloadRefDataIntoEditFromAPI()">
-                            <i class="bi bi-download me-1"></i> โหลดข้อมูลจากระบบ
-                        </button>
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -1017,7 +1014,7 @@ function openEditReceiptNumber() {
     // Show reference reload button if receipt has reference
     if (modalReceiptData.reference_id && modalReceiptData.receipt_type && modalReceiptData.receipt_type !== 'other') {
         const typeLabel = modalReceiptData.receipt_type === 'membership_fee' ? 'ค่าธรรมเนียมสมาชิก' : 'ค่าลงทะเบียนกิจกรรม';
-        $('#editRefLabel').html(`<strong>อ้างอิง:</strong> ${typeLabel} (REF #${modalReceiptData.reference_id})`);
+        $('#editRefLabel').html(`<strong>อ้างอิง:</strong> ${typeLabel} (REF #${modalReceiptData.reference_id}) — โหลดข้อมูลล่าสุดอัตโนมัติ`);
         $('#editRefReloadSection').show();
     } else {
         $('#editRefReloadSection').hide();
@@ -1028,6 +1025,10 @@ function openEditReceiptNumber() {
     // If receipt has no stored address, auto-load from profile using selected source.
     if (modalReceiptData.user_id && !hasEditAddressValue()) {
         applyProfileAddressToEdit(false);
+    }
+
+    if (modalReceiptData.reference_id && modalReceiptData.receipt_type && modalReceiptData.receipt_type !== 'other') {
+        reloadRefDataIntoEditFromAPI(true);
     }
 }
 
@@ -1239,16 +1240,21 @@ async function loadReceipts(page = 1) {
 }
 
 // Quick edit receipt from table row
-function quickEditReceipt(id) {
+async function quickEditReceipt(id) {
+    const result = await API.getReceiptDetail(id);
+    if (result.success && result.data) {
+        modalReceiptData = result.data;
+        openEditReceiptNumber();
+        return;
+    }
+
     const btn = $(`button[onclick="quickEditReceipt(${id})"]`);
     try {
         modalReceiptData = JSON.parse(btn.attr('data-receipt'));
+        openEditReceiptNumber();
     } catch(e) {
-        // Fallback: load from API
-        viewReceipt(id);
-        return;
+        App.error('ไม่สามารถโหลดข้อมูลใบเสร็จสำหรับแก้ไขได้');
     }
-    openEditReceiptNumber();
 }
 
 async function viewReceipt(id) {
@@ -1705,20 +1711,27 @@ async function reloadRefDataIntoEdit() {
 }
 
 // Reload reference data from API directly into edit form
-async function reloadRefDataIntoEditFromAPI() {
+async function reloadRefDataIntoEditFromAPI(silent = false) {
     if (!modalReceiptData) return;
     const refType = modalReceiptData.receipt_type;
     const refId   = modalReceiptData.reference_id;
-    if (!refType || !refId) { App.error('ไม่พบข้อมูลอ้างอิง'); return; }
+    if (!refType || !refId) {
+        if (!silent) App.error('ไม่พบข้อมูลอ้างอิง');
+        return;
+    }
 
     const result = await API.getReceiptReferenceData(refType, refId);
     if (!result.success || !result.data) {
-        App.error(result.message || 'ไม่พบข้อมูลอ้างอิง');
+        if (!silent) App.error(result.message || 'ไม่พบข้อมูลอ้างอิง');
         return;
     }
 
     applyRefDataToEditForm(result.data);
-    App.success('โหลดข้อมูลจากระบบเข้าฟอร์มแก้ไขแล้ว');
+    if (!modalReceiptData.user_id && result.data.user_id) {
+        modalReceiptData.user_id = result.data.user_id;
+        toggleEditAddressSourceUI(true);
+    }
+    if (!silent) App.success('โหลดข้อมูลจากระบบเข้าฟอร์มแก้ไขแล้ว');
 }
 
 // Apply reference data to the edit form fields

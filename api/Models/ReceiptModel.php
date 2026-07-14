@@ -480,6 +480,7 @@ class ReceiptModel extends Model
         $where['LIMIT'] = [($page - 1) * $perPage, $perPage];
         $data = $this->selectJoin($join, [
             'receipts.id', 'receipts.receipt_number', 'receipts.book_number',
+            'receipts.user_id',
             'receipts.receipt_type', 'receipts.reference_id',
             'receipts.title', 'receipts.description', 'receipts.payer_name',
             'receipts.payer_address',
