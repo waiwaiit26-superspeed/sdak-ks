@@ -283,8 +283,18 @@
                             <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceCurrent" value="current">
                             <label class="form-check-label" for="editAddressSourceCurrent">ใช้ที่อยู่ปัจจุบัน</label>
                         </div>
+                        <button type="button" class="btn btn-outline-info btn-sm" id="btnLoadAddressFromProfile">
+                            <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
+                        </button>
                     </div>
-                    <small class="text-muted">ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ</small>
+                    <small class="text-muted">ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ หรือกดดึงใหม่ได้</small>
+                </div>
+                <div class="mb-3" id="editProfileSyncWrap">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editSyncProfileAddress">
+                        <label class="form-check-label" for="editSyncProfileAddress">บันทึกการแก้ไขที่อยู่นี้กลับไปที่โปรไฟล์สมาชิกด้วย</label>
+                    </div>
+                    <small class="text-muted">ถ้าติ๊กไว้ ระบบจะอัปเดตข้อมูลในโปรไฟล์สมาชิกตามตัวเลือกที่อยู่ที่เลือก</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small text-muted">หน่วยงาน/สถานที่ทำงาน</label>
@@ -580,10 +590,14 @@ async function getMemberAddressProfile(userId) {
 
 function toggleEditAddressSourceUI(enabled) {
     $('input[name="editAddressSource"]').prop('disabled', !enabled);
+    $('#btnLoadAddressFromProfile').prop('disabled', !enabled);
+    $('#editSyncProfileAddress').prop('disabled', !enabled);
     if (!enabled) {
         $('#editAddressSourceWrap small').text('ใบเสร็จนี้ไม่ได้ผูกกับสมาชิกในระบบ');
+        $('#editProfileSyncWrap small').text('ไม่สามารถบันทึกกลับโปรไฟล์ได้ เพราะใบเสร็จนี้ไม่ได้ผูกกับสมาชิกในระบบ');
     } else {
-        $('#editAddressSourceWrap small').text('ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ');
+        $('#editAddressSourceWrap small').text('ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ หรือกดดึงใหม่ได้');
+        $('#editProfileSyncWrap small').text('ถ้าติ๊กไว้ ระบบจะอัปเดตข้อมูลในโปรไฟล์สมาชิกตามตัวเลือกที่อยู่ที่เลือก');
     }
 }
 
@@ -804,6 +818,8 @@ $(async function () {
         }
 
         updateData.payer_address = collectEditAddressJson();
+        updateData.address_source = getEditAddressSource();
+        updateData.sync_profile_address = $('#editSyncProfileAddress').is(':checked') ? 1 : 0;
 
         const btn = $('#btnSaveReceiptNum');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
@@ -833,6 +849,10 @@ $(async function () {
 
     $('input[name="editAddressSource"]').on('change', function() {
         applyProfileAddressToEdit(false);
+    });
+
+    $('#btnLoadAddressFromProfile').on('click', function() {
+        applyProfileAddressToEdit(true);
     });
 });
 
@@ -976,6 +996,7 @@ function openEditReceiptNumber() {
 
     fillEditAddressFields(modalReceiptData.payer_address || '');
     $('#editAddressSourceWork').prop('checked', true);
+    $('#editSyncProfileAddress').prop('checked', false);
     toggleEditAddressSourceUI(!!modalReceiptData.user_id);
 
     // Update book number info display

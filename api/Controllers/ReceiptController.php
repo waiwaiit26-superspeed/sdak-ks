@@ -358,11 +358,19 @@ class ReceiptController extends Controller
             $updateData['amount_text'] = $input['amount_text'];
         }
 
+        $syncProfileAddress = !empty($input['sync_profile_address']);
+        $addressSource = strtolower(trim((string)($input['address_source'] ?? 'work')));
+        $addressSource = in_array($addressSource, ['current', 'home', 'personal'], true) ? 'current' : 'work';
+
         if (empty($updateData)) {
             Response::error('ไม่มีข้อมูลที่ต้องแก้ไข');
         }
 
         $receipts->update($updateData, ['id' => $id]);
+
+        if ($syncProfileAddress && !empty($receipt['user_id']) && array_key_exists('payer_address', $updateData)) {
+            $this->syncReceiptAddressToProfile((int)$receipt['user_id'], $updateData['payer_address'], $addressSource);
+        }
 
         Auth::logActivity(
             (int)$this->currentUser['id'], 'update_receipt', 'receipt',
@@ -371,6 +379,89 @@ class ReceiptController extends Controller
         );
 
         Response::success(null, 'แก้ไขใบเสร็จสำเร็จ');
+    }
+
+    private function syncReceiptAddressToProfile(int $userId, $payerAddress, string $addressSource): void
+    {
+        $users = $this->model('UserModel');
+        $member = $users->find($userId);
+        if (!$member) {
+            return;
+        }
+
+        $addr = null;
+        if (is_string($payerAddress) && $payerAddress !== '') {
+            $decoded = json_decode($payerAddress, true);
+            $addr = is_array($decoded) ? $decoded : null;
+        } elseif (is_array($payerAddress)) {
+            $addr = $payerAddress;
+        }
+
+        if (!$addr || !is_array($addr)) {
+            return;
+        }
+
+        $targetField = $addressSource === 'current' ? 'home_address' : 'work_address';
+        $existingRaw = $member[$targetField] ?? null;
+        $existing = [];
+        if (is_string($existingRaw) && $existingRaw !== '') {
+            $existingDecoded = json_decode($existingRaw, true);
+            if (is_array($existingDecoded)) {
+                $existing = $existingDecoded;
+            }
+        } elseif (is_array($existingRaw)) {
+            $existing = $existingRaw;
+        }
+
+        $detail = trim((string)($addr['detail'] ?? ''));
+        $detailOriginal = $detail;
+        $no = '';
+        $moo = '';
+        $soi = '';
+        $road = '';
+
+        if ($detailOriginal !== '') {
+            if (preg_match('/\sหมู่\s+([^\s].*?)(?=\sซอย\s|\sถนน\s|$)/u', $detailOriginal, $m)) {
+                $moo = trim($m[1]);
+            }
+            if (preg_match('/\sซอย\s+([^\s].*?)(?=\sถนน\s|$)/u', $detailOriginal, $m)) {
+                $soi = trim($m[1]);
+            }
+            if (preg_match('/\sถนน\s+(.+)$/u', $detailOriginal, $m)) {
+                $road = trim($m[1]);
+            }
+
+            $no = preg_replace('/\sหมู่\s+.*$/u', '', $detailOriginal);
+            $no = preg_replace('/\sซอย\s+.*$/u', '', $no);
+            $no = preg_replace('/\sถนน\s+.*$/u', '', $no);
+            $no = trim((string)$no);
+        }
+
+        $profileAddress = [
+            'address' => $existing['address'] ?? $no,
+            'detail' => $detail,
+            'no' => $no,
+            'moo' => $moo,
+            'soi' => $soi,
+            'road' => $road,
+            'subdistrict' => trim((string)($addr['subdistrict'] ?? '')),
+            'district' => trim((string)($addr['district'] ?? '')),
+            'province' => trim((string)($addr['province'] ?? '')),
+            'zipcode' => trim((string)($addr['zipcode'] ?? '')),
+        ];
+
+        $updateMemberData = [
+            $targetField => json_encode($profileAddress, JSON_UNESCAPED_UNICODE),
+        ];
+
+        if (array_key_exists('organization', $addr)) {
+            $organization = trim((string)($addr['organization'] ?? ''));
+            if ($organization !== '' || $addressSource === 'work') {
+                $updateMemberData['school_organization'] = $organization;
+            }
+        }
+
+        $users->update($updateMemberData, ['id' => $userId]);
     }
 
     /**
