@@ -47,13 +47,15 @@ include ROOT_PATH . 'templates/public/header.php';
                 <span class="badge badge-hero mb-3" id="hero-badge"><i class="bi bi-mortarboard-fill me-1"></i> <span id="hero-badge-text"><?php echo siteConfig('site_name_en'); ?></span></span>
                 <h1 class="mb-3" id="hero-title"><?php echo htmlspecialchars(siteConfig('site_name')); ?></h1>
                 <p class="lead mb-4" id="hero-subtitle"><?php echo htmlspecialchars(siteConfig('site_name_short')); ?> — <?php echo htmlspecialchars(siteConfig('site_name_en')); ?></p>
-                <div class="d-flex gap-3 flex-wrap">
+                <div class="d-flex gap-3 flex-wrap" id="homeHeroGuestActions">
                     <a href="./auth/?page=login" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
                         <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
                     </a>
                     <a href="./auth/?page=register" class="btn btn-outline-light btn-lg px-4">
                         <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
                     </a>
+                </div>
+                <div class="d-flex gap-3 flex-wrap mt-3" id="homeHeroCommonActions">
                     <a href="#about" class="btn btn-outline-light btn-lg px-4">
                         <i class="bi bi-info-circle me-2"></i>เกี่ยวกับเรา
                     </a>
@@ -160,7 +162,7 @@ include ROOT_PATH . 'templates/public/header.php';
     <div class="container">
         <h2 class="fw-bold mb-3" id="cta-title">ร่วมเป็นส่วนหนึ่งของ <?php echo htmlspecialchars(siteConfig('site_name_short')); ?></h2>
         <p class="lead mb-4 opacity-75" id="cta-subtitle">สมัครสมาชิกวันนี้ เพื่อร่วมเป็นส่วนหนึ่งของ<?php echo htmlspecialchars(siteConfig('site_name')); ?></p>
-        <a href="./auth/?page=register" class="btn btn-light btn-lg px-5 fw-bold text-primary-custom">
+        <a href="./auth/?page=register" class="btn btn-light btn-lg px-5 fw-bold text-primary-custom" id="homeCtaRegisterBtn">
             <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
         </a>
     </div>
@@ -170,12 +172,24 @@ include ROOT_PATH . 'templates/public/header.php';
 
 <script>
 $(document).ready(function() {
+    toggleHomeGuestCtas();
     loadHeroFromSettings();
     loadMemberTypesSection();
     loadLatestNews();
     loadUpcomingActivities();
     loadPublicStats();
 });
+
+function toggleHomeGuestCtas() {
+    const isLoggedIn = !!API.getUser();
+    if (isLoggedIn) {
+        $('#homeHeroGuestActions').hide();
+        $('#homeCtaRegisterBtn').hide();
+    } else {
+        $('#homeHeroGuestActions').show();
+        $('#homeCtaRegisterBtn').show();
+    }
+}
 
 async function loadMemberTypesSection() {
     try {
