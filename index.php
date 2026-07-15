@@ -165,6 +165,9 @@ include ROOT_PATH . 'templates/public/header.php';
         <a href="./auth/?page=register" class="btn btn-light btn-lg px-5 fw-bold text-primary-custom" id="homeCtaRegisterBtn">
             <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
         </a>
+        <a href="./member/?page=home" class="btn btn-light btn-lg px-5 fw-bold text-primary-custom" id="homeCtaDashboardBtn" style="display:none;">
+            <i class="bi bi-speedometer2 me-2"></i>ไปยังแดชบอร์ด
+        </a>
     </div>
 </section>
 
@@ -185,9 +188,11 @@ function toggleHomeGuestCtas() {
     if (isLoggedIn) {
         $('#homeHeroGuestActions').hide();
         $('#homeCtaRegisterBtn').hide();
+        $('#homeCtaDashboardBtn').show();
     } else {
         $('#homeHeroGuestActions').show();
         $('#homeCtaRegisterBtn').show();
+        $('#homeCtaDashboardBtn').hide();
     }
 }
 
