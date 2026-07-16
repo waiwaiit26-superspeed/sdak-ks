@@ -536,10 +536,20 @@ $(async function () {
    DataTable
    ========================================================================= */
 function initDataTable() {
+    const sortableColumnMap = {
+        1: 'full_name',
+        2: 'member_number',
+        5: 'member_type',
+        6: 'position',
+        7: 'school_organization',
+        10: 'created_at'
+    };
+
     membersTable = $('#membersDataTable').DataTable({
         processing: true,
         serverSide: true,
-        ordering: false,
+        ordering: true,
+        order: [],
         pageLength: 20,
         responsive: true,
         lengthMenu: [10, 20, 50, 100],
@@ -555,6 +565,15 @@ function initDataTable() {
             if (role) params.role = role;
             if (status) params.status = status;
             if (type) params.member_type = type;
+
+            if (Array.isArray(data.order) && data.order.length > 0) {
+                const orderReq = data.order[0] || {};
+                const orderCol = sortableColumnMap[parseInt(orderReq.column, 10)];
+                if (orderCol) {
+                    params.order_by = orderCol;
+                    params.order_dir = orderReq.dir === 'desc' ? 'desc' : 'asc';
+                }
+            }
 
             API.getMembers(params).then(json => {
                 if (!json || json.success === false) {
@@ -581,7 +600,7 @@ function initDataTable() {
                 render: (d, t, row, meta) => meta.row + meta.settings._iDisplayStart + 1
             },
             {
-                data: 'full_name', responsivePriority: 1,
+                data: 'full_name', responsivePriority: 1, orderable: true,
                 render: (d, t, row) => {
                     const name = App.escapeHtml(d);
                     const role = App.getRoleBadge(row.role);
@@ -592,28 +611,29 @@ function initDataTable() {
             {
                 data: null,
                 responsivePriority: 5,
+                orderable: true,
                 render: (d, t, row) => row.member_number
                     ? '<span class="badge badge-outline-primary">' + App.escapeHtml(row.member_number) + '</span>'
                     : '<span class="text-muted">-</span>'
             },
-            { data: 'email', responsivePriority: 7, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
-            { data: 'phone', responsivePriority: 6, render: d => d || '-' },
+            { data: 'email', responsivePriority: 7, orderable: false, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
+            { data: 'phone', responsivePriority: 6, orderable: false, render: d => d || '-' },
             {
-                data: 'member_type', responsivePriority: 3,
+                data: 'member_type', responsivePriority: 3, orderable: true,
                 render: d => d ? App.getMemberTypeBadge(d) : '<span class="text-muted">-</span>'
             },
             {
-                data: 'position', responsivePriority: 8,
+                data: 'position', responsivePriority: 8, orderable: true,
                 render: (d, t, row) => {
                     let html = '<small>' + App.escapeHtml(d || '-') + '</small>';
                     if (row.academic_rank) html += '<br><small class="text-primary">' + App.escapeHtml(row.academic_rank) + '</small>';
                     return html;
                 }
             },
-            { data: 'school_organization', responsivePriority: 9, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
-            { data: 'status', responsivePriority: 2, render: d => App.getStatusBadge(d) },
+            { data: 'school_organization', responsivePriority: 9, orderable: true, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
+            { data: 'status', responsivePriority: 2, orderable: false, render: d => App.getStatusBadge(d) },
             {
-                data: null, responsivePriority: 4,
+                data: null, responsivePriority: 4, orderable: false,
                 render: (d, t, row) => {
                     const feeStatusMap = {
                         'paid':    '<span class="badge badge-success"><i class="bi bi-check-circle me-1"></i>ชำระแล้ว</span>',
@@ -630,9 +650,9 @@ function initDataTable() {
                     return badge + year + slip;
                 }
             },
-            { data: 'created_at', responsivePriority: 9, render: d => '<small>' + App.formatDate(d) + '</small>' },
+            { data: 'created_at', responsivePriority: 9, orderable: true, render: d => '<small>' + App.formatDate(d) + '</small>' },
             {
-                data: 'id', responsivePriority: 1,
+                data: 'id', responsivePriority: 1, orderable: false,
                 render: function (id, t, row) {
                     let b = '<button class="btn btn-outline-info btn-xs" onclick="viewMember(' + id + ')" title="ดู"><i class="bi bi-eye"></i></button> ';
                     b += '<button class="btn btn-outline-primary btn-xs" onclick="editMember(' + id + ')" title="แก้ไข"><i class="bi bi-pencil"></i></button> ';
