@@ -659,6 +659,7 @@ async function loadActivities(page = 1) {
     let html = '';
     result.data.forEach((a, i) => {
         const idx = (currentPage - 1) * 20 + i + 1;
+        const publicActivityUrl = `${BASE_PATH}web/?page=activity-detail&id=${a.id}`;
         const statusMap = { 'open': '<span class="badge bg-success">เปิดรับ</span>', 'closed': '<span class="badge bg-danger">ปิดรับ</span>', 'draft': '<span class="badge bg-secondary">แบบร่าง</span>', 'cancelled': '<span class="badge bg-dark">ยกเลิก</span>' };
         const statusBadge = statusMap[a.status] || '<span class="badge bg-secondary">' + a.status + '</span>';
         const eventDate = a.event_date ? App.formatDateTime(a.event_date) : App.formatDateTime(a.start_date);
@@ -674,7 +675,7 @@ async function loadActivities(page = 1) {
 
         html += `<tr>
             <td>${idx}</td>
-            <td>${a.title}</td>
+            <td><a href="${publicActivityUrl}" target="_blank" rel="noopener" class="text-decoration-none">${App.escapeHtml(a.title || '-')}</a></td>
             <td>${eventDate}</td>
             <td>${App.formatDate(a.start_date)}</td>
             <td>${a.location || '-'}</td>
@@ -686,6 +687,7 @@ async function loadActivities(page = 1) {
             <td>${statusBadge}</td>
             <td>
                 <div class="btn-group btn-group-sm">
+                    <a class="btn btn-outline-secondary" href="${publicActivityUrl}" target="_blank" rel="noopener" title="เปิดหน้ากิจกรรม"><i class="bi bi-box-arrow-up-right"></i></a>
                     <button class="btn btn-outline-info" onclick="viewRegistrations(${a.id})" title="ผู้ลงทะเบียน"><i class="bi bi-people"></i></button>
                     <button class="btn btn-outline-primary" onclick="editActivity(${a.id})" title="แก้ไข"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-outline-danger" onclick="deleteActivity(${a.id},'${a.title.replace(/'/g, "\\'")}')" title="ลบ"><i class="bi bi-trash"></i></button>
