@@ -536,18 +536,9 @@ $(async function () {
    DataTable
    ========================================================================= */
 function initDataTable() {
-    const sortableColumnMap = {
-        1: 'full_name',
-        2: 'member_number',
-        5: 'member_type',
-        6: 'position',
-        7: 'school_organization',
-        10: 'created_at'
-    };
-
     membersTable = $('#membersDataTable').DataTable({
         processing: true,
-        serverSide: true,
+        serverSide: false,
         ordering: true,
         order: [],
         pageLength: 20,
@@ -555,44 +546,27 @@ function initDataTable() {
         lengthMenu: [10, 20, 50, 100],
         ajax: function (data, callback) {
             const params = {
-                page: Math.floor(data.start / data.length) + 1,
-                per_page: data.length
+                page: 1,
+                per_page: 10000
             };
-            if (data.search && data.search.value) params.search = data.search.value;
             const role = $('#filterRole').val();
             const status = $('#filterStatus').val();
             const type = $('#filterType').val();
             if (role) params.role = role;
             if (status) params.status = status;
             if (type) params.member_type = type;
-
-            if (Array.isArray(data.order) && data.order.length > 0) {
-                const orderReq = data.order[0] || {};
-                const orderCol = sortableColumnMap[parseInt(orderReq.column, 10)];
-                if (orderCol) {
-                    params.order_by = orderCol;
-                    params.order_dir = orderReq.dir === 'desc' ? 'desc' : 'asc';
-                }
-            }
+            // Keep default order from backend when table first loads.
+            params.order_by = 'member_number';
+            params.order_dir = 'desc';
 
             API.getMembers(params).then(json => {
                 if (!json || json.success === false) {
                     App.error((json && json.message) ? json.message : 'ไม่สามารถโหลดข้อมูลสมาชิกได้');
-                    callback({
-                        draw: data.draw,
-                        recordsTotal: 0,
-                        recordsFiltered: 0,
-                        data: []
-                    });
+                    callback({ data: [] });
                     return;
                 }
-                callback({
-                    draw: data.draw,
-                    recordsTotal: json.pagination ? json.pagination.total : 0,
-                    recordsFiltered: json.pagination ? json.pagination.total : 0,
-                    data: json.data || []
-                });
-            }).catch(() => callback({ draw: data.draw, recordsTotal: 0, recordsFiltered: 0, data: [] }));
+                callback({ data: json.data || [] });
+            }).catch(() => callback({ data: [] }));
         },
         columns: [
             {
@@ -602,6 +576,7 @@ function initDataTable() {
             {
                 data: 'full_name', responsivePriority: 1, orderable: true,
                 render: (d, t, row) => {
+                    if (t === 'sort' || t === 'type') return d || '';
                     const name = App.escapeHtml(d);
                     const role = App.getRoleBadge(row.role);
                     const avatar = '<img src="' + App.getProfileImage(row) + '" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;">';
@@ -612,25 +587,38 @@ function initDataTable() {
                 data: null,
                 responsivePriority: 5,
                 orderable: true,
-                render: (d, t, row) => row.member_number
-                    ? '<span class="badge badge-outline-primary">' + App.escapeHtml(row.member_number) + '</span>'
-                    : '<span class="text-muted">-</span>'
+                render: (d, t, row) => {
+                    if (t === 'sort' || t === 'type') return row.member_number_raw || 0;
+                    return row.member_number
+                        ? '<span class="badge badge-outline-primary">' + App.escapeHtml(row.member_number) + '</span>'
+                        : '<span class="text-muted">-</span>';
+                }
             },
             { data: 'email', responsivePriority: 7, orderable: false, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
             { data: 'phone', responsivePriority: 6, orderable: false, render: d => d || '-' },
             {
                 data: 'member_type', responsivePriority: 3, orderable: true,
-                render: d => d ? App.getMemberTypeBadge(d) : '<span class="text-muted">-</span>'
+                render: (d, t) => {
+                    if (t === 'sort' || t === 'type') return d || '';
+                    return d ? App.getMemberTypeBadge(d) : '<span class="text-muted">-</span>';
+                }
             },
             {
                 data: 'position', responsivePriority: 8, orderable: true,
                 render: (d, t, row) => {
+                    if (t === 'sort' || t === 'type') return d || '';
                     let html = '<small>' + App.escapeHtml(d || '-') + '</small>';
                     if (row.academic_rank) html += '<br><small class="text-primary">' + App.escapeHtml(row.academic_rank) + '</small>';
                     return html;
                 }
             },
-            { data: 'school_organization', responsivePriority: 9, orderable: true, render: d => '<small>' + App.escapeHtml(d || '-') + '</small>' },
+            {
+                data: 'school_organization', responsivePriority: 9, orderable: true,
+                render: (d, t) => {
+                    if (t === 'sort' || t === 'type') return d || '';
+                    return '<small>' + App.escapeHtml(d || '-') + '</small>';
+                }
+            },
             { data: 'status', responsivePriority: 2, orderable: false, render: d => App.getStatusBadge(d) },
             {
                 data: null, responsivePriority: 4, orderable: false,
@@ -650,7 +638,13 @@ function initDataTable() {
                     return badge + year + slip;
                 }
             },
-            { data: 'created_at', responsivePriority: 9, orderable: true, render: d => '<small>' + App.formatDate(d) + '</small>' },
+            {
+                data: 'created_at', responsivePriority: 9, orderable: true,
+                render: (d, t) => {
+                    if (t === 'sort' || t === 'type') return d || '';
+                    return '<small>' + App.formatDate(d) + '</small>';
+                }
+            },
             {
                 data: 'id', responsivePriority: 1, orderable: false,
                 render: function (id, t, row) {
