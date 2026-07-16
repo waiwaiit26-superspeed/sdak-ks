@@ -328,10 +328,30 @@
                                 <input type="text" id="extAddrDetail" class="form-control" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
                             </div>
                             <div class="row g-2">
-                                <div class="col-md-6"><input type="text" id="extAddrSubdistrict" class="form-control" placeholder="ตำบล"></div>
-                                <div class="col-md-6"><input type="text" id="extAddrDistrict" class="form-control" placeholder="อำเภอ"></div>
-                                <div class="col-md-6 mt-2"><input type="text" id="extAddrProvince" class="form-control" placeholder="จังหวัด"></div>
-                                <div class="col-md-6 mt-2"><input type="text" id="extAddrZipcode" class="form-control" placeholder="รหัสไปรษณีย์"></div>
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text">ตำบล</span>
+                                        <input type="text" id="extAddrSubdistrict" class="form-control" placeholder="ตำบล">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text">อำเภอ</span>
+                                        <input type="text" id="extAddrDistrict" class="form-control" placeholder="อำเภอ">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">จังหวัด</span>
+                                        <input type="text" id="extAddrProvince" class="form-control" placeholder="จังหวัด">
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text">รหัสไปรษณีย์</span>
+                                        <input type="text" id="extAddrZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -434,20 +454,60 @@
                                 <label class="form-label">ที่อยู่ที่ทำงาน</label>
                                 <input type="text" id="workDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="text" id="workSubdistrict" class="form-control" placeholder="ตำบล"></div>
-                                    <div class="col-6"><input type="text" id="workDistrict" class="form-control" placeholder="อำเภอ"></div>
-                                    <div class="col-6 mt-2"><input type="text" id="workProvince" class="form-control" placeholder="จังหวัด"></div>
-                                    <div class="col-6 mt-2"><input type="text" id="workZipcode" class="form-control" placeholder="รหัสไปรษณีย์"></div>
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">ตำบล</span>
+                                            <input type="text" id="workSubdistrict" class="form-control" placeholder="ตำบล">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">อำเภอ</span>
+                                            <input type="text" id="workDistrict" class="form-control" placeholder="อำเภอ">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">จังหวัด</span>
+                                            <input type="text" id="workProvince" class="form-control" placeholder="จังหวัด">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">รหัสไปรษณีย์</span>
+                                            <input type="text" id="workZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">ที่อยู่ปัจจุบัน</label>
                                 <input type="text" id="homeDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="text" id="homeSubdistrict" class="form-control" placeholder="ตำบล"></div>
-                                    <div class="col-6"><input type="text" id="homeDistrict" class="form-control" placeholder="อำเภอ"></div>
-                                    <div class="col-6 mt-2"><input type="text" id="homeProvince" class="form-control" placeholder="จังหวัด"></div>
-                                    <div class="col-6 mt-2"><input type="text" id="homeZipcode" class="form-control" placeholder="รหัสไปรษณีย์"></div>
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">ตำบล</span>
+                                            <input type="text" id="homeSubdistrict" class="form-control" placeholder="ตำบล">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">อำเภอ</span>
+                                            <input type="text" id="homeDistrict" class="form-control" placeholder="อำเภอ">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">จังหวัด</span>
+                                            <input type="text" id="homeProvince" class="form-control" placeholder="จังหวัด">
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">รหัสไปรษณีย์</span>
+                                            <input type="text" id="homeZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
