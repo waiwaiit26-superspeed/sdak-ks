@@ -43,6 +43,13 @@ class ActivityRegistrationModel extends Model
         $baseColumns = [
             'activity_registrations.id',
             'activity_registrations.user_id',
+            'activity_registrations.is_external',
+            'activity_registrations.external_prefix',
+            'activity_registrations.external_first_name',
+            'activity_registrations.external_last_name',
+            'activity_registrations.external_full_name',
+            'activity_registrations.external_school_organization',
+            'activity_registrations.external_payer_address',
             'activity_registrations.status',
             'activity_registrations.payment_status',
             'activity_registrations.payment_proof',

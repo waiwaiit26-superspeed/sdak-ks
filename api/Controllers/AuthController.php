@@ -192,7 +192,7 @@ class AuthController extends Controller
         $users = $this->model('UserModel');
         $auth  = new Auth();
 
-        // ── ค้นหาผู้ใช้เดิม ──
+        // ── ค้นหาผู้ใช้เดิม: google_id ก่อน แล้ว fallback ด้วยอีเมล Google ──
         $user = $users->findByGoogleId($gUser['sub']);
         if (!$user) {
             $user = $users->findByEmail($gUser['email']);
@@ -350,9 +350,11 @@ class AuthController extends Controller
         $users = $this->model('UserModel');
         $auth  = new Auth();
 
-        // ── ตรวจซ้ำ: ถ้ามี user แล้ว (จาก google_id หรือ email) ให้ update member_type ──
+        // ── ตรวจซ้ำ: google_id ก่อน แล้ว fallback ด้วยอีเมล Google ──
         $user = $users->findByGoogleId($gUser['sub']);
-        if (!$user) $user = $users->findByEmail($gUser['email']);
+        if (!$user) {
+            $user = $users->findByEmail($gUser['email']);
+        }
 
         if ($user) {
             // มีบัญชีแล้ว → update member_type + google_id + ชื่อ (ถ้ากรอกมา)

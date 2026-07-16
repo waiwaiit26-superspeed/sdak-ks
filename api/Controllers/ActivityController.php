@@ -622,6 +622,215 @@ class ActivityController extends Controller
     }
 
     /**
+     * POST  ?controller=activity&action=add-external-registration
+     * Admin/sub-admin/finance manager adds a non-member participant into activity
+     */
+    public function addExternalRegistration(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $actId = (int)($input['activity_id'] ?? 0);
+        if (!$actId) Response::error('กรุณาระบุ activity_id');
+
+        $prefix = trim((string)($input['external_prefix'] ?? ''));
+        $firstName = trim((string)($input['external_first_name'] ?? ''));
+        $lastName = trim((string)($input['external_last_name'] ?? ''));
+        $schoolOrg = trim((string)($input['external_school_organization'] ?? ''));
+        $payerAddress = $input['external_payer_address'] ?? null;
+
+        if ($firstName === '' || $lastName === '') {
+            Response::error('กรุณากรอกชื่อและนามสกุลของผู้เข้าร่วม');
+        }
+
+        if (is_array($payerAddress)) {
+            $payerAddress = json_encode($payerAddress, JSON_UNESCAPED_UNICODE);
+        } elseif (!is_string($payerAddress)) {
+            $payerAddress = null;
+        }
+        $payerAddress = $payerAddress !== '' ? $payerAddress : null;
+
+        $activity = $this->model('ActivityModel');
+        $act = $activity->find($actId);
+        if (!$act) Response::error('ไม่พบกิจกรรม', 404);
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $paymentStatus = !empty($act['has_fee']) && (float)($act['fee_amount'] ?? 0) > 0 ? 'pending' : 'not_required';
+
+        $fullName = trim($prefix . $firstName . ' ' . $lastName);
+        $id = $reg->create([
+            'activity_id' => $actId,
+            'user_id' => null,
+            'is_external' => 1,
+            'external_prefix' => $prefix !== '' ? $prefix : null,
+            'external_first_name' => $firstName,
+            'external_last_name' => $lastName,
+            'external_full_name' => $fullName,
+            'external_school_organization' => $schoolOrg !== '' ? $schoolOrg : null,
+            'external_payer_address' => $payerAddress,
+            'status' => 'pending',
+            'payment_status' => $paymentStatus,
+            'payment_proof' => null,
+            'note' => $input['note'] ?? null,
+        ]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'add_external_registration',
+            'activity',
+            "เพิ่มบุคคลภายนอกเข้ากิจกรรม: {$fullName}",
+            $actId,
+            'activity'
+        );
+
+        Response::success(['id' => $id], 'เพิ่มบุคคลภายนอกเข้าร่วมกิจกรรมสำเร็จ', 201);
+    }
+
+    /**
+     * GET  ?controller=activity&action=search-external-participants&q=...
+     * Search historical external participants (non-members) for quick autofill.
+     */
+    public function searchExternalParticipants(): void
+    {
+        $this->requireActivityOrFinanceManageAccess();
+
+        $q = trim((string)$this->query('q', ''));
+        $reg = $this->model('ActivityRegistrationModel');
+        $db = $reg->getDB();
+
+        $where = [
+            'is_external' => 1,
+            'ORDER' => ['updated_at' => 'DESC'],
+            'LIMIT' => 20,
+        ];
+
+        if ($q !== '') {
+            $where['OR'] = [
+                'external_full_name[~]' => '%' . $q . '%',
+                'external_first_name[~]' => '%' . $q . '%',
+                'external_last_name[~]' => '%' . $q . '%',
+                'external_school_organization[~]' => '%' . $q . '%',
+            ];
+        }
+
+        $rows = $db->select('activity_registrations', [
+            'id',
+            'external_prefix',
+            'external_first_name',
+            'external_last_name',
+            'external_full_name',
+            'external_school_organization',
+            'external_payer_address',
+            'updated_at',
+        ], $where) ?: [];
+
+        // De-duplicate by normalized full_name + organization to keep list concise.
+        $seen = [];
+        $out = [];
+        foreach ($rows as $r) {
+            $fullName = trim((string)($r['external_full_name'] ?? ''));
+            if ($fullName === '') {
+                $fullName = trim((string)($r['external_prefix'] ?? '') . (string)($r['external_first_name'] ?? '') . ' ' . (string)($r['external_last_name'] ?? ''));
+            }
+            if ($fullName === '') continue;
+
+            $org = trim((string)($r['external_school_organization'] ?? ''));
+            $key = mb_strtolower($fullName . '|' . $org);
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+
+            $out[] = [
+                'prefix' => (string)($r['external_prefix'] ?? ''),
+                'first_name' => (string)($r['external_first_name'] ?? ''),
+                'last_name' => (string)($r['external_last_name'] ?? ''),
+                'full_name' => $fullName,
+                'school_organization' => $org,
+                'payer_address' => $r['external_payer_address'] ?? null,
+                'updated_at' => $r['updated_at'] ?? null,
+            ];
+
+            if (count($out) >= 10) break;
+        }
+
+        Response::success($out);
+    }
+
+    /**
+     * POST  ?controller=activity&action=remove-registration
+     * Admin/sub-admin/finance manager removes a member from activity registration list
+     */
+    public function removeRegistration(): void
+    {
+        $this->requirePost();
+        $this->requireActivityOrFinanceManageAccess();
+
+        $input = $this->input();
+        $regId = (int)($input['registration_id'] ?? 0);
+        if (!$regId) Response::error('กรุณาระบุ registration_id');
+
+        $reg = $this->model('ActivityRegistrationModel');
+        $item = $reg->find($regId);
+        if (!$item) Response::error('ไม่พบข้อมูลการลงทะเบียน', 404);
+
+        $isAdmin = (($this->currentUser['role'] ?? '') === 'admin');
+        $regStatus = (string)($item['status'] ?? '');
+        $paymentStatus = (string)($item['payment_status'] ?? '');
+
+        // Rule:
+        // - Admin: can remove any status.
+        // - Non-admin (sub-admin/finance manager): only pending and not paid.
+        if (!$isAdmin) {
+            if ($paymentStatus === 'paid') {
+                Response::error('รายการที่ยืนยันชำระแล้ว ลบได้เฉพาะผู้ดูแลระบบ (admin)', 403);
+            }
+            if ($regStatus !== 'pending') {
+                Response::error('บัญชีนี้ไม่อยู่สถานะรออนุมัติ จึงลบได้เฉพาะผู้ดูแลระบบ (admin)', 403);
+            }
+        }
+
+        $users = $this->model('UserModel');
+        $user = $users->find((int)$item['user_id'], ['full_name']);
+        $memberName = $user['full_name']
+            ?? ($item['external_full_name'] ?? ('USER#' . (int)$item['user_id']));
+
+        $deletedReceiptId = null;
+        $deletedFinanceCount = 0;
+
+        // Clean linked receipt (if any) to avoid orphan reference data.
+        $receipts = $this->model('ReceiptModel');
+        $linkedReceipt = $receipts->findByReference('activity_fee', $regId);
+        if ($linkedReceipt) {
+            $deletedReceiptId = (int)$linkedReceipt['id'];
+            $receipts->delete(['id' => $deletedReceiptId]);
+        }
+
+        // Clean linked finance transaction created from auto-approval flow.
+        $finTxn = $this->model('FinanceTransactionModel');
+        $finDeleteStmt = $finTxn->delete(['reference_no' => 'ACT-REG-' . $regId]);
+        if ($finDeleteStmt) {
+            $deletedFinanceCount = (int)$finDeleteStmt->rowCount();
+        }
+
+        $reg->delete(['id' => $regId]);
+
+        Auth::logActivity(
+            (int)$this->currentUser['id'],
+            'remove_registration',
+            'activity',
+            "ลบผู้เข้าร่วมกิจกรรม: {$memberName} (REG#{$regId})",
+            (int)$item['activity_id'],
+            'activity'
+        );
+
+        Response::success([
+            'registration_id' => $regId,
+            'deleted_receipt_id' => $deletedReceiptId,
+            'deleted_finance_count' => $deletedFinanceCount,
+        ], 'ลบผู้เข้าร่วมกิจกรรมสำเร็จ');
+    }
+
+    /**
      * GET  ?controller=activity&action=registration-detail&registration_id=X
      */
     public function registrationDetail(): void
@@ -652,6 +861,13 @@ class ActivityController extends Controller
                 'users.school_organization',
                 'users.work_address',
                 'users.home_address',
+                'activity_registrations.is_external',
+                'activity_registrations.external_prefix',
+                'activity_registrations.external_first_name',
+                'activity_registrations.external_last_name',
+                'activity_registrations.external_full_name',
+                'activity_registrations.external_school_organization',
+                'activity_registrations.external_payer_address',
                 'activities.title(activity_title)',
                 'activities.has_fee',
                 'activities.fee_amount',
@@ -716,6 +932,43 @@ class ActivityController extends Controller
 
         if (array_key_exists('note', $input)) {
             $data['note'] = $input['note'] ?: null;
+        }
+
+        if (array_key_exists('external_prefix', $input)) {
+            $data['external_prefix'] = trim((string)$input['external_prefix']) ?: null;
+        }
+        if (array_key_exists('external_first_name', $input)) {
+            $data['external_first_name'] = trim((string)$input['external_first_name']) ?: null;
+        }
+        if (array_key_exists('external_last_name', $input)) {
+            $data['external_last_name'] = trim((string)$input['external_last_name']) ?: null;
+        }
+        if (array_key_exists('external_school_organization', $input)) {
+            $data['external_school_organization'] = trim((string)$input['external_school_organization']) ?: null;
+        }
+        if (array_key_exists('external_payer_address', $input)) {
+            $extAddr = $input['external_payer_address'];
+            if (is_array($extAddr)) {
+                $extAddr = json_encode($extAddr, JSON_UNESCAPED_UNICODE);
+            }
+            $data['external_payer_address'] = is_string($extAddr) && $extAddr !== '' ? $extAddr : null;
+        }
+
+        $needBuildExternalFullName = array_key_exists('external_prefix', $data)
+            || array_key_exists('external_first_name', $data)
+            || array_key_exists('external_last_name', $data);
+        if ($needBuildExternalFullName) {
+            $currentPrefix = array_key_exists('external_prefix', $data)
+                ? (string)($data['external_prefix'] ?? '')
+                : (string)($item['external_prefix'] ?? '');
+            $currentFirst = array_key_exists('external_first_name', $data)
+                ? (string)($data['external_first_name'] ?? '')
+                : (string)($item['external_first_name'] ?? '');
+            $currentLast = array_key_exists('external_last_name', $data)
+                ? (string)($data['external_last_name'] ?? '')
+                : (string)($item['external_last_name'] ?? '');
+            $fullName = trim($currentPrefix . $currentFirst . ' ' . $currentLast);
+            $data['external_full_name'] = $fullName !== '' ? $fullName : null;
         }
 
         if (empty($data)) Response::error('ไม่มีข้อมูลที่ต้องบันทึก');
@@ -824,14 +1077,28 @@ class ActivityController extends Controller
         }
 
         $users = $this->model('UserModel');
-        $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address', 'home_address']);
-        if (!$user) Response::error('ไม่พบข้อมูลสมาชิก', 404);
+        $user = null;
+        if (!empty($registration['user_id'])) {
+            $user = $users->find((int)$registration['user_id'], ['full_name', 'school_organization', 'work_address', 'home_address']);
+            if (!$user) Response::error('ไม่พบข้อมูลสมาชิก', 404);
+        }
 
         $rawSource = strtolower(trim((string)($input['address_source'] ?? 'work')));
         $addressSource = in_array($rawSource, ['current', 'home', 'personal'], true) ? 'personal' : 'organization';
         $payerAddress = $input['payer_address'] ?? null;
         if (!$payerAddress) {
-            $payerAddress = FeeController::buildPayerAddress($user, $addressSource);
+            if ($user) {
+                $payerAddress = FeeController::buildPayerAddress($user, $addressSource);
+            } else {
+                $payerAddress = $registration['external_payer_address'] ?? null;
+            }
+        }
+
+        $payerName = $user
+            ? ($user['full_name'] ?? '')
+            : (string)($registration['external_full_name'] ?? 'บุคคลภายนอก');
+        if ($payerName === '') {
+            $payerName = 'บุคคลภายนอก';
         }
 
         $settings = $this->model('SettingsModel');
@@ -841,11 +1108,11 @@ class ActivityController extends Controller
 
         try {
             $receiptId = $receipts->createReceipt([
-                'user_id'       => (int)$registration['user_id'],
+                'user_id'       => $user ? (int)$registration['user_id'] : null,
                 'receipt_type'  => 'activity_fee',
                 'reference_id'  => (int)$registration['id'],
                 'title'         => 'ค่าลงทะเบียนกิจกรรม',
-                'payer_name'    => $user['full_name'],
+                'payer_name'    => $payerName,
                 'payer_address' => $payerAddress,
                 'description'   => $description,
                 'amount'        => (float)$act['fee_amount'],

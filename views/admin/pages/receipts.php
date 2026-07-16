@@ -173,6 +173,9 @@
                             <input class="form-check-input" type="radio" name="createAddressSource" id="createAddressSourcePersonal" value="current">
                             <label class="form-check-label" for="createAddressSourcePersonal">ใช้ที่อยู่ปัจจุบัน</label>
                         </div>
+                        <button type="button" class="btn btn-outline-info btn-sm ms-2" id="btnLoadCreateAddressFromProfile">
+                            <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
+                        </button>
                     </div>
                     <input type="text" id="createPayerAddress" class="form-control" placeholder="ดึงจากข้อมูลสมาชิกอัตโนมัติ หรือพิมพ์เอง">
                     <small class="text-muted">ค่าเริ่มต้นเป็นที่อยู่ที่ทำงาน และสามารถแก้ไขเองได้</small>
@@ -647,6 +650,23 @@ function applyMemberAddressForCreate(member) {
     }
 }
 
+async function pullCreateAddressFromProfile(showSuccess = true) {
+    const userId = $('#createUserId').val();
+    if (!userId) {
+        App.error('กรุณาเลือกสมาชิกก่อนดึงข้อมูลจากโปรไฟล์');
+        return;
+    }
+
+    const member = await getMemberAddressProfile(parseInt(userId, 10));
+    if (!member) {
+        App.error('ไม่สามารถโหลดที่อยู่จากโปรไฟล์สมาชิกได้');
+        return;
+    }
+
+    applyMemberAddressForCreate(member);
+    if (showSuccess) App.success('โหลดที่อยู่จากโปรไฟล์สมาชิกแล้ว');
+}
+
 $(async function () {
     if (!await App.requireAdminOrSubAdmin()) return;
     loadReceipts();
@@ -671,7 +691,7 @@ $(async function () {
     initPayerSelect2();
 
     // When payer is selected via Select2
-    $('#createPayerSelect').on('select2:select', function(e) {
+    $('#createPayerSelect').on('select2:select', async function(e) {
         const data = e.params.data;
         if (data.id && String(data.id).startsWith('user_')) {
             // Existing member selected
@@ -681,9 +701,9 @@ $(async function () {
             $('#createPayerName').val(member ? member.full_name : data.text).prop('readonly', true);
             $('#payerNameHint').text('ดึงจากชื่อสมาชิกอัตโนมัติ');
             // Auto-fill payer address
-            if (member) {
-                applyMemberAddressForCreate(member);
-            }
+            const profile = await getMemberAddressProfile(parseInt(userId, 10));
+            if (profile) applyMemberAddressForCreate(profile);
+            else if (member) applyMemberAddressForCreate(member);
         } else {
             // Custom text entered (non-member)
             const customName = String(data.id).replace(' (บุคคลภายนอก)', '');
@@ -704,8 +724,11 @@ $(async function () {
     $('input[name="createAddressSource"]').on('change', function() {
         const userId = $('#createUserId').val();
         if (!userId) return;
-        const member = membersCache.find(m => String(m.id) === String(userId));
-        if (member) applyMemberAddressForCreate(member);
+        pullCreateAddressFromProfile(false);
+    });
+
+    $('#btnLoadCreateAddressFromProfile').on('click', function() {
+        pullCreateAddressFromProfile(true);
     });
 
     // When date changes, re-generate receipt number for new year

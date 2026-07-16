@@ -425,6 +425,9 @@ const API = {
     async searchActivityMembers(activityId, q = '') {
         return this.get(this.apiUrl('activity', 'search-members'), { id: activityId, q });
     },
+    async searchActivityExternalParticipants(q = '') {
+        return this.get(this.apiUrl('activity', 'search-external-participants'), { q });
+    },
     async addActivityMemberRegistration(activityId, userId, note = '') {
         return this.post(this.apiUrl('activity', 'add-member-registration'), {
             activity_id: activityId,
@@ -432,11 +435,17 @@ const API = {
             note
         });
     },
+    async addActivityExternalRegistration(data) {
+        return this.post(this.apiUrl('activity', 'add-external-registration'), data);
+    },
     async getActivityRegistrationDetail(registrationId) {
         return this.get(this.apiUrl('activity', 'registration-detail'), { registration_id: registrationId });
     },
     async manageActivityRegistration(data) {
         return this.post(this.apiUrl('activity', 'manage-registration'), data);
+    },
+    async removeActivityRegistration(registrationId) {
+        return this.post(this.apiUrl('activity', 'remove-registration'), { registration_id: registrationId });
     },
     async updateActivityRegistrationAddress(data) {
         return this.post(this.apiUrl('activity', 'update-registration-address'), data);

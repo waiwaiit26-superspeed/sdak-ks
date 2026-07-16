@@ -627,7 +627,18 @@ $basePath = $basePath ?? './';
                     </div>
                 </div>
 
-                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;">
+                <!-- Name match results inside wizard -->
+                <div id="setupNameMatchPanel" style="display:none;margin-top:16px;">
+                    <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+                        <small style="color:#92400e;"><i class="bi bi-search me-1"></i> พบชื่อที่ตรงกันในระบบ — ท่านเป็นคนนี้หรือไม่?</small>
+                    </div>
+                    <div id="setupNameMatchList"></div>
+                    <div style="margin-top:10px;">
+                        <button type="button" class="btn-step btn-step-outline" style="font-size:.85rem;padding:8px 16px;" onclick="skipNameMatch()">ไม่ใช่คนเหล่านี้ → ดำเนินการต่อ</button>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;" id="setupNameNextRow">
                     <button type="button" class="btn-step btn-step-primary" id="btnSetupNameNext" disabled>ถัดไป <i class="bi bi-arrow-right"></i></button>
                 </div>
             </div>
@@ -677,6 +688,31 @@ $basePath = $basePath ?? './';
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Link Request Modal -->
+<div class="modal-overlay" id="linkRequestModal">
+    <div class="setup-modal" style="max-width:460px;">
+        <div class="setup-modal-header" style="background:linear-gradient(135deg,#0369a1,#0284c7);">
+            <h3><i class="bi bi-link-45deg me-1"></i> ยื่นคำขอผูกบัญชี</h3>
+            <p id="linkReqTargetName" style="font-weight:600;font-size:.95rem;margin-bottom:2px;"></p>
+            <p style="opacity:.8;font-size:.82rem;margin:0;">รอ admin อนุมัติก่อนจึงจะเข้าสู่ระบบได้</p>
+        </div>
+        <div class="setup-modal-body">
+            <div id="linkGoogleForm">
+                <div class="callout callout-info py-2 px-3">
+                    <small><i class="bi bi-google me-1"></i> ระบบจะผูกบัญชี Google ของท่านกับสมาชิกนี้</small>
+                </div>
+            </div>
+            <div id="linkReqError" class="alert alert-danger py-2 mt-2" style="display:none;font-size:.88rem;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:0 28px 24px;">
+            <button type="button" class="btn-step btn-step-outline" onclick="closeLinkModal()">ยกเลิก</button>
+            <button type="button" class="btn-step btn-step-primary" id="btnSubmitLink" data-type="google">
+                <i class="bi bi-send me-1"></i> ส่งคำขอ
+            </button>
         </div>
     </div>
 </div>
@@ -796,6 +832,10 @@ $(function () {
     let _selectedMemberType = null;
     let _uploadedSlipUrl = null;
     let _googleToken = null; // เก็บ google credential ไว้ส่งตอน complete
+    let _linkTargetId = null;
+    let _linkGoogleToken = null;
+    let _wizardNameSearchTimer = null;
+    const _searchGenMap = {};
 
     function handleGoogleCredential(response) {
         const btn = $('#btnGoogleDisplay');
@@ -843,10 +883,65 @@ $(function () {
         return '<svg viewBox="0 0 24 24" style="width:20px;height:20px"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.97 10.97 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> เข้าสู่ระบบด้วย Google';
     }
 
+    function buildMatchCard(m) {
+        const school = m.school_organization ? `<small class="text-muted">${App.escapeHtml(m.school_organization)}</small>` : '';
+        const pos = m.position ? `<span class="badge badge-light border mr-1">${App.escapeHtml(m.position)}</span>` : '';
+        const actionHtml = m.has_email
+            ? `<div class="mt-2 alert alert-info py-2 px-3 mb-0" style="font-size:.95rem;">
+                <i class="bi bi-envelope me-1"></i> มีอีเมลในระบบ: <strong>${App.escapeHtml(m.email_hint)}</strong>
+                <br><small>หากนี่คือท่าน กรุณา <a href="./?page=login">เข้าสู่ระบบด้วยอีเมลนี้</a> แทน</small>
+            </div>`
+            : `<button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                onclick="openLinkModal(${m.id}, '${App.escapeHtml(m.full_name)}', 'google')">
+                <i class="bi bi-link-45deg me-1"></i> ใช่คนนี้ — ผูกบัญชี Google
+            </button>`;
+
+        return `<div class="border rounded p-3 mb-2 bg-white">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
+                <div>
+                    <strong style="font-size:1.25rem;">${App.escapeHtml(m.full_name)}</strong><br>
+                    ${pos}${school}
+                </div>
+            </div>
+            ${actionHtml}
+        </div>`;
+    }
+
+    async function runNameSearch(params, containerSelector, callbacks) {
+        const $list = $(containerSelector);
+        const $panel = $list.parent();
+
+        if (!_searchGenMap[containerSelector]) _searchGenMap[containerSelector] = 0;
+        const myGen = ++_searchGenMap[containerSelector];
+
+        const apiParams = {};
+        if (params.first && params.first.length >= 2) apiParams.first = params.first;
+        if (params.last && params.last.length >= 2) apiParams.last = params.last;
+
+        if (!apiParams.first && !apiParams.last) {
+            $panel.hide();
+            if (callbacks && callbacks.onNoResults) callbacks.onNoResults();
+            return;
+        }
+
+        const res = await API.searchMembersByName(apiParams);
+        if (_searchGenMap[containerSelector] !== myGen) return;
+
+        if (!res.success || !res.data || res.data.length === 0) {
+            $panel.hide();
+            if (callbacks && callbacks.onNoResults) callbacks.onNoResults();
+            return;
+        }
+
+        $list.html(res.data.map(m => buildMatchCard(m)).join(''));
+        $panel.show();
+    }
+
     // ─── Setup Modal Logic ───
     function openSetupModal(data) {
         _selectedMemberType = null;
         _uploadedSlipUrl = null;
+        _linkGoogleToken = _googleToken;
         const feeInfo = data.fee_info || {};
         const gUser = data.google_user || {};
 
@@ -856,6 +951,9 @@ $(function () {
         $('#setupFirstName').val(gParts[0] || '');
         $('#setupLastName').val(gParts.slice(1).join(' ') || '');
         $('#setupPrefix').val('');
+        $('#setupNameMatchPanel').hide();
+        $('#setupNameNextRow').show();
+        $('#setupNameMatchList').html('');
         validateNameStep();
 
         // Build types from DB data (member_types) with fallback
@@ -949,14 +1047,113 @@ $(function () {
     }
     $(document).on('input change', '#setupPrefix, #setupPrefixOther, #setupFirstName, #setupLastName', validateNameStep);
 
-    // Name step → next to member type
-    $('#btnSetupNameNext').on('click', function() {
+    $('#setupFirstName, #setupLastName').on('input', function() {
+        clearTimeout(_wizardNameSearchTimer);
+        const first = $('#setupFirstName').val().trim();
+        const last = $('#setupLastName').val().trim();
+
+        if (!first && !last) {
+            $('#setupNameMatchPanel').hide();
+            $('#setupNameNextRow').show();
+            return;
+        }
+
+        if (first.length >= 2 || last.length >= 2) {
+            $('#setupNameMatchList').html('<div class="text-muted py-2 text-center" style="font-size:.85rem;"><span class="spinner-border spinner-border-sm mr-1"></span> กำลังค้นหา...</div>');
+            $('#setupNameMatchPanel').show();
+            $('#setupNameNextRow').hide();
+        }
+
+        _wizardNameSearchTimer = setTimeout(function() {
+            runNameSearch({ first, last }, '#setupNameMatchList', {
+                onNoResults: function() { $('#setupNameNextRow').show(); }
+            });
+        }, 350);
+    });
+
+    // Name step → check for matches first, then proceed
+    $('#btnSetupNameNext').on('click', async function() {
         if (!getResolvedPrefix() || !$('#setupFirstName').val().trim() || !$('#setupLastName').val().trim()) return;
+
+        const q = ($('#setupFirstName').val().trim() + ' ' + $('#setupLastName').val().trim()).trim();
+        const res = await API.searchMembersByName(q);
+        if (res.success && res.data && res.data.length > 0) {
+            $('#setupNameMatchList').html(res.data.map(m => buildMatchCard(m)).join(''));
+            $('#setupNameMatchPanel').show();
+            $('#setupNameNextRow').hide();
+            return;
+        }
+
+        $('#setupNameMatchPanel').hide();
         goToSetupStep(2);
     });
 
     // Back from member type → name step
-    $('#btnSetupNameBack').on('click', function() { goToSetupStep(1); });
+    $('#btnSetupNameBack').on('click', function() {
+        $('#setupNameNextRow').show();
+        $('#setupNameMatchPanel').hide();
+        goToSetupStep(1);
+    });
+
+    window.skipNameMatch = function skipNameMatch() {
+        $('#setupNameMatchPanel').hide();
+        goToSetupStep(2);
+    };
+
+    window.openLinkModal = function openLinkModal(targetId, targetName, requestType) {
+        _linkTargetId = targetId;
+        if (requestType === 'google') {
+            _linkGoogleToken = _googleToken || _linkGoogleToken;
+        }
+        $('#linkReqTargetName').text(targetName);
+        $('#linkReqError').hide();
+        $('#btnSubmitLink').data('type', requestType).prop('disabled', false)
+            .html('<i class="bi bi-send me-1"></i> ส่งคำขอ');
+        $('#linkRequestModal').addClass('show');
+    };
+
+    window.closeLinkModal = function closeLinkModal() {
+        $('#linkRequestModal').removeClass('show');
+        _linkTargetId = null;
+    };
+
+    $('#linkRequestModal').on('click', function(e) {
+        if ($(e.target).is('#linkRequestModal')) closeLinkModal();
+    });
+
+    $('#btnSubmitLink').on('click', async function() {
+        const btn = $(this);
+        const requestType = btn.data('type');
+        if (!_linkTargetId || requestType !== 'google') return;
+        $('#linkReqError').hide();
+
+        if (!_linkGoogleToken) {
+            $('#linkReqError').text('ไม่พบข้อมูล Google Token กรุณาลองใหม่').show();
+            return;
+        }
+
+        const payload = {
+            target_user_id: _linkTargetId,
+            request_type: 'google',
+            google_token: _linkGoogleToken,
+        };
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังส่ง...');
+        const res = await API.requestAccountLink(payload);
+        btn.prop('disabled', false).html('<i class="bi bi-send me-1"></i> ส่งคำขอ');
+
+        if (res.success) {
+            closeLinkModal();
+            Swal.fire({
+                icon: 'success',
+                title: 'ส่งคำขอสำเร็จ!',
+                html: 'ระบบได้รับคำขอของท่านแล้ว<br><small class="text-muted">กรุณารอ admin อนุมัติก่อนจึงจะเข้าสู่ระบบได้</small>',
+                confirmButtonText: 'รับทราบ',
+            });
+        } else {
+            $('#linkReqError').text(res.message || 'เกิดข้อผิดพลาด').show();
+        }
+    });
 
     // Select member type
     $(document).on('click', '.member-type-card', function() {

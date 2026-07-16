@@ -272,6 +272,83 @@
     </div>
 </div>
 
+<!-- Modal: Add External (Non-member) Participant -->
+<div class="modal fade" id="externalParticipantModal" tabindex="-1" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>เพิ่มบุคคลที่ไม่ได้เป็นสมาชิก</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="externalParticipantForm" novalidate>
+                    <div class="card border mb-3">
+                        <div class="card-body py-2">
+                            <label class="form-label mb-1">ค้นหาจากประวัติบุคคลภายนอก (ถ้ามี)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="extHistorySearch" placeholder="พิมพ์ชื่อหรือต้นสังกัด">
+                                <button type="button" class="btn btn-outline-info" onclick="searchExternalParticipantHistory()"><i class="bi bi-search"></i> ค้นหา</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnUseLatestExternal" onclick="useLatestExternalHistory()">
+                                    <i class="bi bi-clock-history me-1"></i>ใช้ข้อมูลล่าสุด
+                                </button>
+                                <select id="extHistoryRecentSelect" class="form-control form-control-sm" style="max-width:320px;">
+                                    <option value="">เลือกรายการล่าสุด (5 คน)</option>
+                                </select>
+                            </div>
+                            <div id="extHistoryResults" class="mt-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">คำนำหน้า</label>
+                            <input type="text" class="form-control" id="extPrefix" placeholder="นาย/นาง/น.ส.">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">ชื่อ <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="extFirstName" required>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label">นามสกุล <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="extLastName" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">หน่วยงาน/สถานที่ทำงาน</label>
+                        <input type="text" class="form-control" id="extSchoolOrg" placeholder="ถ้ามี">
+                    </div>
+
+                    <div class="card border mb-2">
+                        <div class="card-header py-2"><strong>ที่อยู่สำหรับออกใบเสร็จ</strong></div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <input type="text" id="extAddrDetail" class="form-control" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6"><input type="text" id="extAddrSubdistrict" class="form-control" placeholder="ตำบล"></div>
+                                <div class="col-md-6"><input type="text" id="extAddrDistrict" class="form-control" placeholder="อำเภอ"></div>
+                                <div class="col-md-6 mt-2"><input type="text" id="extAddrProvince" class="form-control" placeholder="จังหวัด"></div>
+                                <div class="col-md-6 mt-2"><input type="text" id="extAddrZipcode" class="form-control" placeholder="รหัสไปรษณีย์"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <small class="text-muted">บันทึกข้อมูลไว้ก่อน แล้วค่อยสร้างใบเสร็จภายหลังจากหน้าจัดการผู้เข้าร่วมได้</small>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" id="btnAddExternalParticipant" onclick="submitExternalParticipant()">
+                    <i class="bi bi-check-lg me-1"></i>เพิ่มเข้ากิจกรรม
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Manage Activity Registration -->
 <div class="modal fade" id="regManageModal" tabindex="-1" data-backdrop="static">
     <div class="modal-dialog modal-xl">
@@ -304,11 +381,17 @@
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="form-label">เลือกที่อยู่ออกใบเสร็จ</label>
-                        <select class="form-control" id="manageAddressSource">
-                            <option value="work" selected>ที่อยู่ที่ทำงาน (ค่าเริ่มต้น)</option>
-                            <option value="current">ที่อยู่ปัจจุบัน</option>
-                        </select>
+                        <label class="form-label">ที่อยู่ผู้ชำระเงิน</label>
+                        <div id="manageAddressSourceWrap" class="pt-1">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="manageAddressSource" id="manageAddressSourceWork" value="work" checked>
+                                <label class="form-check-label" for="manageAddressSourceWork">ใช้ที่อยู่ที่ทำงาน</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="manageAddressSource" id="manageAddressSourceCurrent" value="current">
+                                <label class="form-check-label" for="manageAddressSourceCurrent">ใช้ที่อยู่ปัจจุบัน</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -327,6 +410,19 @@
                 <div class="card border mb-3">
                     <div class="card-header py-2"><strong>ข้อมูลที่อยู่ออกใบเสร็จ</strong></div>
                     <div class="card-body">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-info btn-sm" id="btnPullRegAddressFromProfile" onclick="pullRegistrationAddressFromProfile()">
+                                <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
+                            </button>
+                            <small class="text-muted">ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์สมาชิกอัตโนมัติ หรือกดดึงใหม่ได้</small>
+                        </div>
+                        <div class="mb-3" id="manageProfileSyncWrap">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="manageSyncProfileAddress">
+                                <label class="form-check-label" for="manageSyncProfileAddress">บันทึกการแก้ไขที่อยู่นี้กลับไปที่โปรไฟล์สมาชิกด้วย</label>
+                            </div>
+                            <small class="text-muted">ถ้าติ๊กไว้ ระบบจะอัปเดตข้อมูลในโปรไฟล์สมาชิกตามข้อมูลที่กรอก</small>
+                        </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">หน่วยงาน/สถานที่ทำงาน</label>
@@ -620,6 +716,7 @@ let currentRegActivityId = null;
 let currentRegActivityData = null;
 let currentRegistrationsData = [];
 let currentRegPaymentFilter = 'all';
+let extHistoryRows = [];
 
 function getPaymentStatusBadge(paymentStatus) {
     if (paymentStatus === 'paid') return '<span class="badge bg-success">ชำระแล้ว</span>';
@@ -701,6 +798,7 @@ function renderRegistrationsTable(activityId) {
                 <option value="refunded">คืนเงินแล้ว</option>
             </select>
             <button class="btn btn-outline-primary btn-sm" onclick="openMemberPicker()"><i class="bi bi-person-plus me-1"></i>เลือกสมาชิก</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="openExternalParticipantModal()"><i class="bi bi-person-plus-fill me-1"></i>เพิ่มบุคคลที่ไม่ได้เป็นสมาชิก</button>
             <button class="btn btn-outline-success btn-sm" id="btnBulkApprove" onclick="bulkApproveSelected()"><i class="bi bi-check2-all me-1"></i>ยืนยันหลายคน</button>
             <button class="btn btn-success btn-sm" onclick="exportRegistrationsExcel()"><i class="bi bi-file-earmark-excel me-1"></i>Export Excel</button>
         </div>
@@ -712,20 +810,29 @@ function renderRegistrationsTable(activityId) {
         const payBadge = getPaymentStatusBadge(r.payment_status);
         const stBadge = App.getStatusBadge(r.status);
         const slip = r.payment_proof ? `<button class="btn btn-outline-info btn-sm" onclick="previewSlip('${App.escHtml(r.payment_proof)}', ${r.id}, '${r.status}', '${r.payment_status}', ${activityId})" title="ดูสลิป"><i class="bi bi-receipt"></i></button>` : '';
+        const displayName = r.full_name || r.external_full_name || `${r.external_prefix || ''}${r.external_first_name || ''} ${r.external_last_name || ''}`.trim() || '-';
+        const orgName = r.school_organization || r.external_school_organization || '-';
         const memberNo = r.member_number ? App.escapeHtml(r.member_number) : '-';
         const canSelect = r.status === 'pending';
+        const canDelete = API.isAdmin() || (r.status === 'pending' && r.payment_status !== 'paid');
+        const deleteBlockedReason = r.payment_status === 'paid'
+            ? 'รายการชำระแล้ว ลบได้เฉพาะ admin'
+            : (r.status !== 'pending' ? 'ลบได้เฉพาะสถานะรออนุมัติ (pending)' : 'ไม่สามารถลบรายการนี้ได้');
 
         html += `<tr>
             <td>${canSelect ? `<input type="checkbox" class="reg-select" value="${r.id}" data-status="${r.status}">` : ''}</td>
             <td>${i + 1}</td>
-            <td>${r.full_name || ''}</td>
+            <td>${App.escapeHtml(displayName)}${r.is_external ? ' <span class="badge bg-secondary ms-1">บุคคลภายนอก</span>' : ''}</td>
             <td>${memberNo}</td>
-            <td>${r.school_organization || '-'}</td>
+            <td>${App.escapeHtml(orgName)}</td>
             <td>${payBadge} ${slip}</td>
             <td>${stBadge}</td>
             <td>
                 <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-primary" onclick="openRegistrationManager(${r.id})" title="จัดการ"><i class="bi bi-sliders"></i></button>
+                    ${canDelete
+                        ? `<button class="btn btn-outline-danger" onclick="removeRegistrationFromActivity(${r.id}, '${App.escapeHtml((r.full_name || '').replace(/'/g, "\\'"))}', ${activityId})" title="ลบออกจากกิจกรรม"><i class="bi bi-trash"></i></button>`
+                        : `<button class="btn btn-outline-secondary" disabled title="${deleteBlockedReason}"><i class="bi bi-trash"></i></button>`}
                     ${r.status === 'pending' ? `<button class="btn btn-outline-success" onclick="approveReg(${r.id},'approved','paid',${activityId})" title="อนุมัติทันที"><i class="bi bi-check-lg"></i></button>` : ''}
                 </div>
             </td>
@@ -843,6 +950,53 @@ async function approveReg(regId, status, paymentStatus, activityId) {
     }
 }
 
+async function confirmRemoveRegistrationWithCode(fullName) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const title = 'ยืนยันลบผู้เข้าร่วมกิจกรรม';
+    const msg = `ต้องการลบ ${fullName || 'สมาชิก'} ออกจากกิจกรรมใช่หรือไม่`;
+
+    if (typeof Swal === 'undefined') {
+        const input = window.prompt(`${msg}\n\nพิมพ์รหัสยืนยัน 6 หลักนี้: ${code}`);
+        return input === code;
+    }
+
+    const result = await Swal.fire({
+        icon: 'warning',
+        title,
+        html: `${App.escapeHtml(msg)}<br><br>กรุณาพิมพ์รหัสนี้เพื่อยืนยัน: <strong style="font-size:1.15rem;letter-spacing:2px;">${code}</strong>`,
+        input: 'text',
+        inputPlaceholder: 'พิมพ์รหัส 6 หลัก',
+        showCancelButton: true,
+        confirmButtonText: 'ยืนยันลบ',
+        cancelButtonText: 'ยกเลิก',
+        reverseButtons: true,
+        preConfirm: (value) => {
+            if ((value || '').trim() !== code) {
+                Swal.showValidationMessage('รหัสยืนยันไม่ถูกต้อง');
+                return false;
+            }
+            return true;
+        }
+    });
+
+    return !!result.isConfirmed;
+}
+
+async function removeRegistrationFromActivity(regId, fullName, activityId) {
+    const ok = await confirmRemoveRegistrationWithCode(fullName);
+    if (!ok) return;
+
+    const result = await API.removeActivityRegistration(regId);
+    if (!result.success) {
+        App.error(result.message || 'ไม่สามารถลบผู้เข้าร่วมได้');
+        return;
+    }
+
+    App.success(result.message || 'ลบผู้เข้าร่วมกิจกรรมสำเร็จ');
+    await viewRegistrations(activityId);
+    loadActivities(currentPage);
+}
+
 function previewSlip(url, regId, regStatus, paymentStatus, activityId) {
     const src = (url.startsWith('http') || url.startsWith('//')) ? url : (BASE_PATH + url);
     $('#slipPreviewImg').attr('src', src);
@@ -857,6 +1011,7 @@ function previewSlip(url, regId, regStatus, paymentStatus, activityId) {
 }
 
 let currentManageRegData = null;
+const regProfileAddressCache = {};
 
 function parseAddressObject(raw) {
     if (!raw) return {};
@@ -885,6 +1040,78 @@ function readAddress(prefix) {
         province: $(`#${prefix}Province`).val().trim(),
         zipcode: $(`#${prefix}Zipcode`).val().trim(),
     };
+}
+
+function getManageAddressSource() {
+    return $('input[name="manageAddressSource"]:checked').val() || 'work';
+}
+
+function setManageProfileControls(enabled, hintText = '') {
+    $('#btnPullRegAddressFromProfile').prop('disabled', !enabled);
+    $('#manageSyncProfileAddress').prop('disabled', !enabled);
+    if (!enabled) {
+        $('#manageSyncProfileAddress').prop('checked', false);
+    }
+    const text = hintText || (enabled
+        ? 'ถ้าติ๊กไว้ ระบบจะอัปเดตข้อมูลในโปรไฟล์สมาชิกตามข้อมูลที่กรอก'
+        : 'รายการนี้เป็นบุคคลภายนอก จึงไม่มีการซิงก์กลับโปรไฟล์สมาชิก');
+    $('#manageProfileSyncWrap small').text(text);
+}
+
+function buildManagePayerAddressJson(source) {
+    const useCurrent = source === 'current';
+    const addr = useCurrent ? readAddress('home') : readAddress('work');
+    const orgName = useCurrent ? '' : $('#manageSchoolOrg').val().trim();
+    const hasData = !!(orgName || addr.detail || addr.subdistrict || addr.district || addr.province || addr.zipcode);
+    if (!hasData) return null;
+    return JSON.stringify({
+        organization: orgName,
+        detail: addr.detail,
+        subdistrict: addr.subdistrict,
+        district: addr.district,
+        province: addr.province,
+        zipcode: addr.zipcode,
+    });
+}
+
+function getExternalAddressPayloadForManageSave() {
+    const source = getManageAddressSource();
+    return {
+        external_school_organization: $('#manageSchoolOrg').val().trim(),
+        external_payer_address: buildManagePayerAddressJson(source),
+    };
+}
+
+async function getRegistrationMemberProfile(userId) {
+    if (!userId) return null;
+    const key = String(userId);
+    if (regProfileAddressCache[key]) return regProfileAddressCache[key];
+
+    const result = await API.getProfile(parseInt(userId, 10));
+    if (result.success && result.data) {
+        regProfileAddressCache[key] = result.data;
+        return result.data;
+    }
+    return null;
+}
+
+async function pullRegistrationAddressFromProfile(showSuccess = true) {
+    if (!currentManageRegData || !currentManageRegData.user_id) {
+        App.error('ไม่พบสมาชิกของรายการลงทะเบียนนี้');
+        return;
+    }
+
+    const member = await getRegistrationMemberProfile(currentManageRegData.user_id);
+    if (!member) {
+        App.error('ไม่สามารถโหลดข้อมูลจากโปรไฟล์สมาชิกได้');
+        return;
+    }
+
+    $('#manageSchoolOrg').val(member.school_organization || '');
+    fillAddress('work', parseAddressObject(member.work_address));
+    fillAddress('home', parseAddressObject(member.home_address));
+
+    if (showSuccess) App.success('ดึงข้อมูลที่อยู่จากโปรไฟล์สมาชิกแล้ว');
 }
 
 function openMemberPicker() {
@@ -946,6 +1173,170 @@ async function addMemberToActivity(userId, fullName) {
     }
 }
 
+function buildExternalPayerAddressPayload() {
+    const organization = $('#extSchoolOrg').val().trim();
+    const detail = $('#extAddrDetail').val().trim();
+    const subdistrict = $('#extAddrSubdistrict').val().trim();
+    const district = $('#extAddrDistrict').val().trim();
+    const province = $('#extAddrProvince').val().trim();
+    const zipcode = $('#extAddrZipcode').val().trim();
+
+    const hasAny = !!(organization || detail || subdistrict || district || province || zipcode);
+    if (!hasAny) return null;
+
+    return {
+        organization,
+        detail,
+        subdistrict,
+        district,
+        province,
+        zipcode,
+    };
+}
+
+function openExternalParticipantModal() {
+    if (!currentRegActivityId) {
+        App.error('ไม่พบกิจกรรมที่กำลังจัดการ');
+        return;
+    }
+    $('#externalParticipantForm')[0].reset();
+    $('#extHistorySearch').val('');
+    $('#extHistoryResults').html('');
+    $('#extHistoryRecentSelect').html('<option value="">เลือกรายการล่าสุด (5 คน)</option>');
+    $('#btnUseLatestExternal').prop('disabled', true);
+    extHistoryRows = [];
+    $('#externalParticipantModal').modal('show');
+    searchExternalParticipantHistory();
+}
+
+function fillExternalFormFromHistoryRow(row) {
+    if (!row) return;
+    $('#extPrefix').val(row.prefix || '');
+    $('#extFirstName').val(row.first_name || '');
+    $('#extLastName').val(row.last_name || '');
+    $('#extSchoolOrg').val(row.school_organization || '');
+
+    const addr = parseAddressObject(row.payer_address);
+    $('#extAddrDetail').val(addr.detail || addr.address || '');
+    $('#extAddrSubdistrict').val(addr.subdistrict || '');
+    $('#extAddrDistrict').val(addr.district || '');
+    $('#extAddrProvince').val(addr.province || '');
+    $('#extAddrZipcode').val(addr.zipcode || addr.postal_code || '');
+}
+
+function renderExternalHistoryResults() {
+    const box = $('#extHistoryResults');
+    const recentSelect = $('#extHistoryRecentSelect');
+    recentSelect.html('<option value="">เลือกรายการล่าสุด (5 คน)</option>');
+
+    if (!extHistoryRows.length) {
+        box.html('<small class="text-muted">ไม่พบข้อมูลจากประวัติ</small>');
+        $('#btnUseLatestExternal').prop('disabled', true);
+        return;
+    }
+
+    $('#btnUseLatestExternal').prop('disabled', false);
+
+    extHistoryRows.slice(0, 5).forEach((r, idx) => {
+        const org = r.school_organization ? ` | ${r.school_organization}` : '';
+        recentSelect.append(`<option value="${idx}">${App.escapeHtml(r.full_name || '-')} ${App.escapeHtml(org)}</option>`);
+    });
+
+    let html = '<div class="list-group">';
+    extHistoryRows.forEach((r, idx) => {
+        const org = r.school_organization ? `<small class="text-muted">${App.escapeHtml(r.school_organization)}</small>` : '<small class="text-muted">-</small>';
+        html += `<button type="button" class="list-group-item list-group-item-action py-2" onclick="useExternalHistory(${idx})">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>${App.escapeHtml(r.full_name || '-')}</strong>
+                <small class="text-muted">ดึงข้อมูล</small>
+            </div>
+            ${org}
+        </button>`;
+    });
+    html += '</div>';
+    box.html(html);
+}
+
+function useLatestExternalHistory() {
+    if (!extHistoryRows.length) {
+        App.error('ไม่พบข้อมูลล่าสุดให้ใช้งาน');
+        return;
+    }
+    useExternalHistory(0);
+}
+
+async function searchExternalParticipantHistory() {
+    const q = $('#extHistorySearch').val().trim();
+    const box = $('#extHistoryResults');
+    box.html('<small class="text-muted"><span class="spinner-border spinner-border-sm me-1"></span>กำลังค้นหา...</small>');
+
+    const result = await API.searchActivityExternalParticipants(q);
+    if (!result.success) {
+        box.html(`<small class="text-danger">${App.escapeHtml(result.message || 'ค้นหาไม่สำเร็จ')}</small>`);
+        return;
+    }
+
+    extHistoryRows = result.data || [];
+    renderExternalHistoryResults();
+}
+
+function useExternalHistory(idx) {
+    const row = extHistoryRows[idx];
+    if (!row) return;
+    fillExternalFormFromHistoryRow(row);
+    App.success('ดึงข้อมูลจากประวัติแล้ว');
+}
+
+$('#extHistoryRecentSelect').on('change', function() {
+    const idx = parseInt($(this).val(), 10);
+    if (Number.isNaN(idx)) return;
+    useExternalHistory(idx);
+});
+
+$('#extHistorySearch').on('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchExternalParticipantHistory();
+    }
+});
+
+async function submitExternalParticipant() {
+    if (!currentRegActivityId) return;
+
+    const prefix = $('#extPrefix').val().trim();
+    const firstName = $('#extFirstName').val().trim();
+    const lastName = $('#extLastName').val().trim();
+    const schoolOrg = $('#extSchoolOrg').val().trim();
+
+    if (!firstName || !lastName) {
+        App.error('กรุณากรอกชื่อและนามสกุล');
+        return;
+    }
+
+    const btn = $('#btnAddExternalParticipant');
+    btn.prop('disabled', true);
+
+    const result = await API.addActivityExternalRegistration({
+        activity_id: currentRegActivityId,
+        external_prefix: prefix,
+        external_first_name: firstName,
+        external_last_name: lastName,
+        external_school_organization: schoolOrg,
+        external_payer_address: buildExternalPayerAddressPayload(),
+    });
+
+    btn.prop('disabled', false);
+
+    if (!result.success) {
+        App.error(result.message || 'ไม่สามารถเพิ่มบุคคลภายนอกได้');
+        return;
+    }
+
+    $('#externalParticipantModal').modal('hide');
+    App.success(result.message || 'เพิ่มบุคคลภายนอกสำเร็จ');
+    await viewRegistrations(currentRegActivityId);
+}
+
 $('#memberPickerSearch').on('keydown', function (e) {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -969,19 +1360,39 @@ async function openRegistrationManager(registrationId) {
     }
     const d = result.data;
     currentManageRegData = d;
+    const isExternal = parseInt(d.is_external || 0, 10) === 1 || !d.user_id;
 
     $('#manageRegId').val(d.id);
     $('#manageRegStatus').val(d.status || 'pending');
     $('#managePaymentStatus').val(d.payment_status || 'pending');
-    $('#manageAddressSource').val('work');
+    $('#manageAddressSourceWork').prop('checked', true);
+    $('#manageAddressSourceCurrent').prop('disabled', false);
     $('#manageRegNote').val(d.note || '');
     $('#manageRegSlipFile').val('');
-    $('#manageSchoolOrg').val(d.school_organization || '');
+    $('#manageSyncProfileAddress').prop('checked', false);
+    if (isExternal) {
+        const extAddr = parseAddressObject(d.external_payer_address);
+        $('#manageSchoolOrg').val(d.external_school_organization || extAddr.organization || '');
+        fillAddress('work', {
+            detail: extAddr.detail || extAddr.address || '',
+            subdistrict: extAddr.subdistrict || '',
+            district: extAddr.district || '',
+            province: extAddr.province || '',
+            zipcode: extAddr.zipcode || '',
+        });
+        fillAddress('home', {});
+        $('#manageAddressSourceWork').prop('checked', true);
+        $('#manageAddressSourceCurrent').prop('disabled', true);
+        setManageProfileControls(false);
+    } else {
+        $('#manageSchoolOrg').val(d.school_organization || '');
+        fillAddress('work', parseAddressObject(d.work_address));
+        fillAddress('home', parseAddressObject(d.home_address));
+        setManageProfileControls(true);
+    }
 
-    fillAddress('work', parseAddressObject(d.work_address));
-    fillAddress('home', parseAddressObject(d.home_address));
-
-    const infoText = `${d.full_name || '-'} | ${d.activity_title || '-'} | ค่าลงทะเบียน ${App.formatCurrency(d.fee_amount || 0)}`;
+    const displayName = d.full_name || d.external_full_name || `${d.external_prefix || ''}${d.external_first_name || ''} ${d.external_last_name || ''}`.trim() || '-';
+    const infoText = `${displayName} | ${d.activity_title || '-'} | ค่าลงทะเบียน ${App.formatCurrency(d.fee_amount || 0)}`;
     $('#manageRegInfo').text(infoText);
 
     setRegistrationReceiptLink(d.receipt ? d.receipt.id : null);
@@ -1033,6 +1444,18 @@ async function saveRegistrationAddressOnly() {
     const regId = parseInt($('#manageRegId').val(), 10);
     if (!regId) return;
 
+    const isExternal = currentManageRegData && (parseInt(currentManageRegData.is_external || 0, 10) === 1 || !currentManageRegData.user_id);
+
+    if (isExternal) {
+        const extResult = await API.manageActivityRegistration({
+            registration_id: regId,
+            ...getExternalAddressPayloadForManageSave(),
+        });
+        if (extResult.success) App.success(extResult.message || 'บันทึกที่อยู่สำเร็จ');
+        else App.error(extResult.message || 'บันทึกที่อยู่ไม่สำเร็จ');
+        return;
+    }
+
     const payload = getAddressPayloadForSave();
     const result = await API.updateActivityRegistrationAddress({
         registration_id: regId,
@@ -1049,6 +1472,7 @@ async function saveRegistrationAddressOnly() {
 async function saveRegistrationManagement() {
     const regId = parseInt($('#manageRegId').val(), 10);
     if (!regId) return;
+    const isExternal = currentManageRegData && (parseInt(currentManageRegData.is_external || 0, 10) === 1 || !currentManageRegData.user_id);
 
     const btn = $('#btnSaveRegManage');
     btn.prop('disabled', true);
@@ -1061,15 +1485,28 @@ async function saveRegistrationManagement() {
     }
     if (uploaded) paymentProof = uploaded;
 
-    const addrPayload = getAddressPayloadForSave();
-    const saveAddrResult = await API.updateActivityRegistrationAddress({
-        registration_id: regId,
-        ...addrPayload,
-    });
-    if (!saveAddrResult.success) {
-        btn.prop('disabled', false);
-        App.error(saveAddrResult.message || 'ไม่สามารถบันทึกที่อยู่สมาชิกได้');
-        return;
+    const syncProfile = $('#manageSyncProfileAddress').is(':checked');
+    if (isExternal) {
+        const extAddrResult = await API.manageActivityRegistration({
+            registration_id: regId,
+            ...getExternalAddressPayloadForManageSave(),
+        });
+        if (!extAddrResult.success) {
+            btn.prop('disabled', false);
+            App.error(extAddrResult.message || 'ไม่สามารถบันทึกที่อยู่บุคคลภายนอกได้');
+            return;
+        }
+    } else if (syncProfile) {
+        const addrPayload = getAddressPayloadForSave();
+        const saveAddrResult = await API.updateActivityRegistrationAddress({
+            registration_id: regId,
+            ...addrPayload,
+        });
+        if (!saveAddrResult.success) {
+            btn.prop('disabled', false);
+            App.error(saveAddrResult.message || 'ไม่สามารถบันทึกที่อยู่สมาชิกได้');
+            return;
+        }
     }
 
     const regPayload = {
@@ -1096,23 +1533,58 @@ async function saveRegistrationManagement() {
 async function createRegistrationReceiptFromModal() {
     const regId = parseInt($('#manageRegId').val(), 10);
     if (!regId) return;
+    const isExternal = currentManageRegData && (parseInt(currentManageRegData.is_external || 0, 10) === 1 || !currentManageRegData.user_id);
 
     const btn = $('#btnCreateRegReceipt');
     btn.prop('disabled', true);
 
-    const addrPayload = getAddressPayloadForSave();
-    const saveAddrResult = await API.updateActivityRegistrationAddress({
-        registration_id: regId,
-        ...addrPayload,
-    });
-    if (!saveAddrResult.success) {
+    let paymentProof = currentManageRegData ? currentManageRegData.payment_proof : null;
+    const uploaded = await uploadRegistrationSlipIfNeeded();
+    if (uploaded === false) {
         btn.prop('disabled', false);
-        App.error(saveAddrResult.message || 'ไม่สามารถบันทึกที่อยู่ก่อนสร้างใบเสร็จได้');
         return;
     }
+    if (uploaded) {
+        paymentProof = uploaded;
+        const proofResult = await API.manageActivityRegistration({
+            registration_id: regId,
+            payment_proof: paymentProof,
+        });
+        if (!proofResult.success) {
+            btn.prop('disabled', false);
+            App.error(proofResult.message || 'ไม่สามารถบันทึกสลิปก่อนสร้างใบเสร็จได้');
+            return;
+        }
+        if (currentManageRegData) currentManageRegData.payment_proof = paymentProof;
+    }
 
-    const source = $('#manageAddressSource').val() || 'work';
-    const result = await API.createActivityRegistrationReceipt(regId, source);
+    const syncProfile = $('#manageSyncProfileAddress').is(':checked');
+    if (isExternal) {
+        const extAddrResult = await API.manageActivityRegistration({
+            registration_id: regId,
+            ...getExternalAddressPayloadForManageSave(),
+        });
+        if (!extAddrResult.success) {
+            btn.prop('disabled', false);
+            App.error(extAddrResult.message || 'ไม่สามารถบันทึกที่อยู่ก่อนสร้างใบเสร็จได้');
+            return;
+        }
+    } else if (syncProfile) {
+        const addrPayload = getAddressPayloadForSave();
+        const saveAddrResult = await API.updateActivityRegistrationAddress({
+            registration_id: regId,
+            ...addrPayload,
+        });
+        if (!saveAddrResult.success) {
+            btn.prop('disabled', false);
+            App.error(saveAddrResult.message || 'ไม่สามารถบันทึกที่อยู่ก่อนสร้างใบเสร็จได้');
+            return;
+        }
+    }
+
+    const source = getManageAddressSource();
+    const payerAddress = buildManagePayerAddressJson(source);
+    const result = await API.createActivityRegistrationReceipt(regId, source, payerAddress);
     btn.prop('disabled', false);
 
     if (result.success) {

@@ -117,7 +117,14 @@ CREATE TABLE IF NOT EXISTS `activities` (
 CREATE TABLE IF NOT EXISTS `activity_registrations` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `activity_id` INT NOT NULL,
-    `user_id` INT NOT NULL,
+    `user_id` INT DEFAULT NULL,
+    `is_external` TINYINT(1) NOT NULL DEFAULT 0,
+    `external_prefix` VARCHAR(50) DEFAULT NULL,
+    `external_first_name` VARCHAR(150) DEFAULT NULL,
+    `external_last_name` VARCHAR(150) DEFAULT NULL,
+    `external_full_name` VARCHAR(255) DEFAULT NULL,
+    `external_school_organization` VARCHAR(255) DEFAULT NULL,
+    `external_payer_address` TEXT DEFAULT NULL,
     `status` ENUM('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
     `payment_status` ENUM('not_required','pending','paid','refunded') NOT NULL DEFAULT 'not_required',
     `payment_proof` VARCHAR(500) DEFAULT NULL,
@@ -130,6 +137,7 @@ CREATE TABLE IF NOT EXISTS `activity_registrations` (
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`approved_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,
     UNIQUE KEY `unique_registration` (`activity_id`, `user_id`),
+    INDEX `idx_activity_external` (`activity_id`, `is_external`),
     INDEX `idx_status` (`status`)
 ) ENGINE=InnoDB;
 
