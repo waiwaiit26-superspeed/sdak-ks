@@ -1,6 +1,56 @@
 <?php $pageTitle = 'จัดการกิจกรรม'; $page = 'activities'; ?>
 <?php include ROOT_PATH . 'templates/admin/header.php'; ?>
 
+<style>
+#externalParticipantModal .receipt-address-shell,
+#regManageModal .receipt-address-shell {
+    border: 1px solid #d8dee6;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#externalParticipantModal .receipt-address-shell .card-header,
+#regManageModal .receipt-address-shell .card-header {
+    background: linear-gradient(135deg, #f7fafc 0%, #eef3f8 100%);
+    border-bottom: 1px solid #d8dee6;
+}
+
+.address-unified-card {
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fbfdff;
+}
+
+.address-unified-card .form-label {
+    font-weight: 600;
+    color: #2f3e4d;
+}
+
+.address-unified-card .input-group {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.address-unified-card .input-group-text {
+    min-width: 96px;
+    justify-content: center;
+    font-weight: 600;
+    color: #495869;
+    background: #edf2f7;
+    border-color: #cfd8e3;
+    border-right: 0;
+}
+
+.address-unified-card .input-group .form-control {
+    border-left: 0;
+}
+
+.address-unified-card .form-control {
+    border-color: #cfd8e3;
+}
+</style>
+
     <!-- Content Wrapper -->
     <div class="content-wrapper">
         <div class="content-header">
@@ -321,35 +371,37 @@
                         <input type="text" class="form-control" id="extSchoolOrg" placeholder="ถ้ามี">
                     </div>
 
-                    <div class="card border mb-2">
+                    <div class="card border mb-2 receipt-address-shell">
                         <div class="card-header py-2"><strong>ที่อยู่สำหรับออกใบเสร็จ</strong></div>
                         <div class="card-body">
-                            <div class="mb-2">
-                                <input type="text" id="extAddrDetail" class="form-control" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text">ตำบล</span>
-                                        <input type="text" id="extAddrSubdistrict" class="form-control" placeholder="ตำบล">
-                                    </div>
+                            <div class="address-unified-card">
+                                <div class="mb-2">
+                                    <input type="text" id="extAddrDetail" class="form-control" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text">อำเภอ</span>
-                                        <input type="text" id="extAddrDistrict" class="form-control" placeholder="อำเภอ">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">ตำบล</span>
+                                            <input type="text" id="extAddrSubdistrict" class="form-control" placeholder="ตำบล">
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-md-6 mt-2">
-                                    <div class="input-group">
-                                        <span class="input-group-text">จังหวัด</span>
-                                        <input type="text" id="extAddrProvince" class="form-control" placeholder="จังหวัด">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">อำเภอ</span>
+                                            <input type="text" id="extAddrDistrict" class="form-control" placeholder="อำเภอ">
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-md-6 mt-2">
-                                    <div class="input-group">
-                                        <span class="input-group-text">รหัสไปรษณีย์</span>
-                                        <input type="text" id="extAddrZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                    <div class="col-md-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">จังหวัด</span>
+                                            <input type="text" id="extAddrProvince" class="form-control" placeholder="จังหวัด">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mt-2">
+                                        <div class="input-group">
+                                            <span class="input-group-text">รหัสไปรษณีย์</span>
+                                            <input type="text" id="extAddrZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -427,7 +479,7 @@
                     </div>
                 </div>
 
-                <div class="card border mb-3">
+                <div class="card border mb-3 receipt-address-shell">
                     <div class="card-header py-2"><strong>ข้อมูลที่อยู่ออกใบเสร็จ</strong></div>
                     <div class="card-body">
                         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -451,61 +503,65 @@
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">ที่อยู่ที่ทำงาน</label>
-                                <input type="text" id="workDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text">ตำบล</span>
-                                            <input type="text" id="workSubdistrict" class="form-control" placeholder="ตำบล">
+                                <div class="address-unified-card h-100">
+                                    <label class="form-label">ที่อยู่ที่ทำงาน</label>
+                                    <input type="text" id="workDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">ตำบล</span>
+                                                <input type="text" id="workSubdistrict" class="form-control" placeholder="ตำบล">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text">อำเภอ</span>
-                                            <input type="text" id="workDistrict" class="form-control" placeholder="อำเภอ">
+                                        <div class="col-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">อำเภอ</span>
+                                                <input type="text" id="workDistrict" class="form-control" placeholder="อำเภอ">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6 mt-2">
-                                        <div class="input-group">
-                                            <span class="input-group-text">จังหวัด</span>
-                                            <input type="text" id="workProvince" class="form-control" placeholder="จังหวัด">
+                                        <div class="col-6 mt-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text">จังหวัด</span>
+                                                <input type="text" id="workProvince" class="form-control" placeholder="จังหวัด">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6 mt-2">
-                                        <div class="input-group">
-                                            <span class="input-group-text">รหัสไปรษณีย์</span>
-                                            <input type="text" id="workZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                        <div class="col-6 mt-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text">รหัสไปรษณีย์</span>
+                                                <input type="text" id="workZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">ที่อยู่ปัจจุบัน</label>
-                                <input type="text" id="homeDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text">ตำบล</span>
-                                            <input type="text" id="homeSubdistrict" class="form-control" placeholder="ตำบล">
+                                <div class="address-unified-card h-100">
+                                    <label class="form-label">ที่อยู่ปัจจุบัน</label>
+                                    <input type="text" id="homeDetail" class="form-control mb-2" placeholder="บ้านเลขที่/หมู่/ซอย/ถนน">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">ตำบล</span>
+                                                <input type="text" id="homeSubdistrict" class="form-control" placeholder="ตำบล">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text">อำเภอ</span>
-                                            <input type="text" id="homeDistrict" class="form-control" placeholder="อำเภอ">
+                                        <div class="col-6">
+                                            <div class="input-group">
+                                                <span class="input-group-text">อำเภอ</span>
+                                                <input type="text" id="homeDistrict" class="form-control" placeholder="อำเภอ">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6 mt-2">
-                                        <div class="input-group">
-                                            <span class="input-group-text">จังหวัด</span>
-                                            <input type="text" id="homeProvince" class="form-control" placeholder="จังหวัด">
+                                        <div class="col-6 mt-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text">จังหวัด</span>
+                                                <input type="text" id="homeProvince" class="form-control" placeholder="จังหวัด">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-6 mt-2">
-                                        <div class="input-group">
-                                            <span class="input-group-text">รหัสไปรษณีย์</span>
-                                            <input type="text" id="homeZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                        <div class="col-6 mt-2">
+                                            <div class="input-group">
+                                                <span class="input-group-text">รหัสไปรษณีย์</span>
+                                                <input type="text" id="homeZipcode" class="form-control" placeholder="รหัสไปรษณีย์">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
