@@ -588,7 +588,10 @@ function initDataTable() {
                 responsivePriority: 5,
                 orderable: true,
                 render: (d, t, row) => {
-                    if (t === 'sort' || t === 'type') return row.member_number_raw || 0;
+                    if (t === 'sort' || t === 'type') {
+                        const raw = String(row.member_number || '').replace(/\D/g, '');
+                        return raw ? parseInt(raw, 10) : 0;
+                    }
                     return row.member_number
                         ? '<span class="badge badge-outline-primary">' + App.escapeHtml(row.member_number) + '</span>'
                         : '<span class="text-muted">-</span>';
