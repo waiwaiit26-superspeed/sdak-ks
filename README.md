@@ -48,7 +48,7 @@ composer install
 | `deploy-lftp.sh` | deploy เฉพาะไฟล์ที่เปลี่ยนจาก git baseline |
 | `backup-db.php` | สำรองฐานข้อมูล |
 | `migrate.php` | รัน migration บน server |
-| `webhook.php` | รับ GitHub webhook สำหรับ auto-deploy |
+| `webhook.php` | ไฟล์เดิมสำหรับ webhook ซึ่งยังไม่ใช้ใน flow deploy ปัจจุบัน |
 
 ## การทำงานของคำนำหน้าชื่อ
 
@@ -129,9 +129,11 @@ composer install
 
 ## แนวทางการ deploy มาตรฐาน
 
-โปรเจกต์นี้ใช้ `lftp` ผ่าน `deploy-lftp.sh` เป็นวิธีหลัก ส่วน `webhook.php` เป็นวิธีเสริมสำหรับ server ที่ตั้งค่า GitHub webhook ไว้แล้ว
+โปรเจกต์นี้ใช้ `lftp` ผ่าน `deploy-lftp.sh` เป็นวิธี deploy หลักเท่านั้นในปัจจุบัน โดย deploy ไปยังเว็บไซต์ `sdak.obec.in` และ `saak.obec.in` ซึ่งใช้ web root ร่วมกันและมีฐานข้อมูลแยกกัน
 
-### ติดตั้งครั้งแรก
+> ระบบ Webhook deploy ยังไม่ใช้งานในขั้นตอนปัจจุบัน ไม่ต้องตั้งค่า GitHub Webhook และไม่ต้องใช้ `webhook.php` ในการ deploy
+
+### ตั้งค่าครั้งแรก
 
 สร้างไฟล์ตั้งค่าเฉพาะเครื่องจาก template:
 
@@ -139,17 +141,16 @@ composer install
 cp .deploy.env.example .deploy.env
 ```
 
-กำหนดค่าอย่างน้อย:
+กำหนดค่าที่จำเป็นใน `.deploy.env`:
 
 - `FTP_HOST`, `FTP_PORT`, `FTP_USER`, `FTP_PASS`
 - `REMOTE_DIR`
 - `SITE_URL`
 - `DEPLOY_SECRET`
-- `REMOTE_STATE_URL` (ถ้าใช้ตรวจสถานะ remote)
-- `BACKUP_URL`
-- `MIGRATE_URL`
+- `REMOTE_STATE_URL` (ถ้าเปิดใช้การตรวจสถานะ remote)
+- `BACKUP_URL`, `MIGRATE_URL` สำหรับ `sdak.obec.in`
 - `MIGRATE_URL_2` สำหรับ `saak.obec.in`
-- `DEPLOY_SECRET_2` ถ้าไซต์ที่สองใช้ secret ต่างกัน
+- `DEPLOY_SECRET_2` ถ้า `saak` ใช้ secret ต่างจาก `sdak`
 
 กำหนด baseline ให้ตรงกับ commit ที่อยู่บน production:
 
@@ -159,38 +160,87 @@ git rev-parse HEAD > .deploy.git_hash
 
 > อย่าสร้าง baseline ใหม่ทับของเดิมโดยไม่ตรวจว่า production อยู่ที่ commit ใด เพราะ script ใช้ baseline เพื่อคำนวณไฟล์ที่จะส่งขึ้น server
 
-### Deploy ประจำวัน
+### ขั้นตอน deploy ที่ถูกต้อง
 
-1. ตรวจสอบและทดสอบการแก้ไขใน local
-2. ตรวจสอบไฟล์ที่เปลี่ยน:
+ทำตามลำดับนี้ทุกครั้ง:
+
+1. ตรวจสอบ branch และดึงโค้ดล่าสุด:
+
+```bash
+git status --short --branch
+git pull --ff-only origin main
+```
+
+ถ้ามีไฟล์ที่แก้ไขค้างอยู่ ให้ตรวจสอบให้แน่ใจก่อนว่าเป็นงานที่ต้องการ deploy ห้ามใช้ `git reset --hard` เพื่อลบงานโดยไม่ตรวจสอบ
+
+2. ตรวจสอบและทดสอบไฟล์ที่แก้ไข:
 
 ```bash
 git status
 git diff --check
+php -l api/Models/UserModel.php
+php -l api/Controllers/AuthController.php
+php -l api/Controllers/MemberController.php
 ```
 
-3. commit การแก้ไข:
+3. ตรวจว่าไฟล์ที่ต้องการ deploy อยู่ในความต่างจาก baseline:
+
+```bash
+cat .deploy.git_hash
+git rev-parse HEAD
+git diff --name-status "$(cat .deploy.git_hash)" HEAD
+```
+
+ต้องแน่ใจว่าไฟล์ที่ต้องการส่งอยู่ในผลลัพธ์นี้ ไฟล์ที่ยังเป็น `??` หรือเป็น untracked จะไม่ถูก deploy จนกว่าจะ `git add` และ commit
+
+4. commit การแก้ไขให้เรียบร้อย:
 
 ```bash
 git add <files>
 git commit -m "อธิบายการเปลี่ยนแปลง"
 ```
 
-4. deploy:
+หลัง commit ให้ตรวจอีกครั้งว่า commit มีไฟล์ครบ:
 
 ```bash
-./deploy-lftp.sh
+git show --stat --oneline HEAD
+git status --short
 ```
 
-5. ตรวจสอบเว็บไซต์ทุกโดเมนและฟังก์ชันที่เกี่ยวข้องหลัง deploy
-
-ถ้า script ยังไม่มีสิทธิ์ execute ให้ใช้:
+5. เริ่ม deploy ด้วยคำสั่งนี้:
 
 ```bash
-chmod +x deploy-lftp.sh
+bash deploy-lftp.sh
 ```
 
-### พฤติกรรมของ `deploy-lftp.sh`
+แนะนำ `bash deploy-lftp.sh` เพราะใช้ได้แม้ไฟล์ script ไม่มี execute permission
+
+6. ตรวจผลลัพธ์ ต้องเห็นข้อความ `Deploy complete` และตรวจว่า baseline เปลี่ยนเป็น HEAD:
+
+```bash
+printf 'HEAD='; git rev-parse HEAD
+printf 'BASELINE='; cat .deploy.git_hash
+git status --short --branch
+```
+
+ค่า `HEAD` และ `BASELINE` ต้องตรงกันหลัง deploy สำเร็จ ถ้าไม่ตรงกันให้หยุดและตรวจ log/การเชื่อมต่อ FTP ก่อน อย่ารัน migration ซ้ำทันที
+
+7. เปิดตรวจทั้ง `sdak.obec.in` และ `saak.obec.in` โดยทดสอบ login, จัดการสมาชิก,
+   คำนำหน้า ค่าธรรมเนียม และใบเสร็จ
+
+### สรุปผลการ deploy
+
+เมื่อ deploy สำเร็จ ควรได้ผลลัพธ์ดังนี้:
+
+| รายการ | ผลที่คาดหวัง |
+|---|---|
+| Code | ไฟล์ที่ commit แล้วถูกส่งขึ้น FTP |
+| เว็บไซต์ | `sdak.obec.in` และ `saak.obec.in` ใช้ code ล่าสุด |
+| Database | backup/migrate ทำงานเมื่อมีไฟล์ migration เปลี่ยน |
+| Baseline | `.deploy.git_hash` ตรงกับ `git rev-parse HEAD` |
+| สถานะ | เห็น `Deploy complete` และไม่มีไฟล์แก้ไขค้างโดยไม่ตั้งใจ |
+
+### สิ่งที่ script deploy ทำ
 
 - ตรวจ `.deploy.env` และ `.deploy.git_hash`
 - เปรียบเทียบ local HEAD กับ baseline
@@ -199,8 +249,14 @@ chmod +x deploy-lftp.sh
 - ไม่อัปโหลด `.git`, `uploads/`, `webhook-secret.php` และไฟล์ deploy ที่ไม่ควรเผยแพร่
 - ถ้ามีไฟล์ใน `migrations/` เปลี่ยน จะเรียก backup ก่อน แล้วรัน migration ของไซต์ที่ตั้งค่าไว้
 - เมื่อสำเร็จจะบันทึก HEAD ใหม่ลง `.deploy.git_hash`
+- ไม่ deploy ไฟล์ที่ยังไม่ได้ commit หรือไฟล์ที่อยู่นอกผลลัพธ์ `git diff` ระหว่าง baseline กับ HEAD
+- ไม่ติดตั้ง dependency ใหม่บน server โดยอัตโนมัติ หาก `composer.lock` เปลี่ยนต้องตรวจสอบและจัดการ `vendor/` ตามวิธีของ server
+
+หาก script หยุดก่อนข้อความ `Deploy complete` ให้ถือว่า deploy ยังไม่เสร็จ และห้ามแก้ `.deploy.git_hash` ด้วยมือ
 
 ### กรณีมี migration
+
+Migration ต้องถูก commit ไปพร้อมกับ code ที่ใช้งาน migration นั้น และควร deploy ในช่วงที่สามารถตรวจสอบระบบได้ทันที
 
 ก่อน deploy ต้องตรวจว่าใน `.deploy.env` มีอย่างน้อย:
 
@@ -218,7 +274,21 @@ upload files -> backup site 1 -> migrate site 1 -> migrate site 2 ...
 
 หาก backup หรือ migration ล้มเหลว ให้หยุดตรวจสอบผลลัพธ์ก่อนดำเนินการต่อ อย่ารัน migration ซ้ำโดยไม่ตรวจตารางสถานะและผลจาก server
 
-### เพิ่มไซต์ใน deploy
+ถ้า deploy เป็น code อย่างเดียวและไม่มีไฟล์ใน `migrations/` เปลี่ยน script จะไม่เรียก backup/migrate
+
+### ตรวจสอบก่อน deploy production
+
+ใช้ checklist นี้ก่อนเริ่ม:
+
+- อยู่ที่ branch `main` และ commit ที่จะ deploy ผ่านการตรวจสอบแล้ว
+- `.deploy.env` มีค่า FTP และ URL ของทุกไซต์ครบ โดยไม่แสดง secret ใน log หรือ commit
+- `.deploy.git_hash` ตรงกับ commit ที่ production ใช้งานอยู่
+- ไฟล์ที่ต้องการ deploy ถูก commit แล้ว
+- ถ้ามี migration มี `BACKUP_URL`, `MIGRATE_URL` และ `MIGRATE_URL_2` ครบ
+- มีเวลาตรวจหน้าเว็บและ log หลัง deploy
+- มี backup ล่าสุดและแผนย้อนกลับ หากการเปลี่ยนแปลงกระทบ schema หรือข้อมูล
+
+### การเพิ่มไซต์ในอนาคต
 
 สคริปต์รองรับ `MIGRATE_URL_2` ถึง `MIGRATE_URL_10`:
 
@@ -228,19 +298,6 @@ DEPLOY_SECRET_3=...
 ```
 
 ต้องสร้าง `config/sites/{domain}.php` ให้เรียบร้อยก่อนเพิ่ม URL migration ของไซต์นั้น
-
-## Webhook deploy
-
-ใช้เฉพาะกรณีที่ server ตั้งค่า GitHub webhook และ secret ไว้แล้ว:
-
-1. GitHub ส่ง push event ไปยัง `webhook.php`
-2. ระบบตรวจ HMAC signature
-3. server ดึงโค้ดด้วย git หรือ zip fallback
-4. รัน `composer install`
-5. backup database
-6. รัน migration
-
-ไฟล์ `webhook-secret.php` ต้องอยู่บน server และต้องไม่ commit ขึ้น GitHub
 
 ## การตรวจสอบก่อน release
 
@@ -264,7 +321,7 @@ git diff --check
 ## ความปลอดภัยและการดูแลระบบ
 
 - ห้าม commit `.deploy.env`, `webhook-secret.php`, password และ token
-- จำกัดสิทธิ์ endpoint backup, migration และ webhook ด้วย secret
+- จำกัดสิทธิ์ endpoint backup และ migration ด้วย secret
 - สำรองฐานข้อมูลก่อน migration production
 - ไม่ deploy ไฟล์ทดสอบหรือข้อมูลส่วนตัวโดยไม่จำเป็น
 - ตรวจ log หลัง deploy และตรวจสิทธิ์ไฟล์อัปโหลด
@@ -273,5 +330,4 @@ git diff --check
 ## เอกสารอ้างอิง
 
 - [DEPLOY_LFTP_RUNBOOK.md](DEPLOY_LFTP_RUNBOOK.md)
-- [WEBHOOK_DEPLOY_GUIDE.md](WEBHOOK_DEPLOY_GUIDE.md)
 - [MULTISITE_AUDIT_2026-07-14.md](MULTISITE_AUDIT_2026-07-14.md)
