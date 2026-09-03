@@ -133,6 +133,9 @@ class MemberController extends Controller
                 }
             }
         }
+        if (array_key_exists('prefix', $input)) {
+            $data['prefix'] = UserModel::resolvePrefixFromInput($input);
+        }
 
         // admin-only fields (role, status)
         if ($this->currentUser['role'] === 'admin') {
@@ -176,7 +179,7 @@ class MemberController extends Controller
             $prefix    = $data['prefix']     ?? $existing['prefix']     ?? '';
             $firstName = $data['first_name'] ?? $existing['first_name'] ?? '';
             $lastName  = $data['last_name']  ?? $existing['last_name']  ?? '';
-            $data['full_name'] = AuthController::buildFullName($prefix, $firstName, $lastName);
+            $data['full_name'] = UserModel::buildFullName($prefix, $firstName, $lastName);
 
             // Legacy schema may not yet have first_name/last_name columns.
             if (!$users->hasColumn('first_name') || !$users->hasColumn('last_name')) {
@@ -285,6 +288,9 @@ class MemberController extends Controller
                     }
                 }
             }
+            if (array_key_exists('prefix', $input)) {
+                $data['prefix'] = UserModel::resolvePrefixFromInput($input);
+            }
 
             // Admin-only fields (role, status, member_type)
             foreach (['role','member_type','status'] as $f) {
@@ -315,7 +321,7 @@ class MemberController extends Controller
                 $prefix    = $data['prefix']     ?? $existing['prefix']     ?? '';
                 $firstName = $data['first_name'] ?? $existing['first_name'] ?? '';
                 $lastName  = $data['last_name']  ?? $existing['last_name']  ?? '';
-                $data['full_name'] = AuthController::buildFullName($prefix, $firstName, $lastName);
+                $data['full_name'] = UserModel::buildFullName($prefix, $firstName, $lastName);
 
                 // Legacy schema may not yet have first_name/last_name columns.
                 if (!$users->hasColumn('first_name') || !$users->hasColumn('last_name')) {
@@ -467,14 +473,14 @@ class MemberController extends Controller
 
         // prefix — direct override
         if (array_key_exists('prefix', $input)) {
-            $data['prefix'] = trim((string)$input['prefix']);
+            $data['prefix'] = UserModel::resolvePrefixFromInput($input);
         }
 
         // full_name — ผสม prefix + ชื่อ เพื่อเก็บชื่อเต็มใน DB (เช่น "นายเอนก อันพาพรม")
         if (array_key_exists('full_name', $input) && trim((string)$input['full_name']) !== '') {
             $prefixVal = $data['prefix'] ?? trim((string)($input['prefix'] ?? ''));
             $nameVal   = trim((string)$input['full_name']);
-            $data['full_name'] = $prefixVal . $nameVal;
+            $data['full_name'] = UserModel::buildFullName($prefixVal, $nameVal, '');
         }
 
         // position — direct override
@@ -645,7 +651,7 @@ class MemberController extends Controller
             'member_type' => $this->query('member_type'),
             'role'        => $this->query('role'),
             'search'      => $this->query('search'),
-        ], $this->getPage(), $this->getPerPage());
+        ], $this->getPage(), $this->getPerPage(10000));
 
         // Format member_number for display
         $settings = $this->model('SettingsModel');
@@ -1097,11 +1103,11 @@ class MemberController extends Controller
         $users = $this->model('UserModel');
 
         // Required: first_name (+ last_name)
-        $prefix    = trim($input['prefix'] ?? '');
+        $prefix    = UserModel::resolvePrefixFromInput($input);
         $firstName = trim($input['first_name'] ?? '');
         $lastName  = trim($input['last_name'] ?? '');
         if (!$firstName) Response::error('กรุณากรอกชื่อ');
-        $fullName = AuthController::buildFullName($prefix, $firstName, $lastName);
+        $fullName = UserModel::buildFullName($prefix, $firstName, $lastName);
 
         // Username: if provided explicitly, validate & use; otherwise generate domain-prefix + userId after insert
         $providedUsername = trim($input['username'] ?? '');
@@ -1146,7 +1152,7 @@ class MemberController extends Controller
             'member_type' => $memberType,
             'status'      => 'active',
             'full_name'   => $fullName,
-            'prefix'      => trim($input['prefix'] ?? ''),
+            'prefix'      => $prefix,
             'approved_by' => (int)$this->currentUser['id'],
             'approved_at' => date('Y-m-d H:i:s'),
         ];
@@ -1290,10 +1296,10 @@ class MemberController extends Controller
         foreach ($members as $i => $m) {
             $row = $i + 1;
             try {
-                $prefix    = trim($m['prefix'] ?? '');
+                $prefix    = UserModel::resolvePrefixFromInput($m);
                 $firstName = trim($m['first_name'] ?? '');
                 $lastName  = trim($m['last_name'] ?? '');
-                $fullName  = AuthController::buildFullName($prefix, $firstName, $lastName);
+                $fullName  = UserModel::buildFullName($prefix, $firstName, $lastName);
                 if (!$fullName && !$firstName) {
                     $errors[] = "แถวที่ {$row}: ไม่มีชื่อ-นามสกุล";
                     $failed++;

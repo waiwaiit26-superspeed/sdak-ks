@@ -5,6 +5,7 @@ use App\Core\Controller;
 use App\Core\Response;
 use App\Core\Auth;
 use App\Core\Mailer;
+use App\Models\UserModel;
 
 /**
  * AuthController
@@ -89,10 +90,10 @@ class AuthController extends Controller
         if ($users->usernameExists($username)) Response::error('ชื่อผู้ใช้นี้ถูกใช้แล้ว');
         if ($email !== null && $users->emailExists($email)) Response::error('อีเมลนี้ถูกใช้แล้ว');
 
-        $prefix    = trim($input['prefix'] ?? '');
+        $prefix    = UserModel::resolvePrefixFromInput($input);
         $firstName = trim($input['first_name'] ?? '');
         $lastName  = trim($input['last_name'] ?? '');
-        $fullName  = self::buildFullName($prefix, $firstName, $lastName);
+        $fullName  = UserModel::buildFullName($prefix, $firstName, $lastName);
 
         $userId = $users->create([
             'username'            => $username,
@@ -334,7 +335,7 @@ class AuthController extends Controller
         $googleToken = $input['google_token'] ?? '';
         $memberType  = $input['member_type'] ?? '';
         $slip        = $input['payment_slip'] ?? '';
-        $inputPrefix   = trim($input['prefix'] ?? '');
+        $inputPrefix   = UserModel::resolvePrefixFromInput($input);
         $inputFirstName = trim($input['first_name'] ?? '');
         $inputLastName  = trim($input['last_name'] ?? '');
 
@@ -372,7 +373,7 @@ class AuthController extends Controller
                 $updateData['prefix']     = $inputPrefix;
                 $updateData['first_name'] = $inputFirstName;
                 $updateData['last_name']  = $inputLastName;
-                $updateData['full_name']  = self::buildFullName($inputPrefix, $inputFirstName, $inputLastName);
+                $updateData['full_name']  = UserModel::buildFullName($inputPrefix, $inputFirstName, $inputLastName);
             }
             // ไม่ block register หาก schema เก่ายังไม่มี profile_image
             try {
@@ -389,13 +390,13 @@ class AuthController extends Controller
             if ($inputFirstName !== '') {
                 $gFirstName = $inputFirstName;
                 $gLastName  = $inputLastName;
-                $gFullName  = self::buildFullName($inputPrefix, $gFirstName, $gLastName);
+                $gFullName  = UserModel::buildFullName($inputPrefix, $gFirstName, $gLastName);
             } else {
                 $gName = $gUser['name'] ?? '';
                 $gNameParts = preg_split('/\s+/', trim($gName), 2);
                 $gFirstName = $gNameParts[0] ?? '';
                 $gLastName  = $gNameParts[1] ?? '';
-                $gFullName  = self::buildFullName('', $gFirstName, $gLastName);
+                $gFullName  = UserModel::buildFullName('', $gFirstName, $gLastName);
             }
 
             $googlePicture = $this->sanitizeGooglePictureUrl($gUser['picture'] ?? '');
@@ -724,19 +725,6 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             Response::error('ส่งอีเมลไม่สำเร็จ: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * สร้าง full_name จาก prefix + first_name + last_name
-     * คำนำหน้าชิดกับชื่อ เช่น "นางวราภรณ์ โพนะทา"
-     */
-    public static function buildFullName(string $prefix, string $firstName, string $lastName): string
-    {
-        $name = $prefix . $firstName;
-        if ($lastName !== '') {
-            $name .= ' ' . $lastName;
-        }
-        return trim($name) ?: '';
     }
 
     /* ---- internal ---- */

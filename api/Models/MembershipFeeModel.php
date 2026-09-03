@@ -13,6 +13,15 @@ class MembershipFeeModel extends Model
     private ?bool $hasFeeType = null;
     private ?bool $hasReceivedDate = null;
 
+    public static function resolveEffectiveFeeType(?string $storedFeeType, ?string $configuredMode): string
+    {
+        if ($configuredMode === 'onetime' || $configuredMode === 'annual') {
+            return $configuredMode;
+        }
+
+        return $storedFeeType === 'onetime' ? 'onetime' : 'annual';
+    }
+
     private function hasColumn(string $column): bool
     {
         try {
@@ -148,14 +157,25 @@ class MembershipFeeModel extends Model
     public function upsertFee(int $userId, int $year, float $amount, string $feeType = 'annual'): int
     {
         $hasFeeType = $this->hasFeeTypeColumn();
+        $updateData = ['amount' => $amount];
+        if ($hasFeeType) {
+            $updateData['fee_type'] = $feeType;
+        }
 
         // For one-time: check if record already exists (any year)
-        if ($feeType === 'onetime' && $hasFeeType) {
-            $existing = $this->getOnetimeFee($userId);
+        if ($feeType === 'onetime') {
+            $existing = $hasFeeType ? $this->getOnetimeFee($userId) : null;
             if ($existing) {
-                $this->update(['amount' => $amount], ['id' => $existing['id']]);
+                $this->update($updateData, ['id' => $existing['id']]);
                 return (int)$existing['id'];
             }
+
+            $existingYear = $this->getUserYearFee($userId, $year);
+            if ($existingYear) {
+                $this->update($updateData, ['id' => $existingYear['id']]);
+                return (int)$existingYear['id'];
+            }
+
             $data = [
                 'user_id' => $userId,
                 'year' => $year,
@@ -169,7 +189,7 @@ class MembershipFeeModel extends Model
         // For annual:
         $existing = $this->getUserYearFee($userId, $year);
         if ($existing) {
-            $this->update(['amount' => $amount], ['id' => $existing['id']]);
+            $this->update($updateData, ['id' => $existing['id']]);
             return (int)$existing['id'];
         }
 
@@ -275,6 +295,7 @@ class MembershipFeeModel extends Model
             [
                 '[>]users(u)' => ['user_id' => 'id'],
                 '[>]users(approver)' => ['approved_by' => 'id'],
+                '[>]member_types(mt)' => ['u.member_type' => 'type_key'],
             ],
             [
                 'membership_fees.id',
@@ -294,10 +315,20 @@ class MembershipFeeModel extends Model
                 'u.email',
                 'u.member_type',
                 'u.school_organization',
+                'mt.fee_mode(configured_fee_mode)',
                 'approver.full_name(approver_name)',
             ],
             $where
         );
+
+        foreach ($data as &$row) {
+            $row['fee_type'] = self::resolveEffectiveFeeType(
+                $row['fee_type'] ?? null,
+                $row['configured_fee_mode'] ?? null
+            );
+            unset($row['configured_fee_mode']);
+        }
+        unset($row);
 
         return ['data' => $data, 'total' => $total, 'page' => $page, 'per_page' => $perPage];
     }

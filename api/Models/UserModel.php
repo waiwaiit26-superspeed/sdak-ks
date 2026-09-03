@@ -10,6 +10,24 @@ class UserModel extends Model
 {
     protected string $table = 'users';
 
+    public static function resolvePrefixFromInput(array $input): string
+    {
+        $prefix = trim((string)($input['prefix'] ?? ''));
+        if ($prefix === 'other') {
+            $prefix = trim((string)($input['prefix_other'] ?? ''));
+        }
+        return $prefix;
+    }
+
+    public static function buildFullName(string $prefix, string $firstName, string $lastName): string
+    {
+        $name = trim($prefix) . trim($firstName);
+        if (trim($lastName) !== '') {
+            $name .= ' ' . trim($lastName);
+        }
+        return trim($name);
+    }
+
     /**
      * Fallback columns for older schemas that may not have newly added fields yet.
      */
@@ -219,42 +237,68 @@ class UserModel extends Model
     public function getFilteredList(array $filters, int $page, int $perPage): array
     {
         $where = [];
+        $legacyWhere = [];
+        $availableColumns = $this->getColumns();
+        $selectColumns = !empty($availableColumns)
+            ? array_values(array_intersect(self::SAFE_COLUMNS, $availableColumns))
+            : self::SAFE_COLUMNS;
 
-        if (!empty($filters['status']))      $where['status'] = $filters['status'];
-        if (!empty($filters['member_type'])) $where['member_type'] = $filters['member_type'];
+        if (!empty($filters['status'])) {
+            $where['status'] = $filters['status'];
+            $legacyWhere['status'] = $filters['status'];
+        }
+        if (!empty($filters['member_type'])) {
+            $where['member_type'] = $filters['member_type'];
+            $legacyWhere['member_type'] = $filters['member_type'];
+        }
         if (!empty($filters['role'])) {
             // Backward compatibility: some older records may use role='user' for members.
             if ($filters['role'] === 'member') {
                 $where['role'] = ['member', 'user'];
+                $legacyWhere['role'] = ['member', 'user'];
             } else {
                 $where['role'] = $filters['role'];
+                $legacyWhere['role'] = $filters['role'];
             }
         }
 
         if (!empty($filters['search'])) {
             $s = '%' . $filters['search'] . '%';
-            $where['OR'] = [
+            $legacyWhere['OR'] = [
                 'full_name[~]'          => $s,
                 'username[~]'           => $s,
                 'email[~]'              => $s,
                 'school_organization[~]'=> $s,
                 'member_number[~]'      => $s,
             ];
+
+            $where['OR'] = $legacyWhere['OR'];
+            if (in_array('first_name', $selectColumns, true)) {
+                $where['OR']['first_name[~]'] = $s;
+            }
+            if (in_array('last_name', $selectColumns, true)) {
+                $where['OR']['last_name[~]'] = $s;
+            }
+            if (in_array('prefix', $selectColumns, true)) {
+                $where['OR']['prefix[~]'] = $s;
+            }
         }
 
         $where['ORDER'] = ['created_at' => 'DESC'];
+        $legacyWhere['ORDER'] = ['created_at' => 'DESC'];
 
         $allowedSortCols = ['full_name', 'member_number', 'member_type', 'position', 'school_organization', 'created_at'];
         if (!empty($filters['order_by']) && in_array($filters['order_by'], $allowedSortCols)) {
             $dir = strtoupper($filters['order_dir'] ?? 'ASC') === 'DESC' ? 'DESC' : 'ASC';
             $where['ORDER'] = [$filters['order_by'] => $dir];
+            $legacyWhere['ORDER'] = [$filters['order_by'] => $dir];
         }
 
         try {
-            return $this->paginate(self::SAFE_COLUMNS, $where, $page, $perPage);
+            return $this->paginate($selectColumns, $where, $page, $perPage);
         } catch (\Throwable $e) {
             // Backward compatibility for sites that have not applied the latest migrations.
-            return $this->paginate(self::LEGACY_LIST_COLUMNS, $where, $page, $perPage);
+            return $this->paginate(self::LEGACY_LIST_COLUMNS, $legacyWhere, $page, $perPage);
         }
     }
 }

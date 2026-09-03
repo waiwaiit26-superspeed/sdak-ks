@@ -62,6 +62,15 @@ class ReceiptController extends Controller
         );
         $receipt['reference_data'] = $refData;
 
+        // Keep membership-fee receipt description aligned with current reference data.
+        if (($receipt['receipt_type'] ?? '') === 'membership_fee' && is_array($refData)) {
+            $isOnetime = ($refData['fee_type'] ?? 'annual') === 'onetime';
+            $feeLabel = $isOnetime ? 'ครั้งเดียว' : ('ปี ' . (int)($refData['fee_year'] ?? 0));
+            $memberTypeLabel = trim((string)($receipt['member_type_label'] ?? ''));
+            $baseTitle = 'ค่าธรรมเนียมสมาชิก' . $memberTypeLabel;
+            $receipt['description'] = trim($baseTitle . ' (' . $feeLabel . ')');
+        }
+
         // Add receipt settings for rendering
         $settings = $this->model('SettingsModel');
         $receipt['organization_name'] = $settings->get('receipt_organization_name', 'สมาคมรองผู้อำนวยการโรงเรียนมัธยมศึกษาจังหวัดกาฬสินธุ์');

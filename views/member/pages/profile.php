@@ -216,7 +216,9 @@
                                                 <option value="ผศ.">ผศ.</option>
                                                 <option value="รศ.">รศ.</option>
                                                 <option value="ศ.">ศ.</option>
+                                                <option value="other">อื่นๆ (กรอกเอง)</option>
                                             </select>
+                                            <input type="text" class="form-control mt-2" name="prefix_other" placeholder="กรอกคำนำหน้า" style="display:none">
                                         </div>
                                         <div class="col-md-5 mb-3">
                                             <label class="form-label">ชื่อ <span class="text-danger">*</span></label>
@@ -592,7 +594,14 @@ $(function () {
         const form = $('#profileForm');
         form.find('[name=member_type]').val(u.member_type);
         form.find('[name=national_id]').val(u.national_id);
-        form.find('[name=prefix]').val(u.prefix);
+        const knownPrefixes = ['นาย', 'นาง', 'นางสาว', 'ดร.', 'ผศ.', 'รศ.', 'ศ.'];
+        if (u.prefix && !knownPrefixes.includes(u.prefix)) {
+            form.find('[name=prefix]').val('other');
+            form.find('[name=prefix_other]').val(u.prefix).show();
+        } else {
+            form.find('[name=prefix]').val(u.prefix);
+            form.find('[name=prefix_other]').val('').hide();
+        }
         form.find('[name=first_name]').val(u.first_name);
         form.find('[name=last_name]').val(u.last_name);
         form.find('[name=email]').val(u.email);
@@ -670,6 +679,13 @@ $(function () {
 
     loadProfile();
 
+    $('#profileForm [name=prefix]').on('change', function() {
+        const isOther = $(this).val() === 'other';
+        $('#profileForm [name=prefix_other]').toggle(isOther).prop('required', isOther);
+        if (isOther) $('#profileForm [name=prefix_other]').focus();
+        else $('#profileForm [name=prefix_other]').val('');
+    });
+
     // Check sessionStorage for auto-open tab & activity detail
     const autoTab = sessionStorage.getItem('openTab');
     if (autoTab) {
@@ -696,10 +712,16 @@ $(function () {
         highlight(el) { $(el).addClass('is-invalid'); },
         unhighlight(el) { $(el).removeClass('is-invalid'); },
         submitHandler: function () {
+            if ($('#profileForm [name=prefix]').val() === 'other' && !$('#profileForm [name=prefix_other]').val().trim()) {
+                $('#profileForm [name=prefix_other]').focus();
+                return App.error('กรุณาระบุคำนำหน้า');
+            }
             const btn = $('#btnSaveProfile');
             btn.prop('disabled', true);
             const data = {};
             $('#profileForm').serializeArray().forEach(function (f) { if (f.value) data[f.name] = f.value; });
+            if (data.prefix === 'other') data.prefix = data.prefix_other || '';
+            delete data.prefix_other;
 
             // Position: resolve "other" + normalize old values
             let positionVal = $('#prof_position').val();

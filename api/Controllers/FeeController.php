@@ -4,6 +4,7 @@ namespace App\Controllers;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Core\Response;
+use App\Models\MembershipFeeModel;
 
 /**
  * FeeController — Membership annual fee management
@@ -513,8 +514,12 @@ class FeeController extends Controller
         $memberTypeKey = $member['member_type'] ?? '';
         $typeData = $mt->findByKey($memberTypeKey);
         $memberTypeSuffix = $typeData ? ($typeData['label_short'] ?: $typeData['label']) : '';
+        $effectiveFeeType = MembershipFeeModel::resolveEffectiveFeeType(
+            $fee['fee_type'] ?? null,
+            $typeData['fee_mode'] ?? null
+        );
 
-        $feeType = ($fee['fee_type'] ?? 'annual') === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
+        $feeType = $effectiveFeeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
         $title = 'ค่าธรรมเนียมสมาชิก' . ($memberTypeSuffix ? $memberTypeSuffix : '');
         $description = $title . " ({$feeType})";
 
@@ -622,8 +627,12 @@ class FeeController extends Controller
         $memberTypeKey = $member['member_type'] ?? '';
         $typeData = $mt->findByKey($memberTypeKey);
         $memberTypeText = $typeData ? ' (' . ($typeData['label_short'] ?: $typeData['label']) . ')' : '';
+        $effectiveFeeType = MembershipFeeModel::resolveEffectiveFeeType(
+            $fee['fee_type'] ?? null,
+            $typeData['fee_mode'] ?? null
+        );
 
-        $feeType = ($fee['fee_type'] ?? 'annual') === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
+        $feeType = $effectiveFeeType === 'onetime' ? 'ครั้งเดียว' : "ปี {$fee['year']}";
 
         $txnModel->create([
             'category_id'      => (int)$feeCategory['id'],

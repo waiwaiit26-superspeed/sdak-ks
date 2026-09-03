@@ -82,7 +82,8 @@
                                 <tr>
                                     <th width="5%">#</th>
                                     <th width="10%" data-sort="member_number" style="cursor:pointer;white-space:nowrap;">รหัส <i class="bi bi-sort-down text-primary sort-icon"></i></th>
-                                    <th width="25%" data-sort="full_name" style="cursor:pointer;white-space:nowrap;">ชื่อ-นามสกุล <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th width="22%" data-sort="full_name" style="cursor:pointer;white-space:nowrap;">ชื่อ-นามสกุล <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
+                                    <th width="18%" style="white-space:nowrap;">อีเมล</th>
                                     <th width="12%" data-sort="member_type" style="cursor:pointer;white-space:nowrap;">ประเภท <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th width="15%" data-sort="position" style="cursor:pointer;white-space:nowrap;">ตำแหน่ง / วิทยฐานะ <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
                                     <th data-sort="school_organization" style="cursor:pointer;white-space:nowrap;">โรงเรียน / หน่วยงาน <i class="bi bi-arrow-down-up text-muted sort-icon"></i></th>
@@ -90,7 +91,7 @@
                                 </tr>
                             </thead>
                             <tbody id="dirTableBody">
-                                <tr><td colspan="7" class="text-center py-4 text-muted">
+                                <tr><td colspan="8" class="text-center py-4 text-muted">
                                     <span class="spinner-border spinner-border-sm"></span> กำลังโหลด...
                                 </td></tr>
                             </tbody>
@@ -135,7 +136,7 @@ $(async function () {
 
     // Feature enabled check
     if (sRes.success && sRes.data?.member_directory_enabled === '0') {
-        $('#dirTableBody').html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-lock" style="font-size:2rem;"></i><br>ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ</td></tr>');
+        $('#dirTableBody').html('<tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-lock" style="font-size:2rem;"></i><br>ฟีเจอร์นี้ถูกปิดโดยผู้ดูแลระบบ</td></tr>');
         return;
     }
 
@@ -253,12 +254,13 @@ async function exportDirectory() {
     csv += 'ทำเนียบสมาชิก\n';
     csv += `ส่งออกเมื่อ: ${exported_at}\n`;
     csv += `ส่งออกโดย: ${exported_by}\n\n`;
-    csv += 'ลำดับ,รหัสสมาชิก,ชื่อ-นามสกุล,ประเภทสมาชิก,วิทยฐานะ,ตำแหน่ง,โรงเรียน / หน่วยงาน\n';
+    csv += 'ลำดับ,รหัสสมาชิก,ชื่อ-นามสกุล,อีเมล,ประเภทสมาชิก,วิทยฐานะ,ตำแหน่ง,โรงเรียน / หน่วยงาน\n';
     members.forEach((m, i) => {
         csv += [
             i + 1,
             esc(m.member_number),
             esc(m.full_name),
+            esc(m.email),
             esc(typeLabel(m.member_type)),
             esc(m.academic_rank),
             esc(m.position),
@@ -286,11 +288,11 @@ async function loadDirectory(page = 1) {
     if (type)         params.member_type = type;
     if (dirSort.col)  { params.order_by = dirSort.col; params.order_dir = dirSort.dir; }
 
-    $('#dirTableBody').html('<tr><td colspan="7" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span></td></tr>');
+    $('#dirTableBody').html('<tr><td colspan="8" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span></td></tr>');
 
     const res = await API.getMemberDirectory(params);
     if (!res.success) {
-        $('#dirTableBody').html(`<tr><td colspan="7" class="text-center text-danger py-4">${App.escapeHtml(res.message || 'โหลดข้อมูลล้มเหลว')}</td></tr>`);
+        $('#dirTableBody').html(`<tr><td colspan="8" class="text-center text-danger py-4">${App.escapeHtml(res.message || 'โหลดข้อมูลล้มเหลว')}</td></tr>`);
         return;
     }
 
@@ -305,7 +307,7 @@ async function loadDirectory(page = 1) {
     $('#dirResultInfo').text(total > 0 ? `แสดง ${start}–${end} จาก ${total} รายการ` : '');
 
     if (!data.length) {
-        $('#dirTableBody').html('<tr><td colspan="7" class="text-center text-muted py-5"><i class="bi bi-person-x" style="font-size:2rem;"></i><br>ไม่พบสมาชิก</td></tr>');
+        $('#dirTableBody').html('<tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-person-x" style="font-size:2rem;"></i><br>ไม่พบสมาชิก</td></tr>');
         $('#dirPagination').empty();
         return;
     }
@@ -316,6 +318,7 @@ async function loadDirectory(page = 1) {
         const rank    = m.academic_rank ? `<br><small class="text-muted">${App.escapeHtml(m.academic_rank)}</small>` : '';
         const pos     = m.position ? App.escapeHtml(m.position) : '<span class="text-muted">-</span>';
         const school  = m.school_organization ? App.escapeHtml(m.school_organization) : '<span class="text-muted">-</span>';
+        const email   = m.email ? `<a href="mailto:${App.escapeHtml(m.email)}">${App.escapeHtml(m.email)}</a>` : '<span class="text-muted">-</span>';
         const memNum  = m.member_number ? `<span class="badge badge-light border">${App.escapeHtml(m.member_number)}</span>` : '<span class="text-muted small">-</span>';
         const confirmed = m.member_number_confirmed ? 1 : 0;
         const confirmIconClass = confirmed ? 'bi-check-circle-fill text-success' : 'bi-circle text-secondary';
@@ -350,6 +353,7 @@ async function loadDirectory(page = 1) {
             <td class="dir-name-cell" style="cursor:pointer;" onclick="viewDirMember(${m.id})">
                 <div class="d-flex align-items-center">${avatar}<strong class="text-primary">${App.escapeHtml((m.prefix || '') + nameWithoutPrefix)}</strong></div>
             </td>
+            <td class="dir-email-cell">${email}</td>
             <td>${App.getMemberTypeBadge(m.member_type)}</td>
             <td class="dir-pos-cell">${pos}${rank}</td>
             <td class="dir-school-cell">${school}</td>

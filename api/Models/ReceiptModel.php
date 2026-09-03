@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use App\Models\MembershipFeeModel;
 
 /**
  * ReceiptModel — manages `receipts` table
@@ -262,6 +263,7 @@ class ReceiptModel extends Model
             // Load from membership_fees + user
             $row = $this->db->get('membership_fees', [
                 '[>]users' => ['user_id' => 'id'],
+                '[>]member_types' => ['users.member_type' => 'type_key'],
             ], [
                 'membership_fees.id', 'membership_fees.user_id',
                 'membership_fees.year', 'membership_fees.amount',
@@ -272,10 +274,16 @@ class ReceiptModel extends Model
                 'users.member_type', 'users.school_organization',
                 'users.work_address', 'users.home_address',
                 'users.profile_image', 'users.google_picture',
+                'member_types.fee_mode(configured_fee_mode)',
             ], [
                 'membership_fees.id' => $referenceId,
             ]);
             if (!$row) return null;
+
+            $effectiveFeeType = MembershipFeeModel::resolveEffectiveFeeType(
+                $row['fee_type'] ?? null,
+                $row['configured_fee_mode'] ?? null
+            );
 
             return [
                 'source_type'  => 'membership_fee',
@@ -292,7 +300,7 @@ class ReceiptModel extends Model
                 'profile_image'  => $row['profile_image'] ?? '',
                 'google_picture' => $row['google_picture'] ?? '',
                 'fee_year'     => (int)$row['year'],
-                'fee_type'     => $row['fee_type'] ?? 'annual',
+                'fee_type'     => $effectiveFeeType,
                 'fee_amount'   => (float)$row['amount'],
                 'fee_status'   => $row['status'],
                 'payment_slip' => $row['payment_slip'] ?? '',
@@ -379,6 +387,7 @@ class ReceiptModel extends Model
 
         $rows = $this->db->select('membership_fees', [
             '[>]users' => ['user_id' => 'id'],
+            '[>]member_types' => ['users.member_type' => 'type_key'],
         ], [
             'membership_fees.id',
             'membership_fees.user_id',
@@ -388,10 +397,16 @@ class ReceiptModel extends Model
             'membership_fees.status',
             'users.full_name',
             'users.email',
+            'member_types.fee_mode(configured_fee_mode)',
         ], $where) ?: [];
 
         foreach ($rows as &$r) {
             $existing = $this->findByReference('membership_fee', (int)$r['id']);
+            $r['fee_type'] = MembershipFeeModel::resolveEffectiveFeeType(
+                $r['fee_type'] ?? null,
+                $r['configured_fee_mode'] ?? null
+            );
+            unset($r['configured_fee_mode']);
             $feeLabel = $r['fee_type'] === 'onetime' ? 'ครั้งเดียว' : 'ปี ' . $r['year'];
             $r['label'] = $r['full_name'] . ' — ค่าธรรมเนียม' . $feeLabel . ' (' . number_format($r['amount'], 2) . ' บาท)';
             $r['has_receipt'] = (bool)$existing;

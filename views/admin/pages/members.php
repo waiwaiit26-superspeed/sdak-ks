@@ -150,7 +150,14 @@
                                         <option value="">-- เลือก --</option>
                                         <option>นาย</option><option>นาง</option><option>นางสาว</option>
                                         <option>ดร.</option><option>ผศ.</option><option>รศ.</option><option>ศ.</option>
+                                        <option value="other">อื่นๆ (กรอกเอง)</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3" id="mf_prefixOtherWrap" style="display:none">
+                                <div class="form-group">
+                                    <label>ระบุคำนำหน้า</label>
+                                    <input type="text" class="form-control" id="mf_prefix_other" placeholder="เช่น พ.ต.อ.">
                                 </div>
                             </div>
                             <div class="col-md-5">
@@ -576,8 +583,27 @@ function initDataTable() {
             {
                 data: 'full_name', responsivePriority: 1, orderable: true,
                 render: (d, t, row) => {
-                    if (t === 'sort' || t === 'type') return d || '';
-                    const name = App.escapeHtml(d);
+                    const prefix = row.prefix || '';
+                    const firstName = row.first_name || '';
+                    const lastName = row.last_name || '';
+                    const spacedName = [prefix, firstName, lastName].filter(Boolean).join(' ').trim();
+                    const compactName = (prefix + firstName + lastName).trim();
+                    const fallbackName = (d || '').trim();
+                    const displayName = spacedName || fallbackName || compactName;
+                    if (t === 'sort' || t === 'type') return displayName;
+                    if (t === 'filter') {
+                        return [
+                            fallbackName,
+                            spacedName,
+                            compactName,
+                            [firstName, lastName].filter(Boolean).join(' ').trim(),
+                            (firstName + lastName).trim(),
+                            row.username || '',
+                            row.email || '',
+                            row.member_number || ''
+                        ].filter(Boolean).join(' ');
+                    }
+                    const name = App.escapeHtml(displayName || '-');
                     const role = App.getRoleBadge(row.role);
                     const avatar = '<img src="' + App.getProfileImage(row) + '" class="rounded-circle mr-2" width="34" height="34" style="object-fit:cover;flex-shrink:0;">';
                     return '<div class="d-flex align-items-center">' + avatar + '<div><strong>' + name + '</strong><br><small class="text-muted">' + (row.username || '') + '</small> ' + role + '</div></div>';
@@ -743,6 +769,13 @@ $('#mf_position').on('change', function () {
     updateMfAcademicRank(val);
 });
 
+$('#mf_prefix').on('change', function () {
+    const isOther = $(this).val() === 'other';
+    $('#mf_prefixOtherWrap').toggle(isOther);
+    if (isOther) $('#mf_prefix_other').focus();
+    else $('#mf_prefix_other').val('');
+});
+
 /* =========================================================================
    Add / Edit Member
    ========================================================================= */
@@ -752,6 +785,8 @@ function openAddMember() {
     $('#mf_school_prefix').val('โรงเรียน');
     if (mfBirthFp) mfBirthFp.clear();
     $('#mf_positionOtherWrap').hide();
+    $('#mf_prefixOtherWrap').hide();
+    $('#mf_prefix_other').val('');
     $('#mf_academicRankWrap').hide();
     $('#memberFormTitle').text('เพิ่มสมาชิก');
     $('#accountFieldset').show();
@@ -773,7 +808,16 @@ async function editMember(id) {
     $('#mf_member_number').val(u.member_number || '');
     $('#mf_national_id').val(u.national_id || '');
     $('#mf_email').val(u.email || '');
-    $('#mf_prefix').val(u.prefix || '');
+    const mfPrefix = u.prefix || '';
+    if (mfPrefix && !$('#mf_prefix option').filter(function() { return $(this).val() === mfPrefix || $(this).text() === mfPrefix; }).length) {
+        $('#mf_prefix').val('other');
+        $('#mf_prefix_other').val(mfPrefix);
+        $('#mf_prefixOtherWrap').show();
+    } else {
+        $('#mf_prefix').val(mfPrefix);
+        $('#mf_prefixOtherWrap').hide();
+        $('#mf_prefix_other').val('');
+    }
     $('#mf_first_name').val(u.first_name || u.full_name || '');
     $('#mf_last_name').val(u.last_name || '');
     $('#mf_phone').val(u.phone || '');
@@ -838,6 +882,9 @@ async function saveMember() {
     const firstName = $('#mf_first_name').val().trim();
     const lastName = $('#mf_last_name').val().trim();
     if (!firstName) return App.error('กรุณากรอกชื่อ');
+    if ($('#mf_prefix').val() === 'other' && !$('#mf_prefix_other').val().trim()) {
+        return App.error('กรุณาระบุคำนำหน้า');
+    }
 
     const btn = $('#btnSaveMember');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
@@ -850,7 +897,7 @@ async function saveMember() {
     }
 
     const data = {
-        prefix: $('#mf_prefix').val(),
+        prefix: $('#mf_prefix').val() === 'other' ? $('#mf_prefix_other').val().trim() : $('#mf_prefix').val(),
         first_name: firstName,
         last_name: lastName,
         member_type: $('#mf_member_type').val(),
