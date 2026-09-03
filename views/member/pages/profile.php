@@ -569,7 +569,7 @@ $(function () {
         if (!result.success) { App.error(result.message); return; }
         const u = result.data;
 
-        $('#profileName').text((u.prefix || '') + (u.first_name || '') + (u.last_name ? ' ' + u.last_name : '') || u.full_name);
+        $('#profileName').text(App.formatMemberName(u) || u.full_name);
         if (u.member_number) {
             $('#profileMemberNumber').text('เลขสมาชิก: ' + u.member_number).removeClass('d-none');
         }

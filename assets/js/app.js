@@ -31,6 +31,18 @@ const App = {
         return url ? App.imgUrl(url, bustCache) : App.imgUrl('assets/images/default-avatar.png', bustCache);
     },
 
+    /** Format a member name with the prefix adjacent to the first name. */
+    formatMemberName(user) {
+        if (!user) return '';
+        const prefix = String(user.prefix || '').trim();
+        const firstName = String(user.first_name || '').trim();
+        const lastName = String(user.last_name || '').trim();
+        if (prefix || firstName || lastName) {
+            return (prefix + firstName + (lastName ? ' ' + lastName : '')).trim();
+        }
+        return String(user.full_name || '').trim();
+    },
+
     /**
      * Initialize app
      */

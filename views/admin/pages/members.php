@@ -586,16 +586,13 @@ function initDataTable() {
                     const prefix = row.prefix || '';
                     const firstName = row.first_name || '';
                     const lastName = row.last_name || '';
-                    const spacedName = [prefix, firstName, lastName].filter(Boolean).join(' ').trim();
-                    const compactName = (prefix + firstName + lastName).trim();
+                    const displayName = App.formatMemberName({ ...row, full_name: d });
                     const fallbackName = (d || '').trim();
-                    const displayName = spacedName || fallbackName || compactName;
                     if (t === 'sort' || t === 'type') return displayName;
                     if (t === 'filter') {
                         return [
                             fallbackName,
-                            spacedName,
-                            compactName,
+                            displayName,
                             [firstName, lastName].filter(Boolean).join(' ').trim(),
                             (firstName + lastName).trim(),
                             row.username || '',
@@ -985,9 +982,7 @@ async function viewMember(id) {
                 a.province ? 'จ.' + a.province : '', a.postal_code || ''].filter(Boolean).join(' ');
     };
 
-    const displayName = (u.prefix || '') + (u.first_name && u.last_name
-        ? u.first_name + ' ' + u.last_name
-        : ((u.prefix && u.full_name?.startsWith(u.prefix)) ? u.full_name.slice(u.prefix.length).trim() : (u.full_name || '')));
+    const displayName = App.formatMemberName(u);
 
     body.html(
         '<div class="row">' +
@@ -1058,9 +1053,7 @@ async function approveMember(userId, action) {
 
         const u = profileResult.data;
         const f = feeResult.data;
-        const displayName = (u.prefix || '') + (u.first_name && u.last_name
-            ? u.first_name + ' ' + u.last_name
-            : ((u.prefix && u.full_name?.startsWith(u.prefix)) ? u.full_name.slice(u.prefix.length).trim() : (u.full_name || '')));
+        const displayName = App.formatMemberName(u);
         const typeLabels = App._memberTypeLabelsShort || { ordinary: 'สามัญ', associate: 'วิสามัญ', affiliate: 'สมทบ', honorary: 'กิตติมศักดิ์' };
         const feeLabels = { none: 'ไม่ต้องชำระ', onetime: 'จ่ายครั้งเดียว', annual: 'จ่ายรายปี' };
 

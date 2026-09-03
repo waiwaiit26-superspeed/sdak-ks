@@ -723,9 +723,7 @@ async function viewDirMember(id) {
         return;
     }
     const u = result.data;
-    const displayName = (u.prefix || '') + (u.first_name && u.last_name
-        ? u.first_name + ' ' + u.last_name
-        : ((u.prefix && u.full_name?.startsWith(u.prefix)) ? u.full_name.slice(u.prefix.length).trim() : (u.full_name || '')));
+    const displayName = App.formatMemberName(u);
 
     if (canViewFull) {
         // === Full view for admin / sub-admin with view permission ===
