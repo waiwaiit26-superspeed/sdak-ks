@@ -300,6 +300,9 @@
                                                 </select>
                                                 <input type="text" class="form-control" name="school_organization">
                                             </div>
+                                            <small class="text-muted d-block mt-1" id="schoolOrgHint">
+                                                <i class="bi bi-info-circle"></i> เลือกประเภทหน่วยงาน แล้วระบบจะเติมคำนำหน้าให้อัตโนมัติ — กรุณาพิมพ์ <strong>ชื่อเต็มของหน่วยงาน</strong> ต่อท้ายในช่อง เช่น เลือก "โรงเรียน" แล้วพิมพ์เพิ่มเป็น "โรงเรียนบ้านทุ่งสว่าง"
+                                            </small>
                                         </div>
                                         <div class="col-md-3 mb-2">
                                             <label>โทรศัพท์ (ที่ทำงาน)</label>
@@ -677,6 +680,31 @@ $(function () {
         $(inputSel).val(matched ? fullValue.substring(matched.length) : fullValue);
     }
 
+    // ─── Auto-fill prefix into organization name field ───
+    const _schoolPrefixes = ['โรงเรียน', 'สพม.', 'สพป.', 'สำนักงาน'];
+    function stripSchoolPrefix(text) {
+        let t = (text || '').trim();
+        for (const p of _schoolPrefixes) {
+            if (t.startsWith(p)) { t = t.substring(p.length).trim(); break; }
+        }
+        return t;
+    }
+    $('#school_prefix').on('change', function () {
+        const prefix = $(this).val() || '';
+        const input = $('[name=school_organization]');
+        const rest = stripSchoolPrefix(input.val());
+        input.val(prefix + rest);
+        input.focus();
+        // วาง cursor ท้ายข้อความ เพื่อให้พิมพ์ชื่อต่อท้ายได้ทันที
+        const len = input.val().length;
+        input[0].setSelectionRange(len, len);
+        if (!prefix) {
+            $('#schoolOrgHint').removeClass('text-primary').addClass('text-muted');
+        } else {
+            $('#schoolOrgHint').removeClass('text-muted').addClass('text-primary');
+        }
+    });
+
     loadProfile();
 
     $('#profileForm [name=prefix]').on('change', function() {
@@ -736,9 +764,9 @@ $(function () {
             data.position = positionVal;
             data.academic_rank = $('#prof_academic_rank').val() || '';
 
-            // Combine school prefix + name
+            // Combine school prefix + name (strip prefix if user already typed it in)
             const schoolPrefix = $('#school_prefix').val() || '';
-            const schoolName = $('[name=school_organization]').val().trim();
+            const schoolName = stripSchoolPrefix($('[name=school_organization]').val());
             data.school_organization = schoolPrefix + schoolName;
 
             // Birth date (ISO format)
