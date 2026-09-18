@@ -785,13 +785,15 @@ $(function () {
         highlight(el) { $(el).addClass('is-invalid'); },
         unhighlight(el) { $(el).removeClass('is-invalid'); },
         submitHandler: function () {
+            const btn = $('#btnSaveProfile');
+            let data;
+            try {
             if ($('#profileForm [name=prefix]').val() === 'other' && !$('#profileForm [name=prefix_other]').val().trim()) {
                 $('#profileForm [name=prefix_other]').focus();
                 return App.error('กรุณาระบุคำนำหน้า');
             }
-            const btn = $('#btnSaveProfile');
             btn.prop('disabled', true);
-            const data = {};
+            data = {};
             $('#profileForm').serializeArray().forEach(function (f) { if (f.value) data[f.name] = f.value; });
             if (data.prefix === 'other') data.prefix = data.prefix_other || '';
             delete data.prefix_other;
@@ -851,8 +853,17 @@ $(function () {
                 postal_code: $('#w_postal').val().trim()
             };
 
+            } catch (e) {
+                console.error('Profile build error:', e);
+                btn.prop('disabled', false);
+                App.error('เกิดข้อผิดพลาดในการเตรียมข้อมูล: ' + e.message);
+                return false;
+            }
+
+            console.log('Profile save payload:', data);
             API.updateProfile(data)
                 .then(function (result) {
+                    console.log('Profile save response:', result);
                     if (result.success) {
                         App.success('บันทึกข้อมูลสำเร็จ');
                         const user = API.getUser();
@@ -874,7 +885,10 @@ $(function () {
                 })
                 .catch(function (err) {
                     console.error('Profile error:', err);
-                    App.error('เกิดข้อผิดพลาด');
+                    App.error('เกิดข้อผิดพลาด: ' + (err && err.message ? err.message : 'ไม่ทราบสาเหตุ'));
+                    btn.prop('disabled', false);
+                })
+                .always(function () {
                     btn.prop('disabled', false);
                 });
 
