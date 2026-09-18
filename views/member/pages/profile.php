@@ -503,6 +503,7 @@ $(function () {
             return new Date(dateStr);
         }
         });
+        }
     } catch (e) { console.error('Flatpickr init error:', e); }
 
     // ─── Academic rank options by position ───
