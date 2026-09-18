@@ -179,7 +179,7 @@
                     <div class="tab-content">
                         <!-- Tab: Profile Info -->
                         <div class="tab-pane fade show active" id="tabInfo">
-                            <form id="profileForm" novalidate>
+                            <form id="profileForm" novalidate onsubmit="return false;">
                                 <!-- ข้อมูลทั่วไป -->
                                 <fieldset class="border rounded p-3 mb-3">
                                     <legend class="w-auto px-2 small font-weight-bold text-primary">ข้อมูลทั่วไป</legend>
@@ -359,7 +359,7 @@
 
                         <!-- Tab: Change Password -->
                         <div class="tab-pane fade" id="tabPassword">
-                            <form id="passwordForm" novalidate>
+                            <form id="passwordForm" novalidate onsubmit="return false;">
                                 <div class="mb-3">
                                     <label class="form-label">รหัสผ่านปัจจุบัน</label>
                                     <input type="password" class="form-control" name="current_password" required>
