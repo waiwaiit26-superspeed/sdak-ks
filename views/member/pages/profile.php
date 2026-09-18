@@ -304,6 +304,8 @@
                                                 <i class="bi bi-info-circle"></i> เลือกประเภทหน่วยงาน แล้วระบบจะเติมคำนำหน้าให้อัตโนมัติ — กรุณาพิมพ์ <strong>ชื่อเต็มของหน่วยงาน</strong> ต่อท้ายในช่อง เช่น เลือก "โรงเรียน" แล้วพิมพ์เพิ่มเป็น "โรงเรียนบ้านทุ่งสว่าง"
                                             </small>
                                         </div>
+                                    </div>
+                                    <div class="row">
                                         <div class="col-md-3 mb-2">
                                             <label>โทรศัพท์ (ที่ทำงาน)</label>
                                             <input type="tel" class="form-control" name="work_phone">
