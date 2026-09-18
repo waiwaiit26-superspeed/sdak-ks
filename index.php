@@ -196,11 +196,12 @@ function toggleHomeGuestCtas() {
 
     const isLoggedIn = !!(API.getUser() || API.isLoggedIn());
     if (isLoggedIn) {
-        $('#homeHeroGuestActions').hide();
+        // d-flex has display:flex!important — must toggle classes, not inline style
+        $('#homeHeroGuestActions').removeClass('d-flex').addClass('d-none');
         $('#homeCtaRegisterBtn').hide();
         $('#homeCtaDashboardBtn').show();
     } else {
-        $('#homeHeroGuestActions').show();
+        $('#homeHeroGuestActions').removeClass('d-none').addClass('d-flex');
         $('#homeCtaRegisterBtn').show();
         $('#homeCtaDashboardBtn').hide();
     }

@@ -276,7 +276,8 @@ const App = {
         if (loggedIn) {
             $authNav.removeClass('d-flex').addClass('d-none').hide();
             $userNav.show();
-            $('#homeHeroGuestActions').hide();
+            // d-flex has display:flex!important — must toggle classes, not inline style
+            $('#homeHeroGuestActions').removeClass('d-flex').addClass('d-none');
             if (!user) return; // user cache still recovering — callback above re-renders
             $('#nav-username').text(user.full_name || user.username);
             const avatarSrc = App.getProfileImage(user, true);
@@ -316,7 +317,7 @@ const App = {
         } else {
             $authNav.removeClass('d-none').addClass('d-flex').show();
             $userNav.hide();
-            $('#homeHeroGuestActions').show();
+            $('#homeHeroGuestActions').removeClass('d-none').addClass('d-flex');
         }
     },
 
