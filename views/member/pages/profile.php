@@ -288,15 +288,15 @@
                                 <fieldset class="border rounded p-3 mb-3">
                                     <legend class="w-auto px-2 small font-weight-bold text-primary">สถานที่ทำงาน</legend>
                                     <div class="row">
-                                        <div class="col-md-6 mb-2">
+                                        <div class="col-md-12 mb-2">
                                             <label>โรงเรียน/หน่วยงาน</label>
                                             <div class="input-group">
                                                 <select class="form-control" id="school_prefix" style="max-width:160px">
+                                                    <option value="">-- เลือก --</option>
                                                     <option value="โรงเรียน">โรงเรียน</option>
                                                     <option value="สพม.">สพม.</option>
                                                     <option value="สพป.">สพป.</option>
                                                     <option value="สำนักงาน">สำนักงาน</option>
-                                                    <option value="">อื่นๆ</option>
                                                 </select>
                                                 <input type="text" class="form-control" name="school_organization">
                                             </div>
@@ -336,14 +336,17 @@
                                                 <option>สช.</option><option>อื่นๆ</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3 mb-2">
-                                            <label>ภาค</label>
-                                            <select class="form-control" name="region">
-                                                <option value="">-- เลือก --</option>
-                                                <option>ภาคเหนือ</option><option>ภาคกลาง</option>
-                                                <option>ภาคตะวันออกเฉียงเหนือ</option><option>ภาคใต้</option>
-                                                <option>ภาคตะวันออก</option><option>ภาคตะวันตก</option>
+                                        <div class="col-md-4 mb-2" id="eduDetailWrap">
+                                            <label>ชื่อเขตพื้นที่/หน่วยงาน</label>
+                                            <input type="text" class="form-control" name="education_area_detail" placeholder="เช่น กาฬสินธุ์ เขต 1">
+                                        </div>
+                                        <div class="col-md-4 mb-2" id="spmAreaWrap" style="display:none;">
+                                            <label>เขตพื้นที่ สพม.</label>
+                                            <select class="form-control" id="spm_area_select">
+                                                <option value="สพม.กาฬสินธุ์">สพม.กาฬสินธุ์</option>
+                                                <option value="_other">อื่นๆ (ระบุ)</option>
                                             </select>
+                                            <input type="text" class="form-control mt-1" id="spm_area_other" placeholder="ระบุชื่อเขตพื้นที่" style="display:none;">
                                         </div>
                                     </div>
                                 </fieldset>
@@ -618,8 +621,7 @@ $(function () {
         }
         form.find('[name=phone]').val(u.phone);
         form.find('[name=work_phone]').val(u.work_phone);
-        form.find('[name=education_area]').val(u.education_area);
-        form.find('[name=region]').val(u.region);
+        splitEducationArea(u.education_area || '');
 
         // Position — normalize old values
         const positionMap = {
@@ -681,6 +683,47 @@ $(function () {
         $(selectSel).val(matched);
         $(inputSel).val(matched ? fullValue.substring(matched.length) : fullValue);
     }
+
+    // ─── Education area: สพม. dropdown vs free-text detail ───
+    const _eduPrefixes = ['สพป.', 'สพม.', 'สพอ.', 'สช.', 'อื่นๆ'];
+    function splitEducationArea(full) {
+        full = (full || '').trim();
+        const sel = $('#profileForm [name=education_area]');
+        let matched = '', rest = full;
+        for (const p of _eduPrefixes) {
+            if (full.startsWith(p)) { matched = p; rest = full.substring(p.length).trim(); break; }
+        }
+        sel.val(matched);
+        if (matched === 'สพม.') {
+            $('#spmAreaWrap').show();
+            $('#eduDetailWrap').hide();
+            if ($('#spm_area_select option[value="' + full + '"]').length) {
+                $('#spm_area_select').val(full);
+                $('#spm_area_other').hide();
+            } else {
+                $('#spm_area_select').val('_other');
+                $('#spm_area_other').val(rest).show();
+            }
+        } else {
+            $('#spmAreaWrap').hide();
+            $('#spm_area_other').hide();
+            $('#eduDetailWrap').show();
+            $('#profileForm [name=education_area_detail]').val(rest);
+        }
+    }
+    $('#profileForm [name=education_area]').on('change', function () {
+        if ($(this).val() === 'สพม.') {
+            $('#eduDetailWrap').hide();
+            $('#spmAreaWrap').show();
+        } else {
+            $('#spmAreaWrap').hide();
+            $('#spm_area_other').hide();
+            $('#eduDetailWrap').show();
+        }
+    });
+    $('#spm_area_select').on('change', function () {
+        $('#spm_area_other').toggle($(this).val() === '_other');
+    });
 
     // ─── Auto-fill prefix into organization name field ───
     const _schoolPrefixes = ['โรงเรียน', 'สพม.', 'สพป.', 'สำนักงาน'];
@@ -770,6 +813,21 @@ $(function () {
             const schoolPrefix = $('#school_prefix').val() || '';
             const schoolName = stripSchoolPrefix($('[name=school_organization]').val());
             data.school_organization = schoolPrefix + schoolName;
+
+            // Education area: combine prefix + detail, or สพม. dropdown value
+            const eduSel = $('#profileForm [name=education_area]').val() || '';
+            if (eduSel === 'สพม.') {
+                const spmVal = $('#spm_area_select').val() || '';
+                data.education_area = spmVal === '_other'
+                    ? 'สพม.' + $('#spm_area_other').val().trim()
+                    : spmVal;
+            } else if (eduSel) {
+                data.education_area = eduSel + ($('#profileForm [name=education_area_detail]').val() || '').trim();
+            } else {
+                delete data.education_area;
+            }
+            delete data.education_area_detail;
+            delete data.region; // ภาค removed from form
 
             // Birth date (ISO format)
             if (profBirthFp.selectedDates.length > 0) {
