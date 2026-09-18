@@ -900,9 +900,6 @@ $(function () {
                     console.error('Profile error:', err);
                     App.error('เกิดข้อผิดพลาด: ' + (err && err.message ? err.message : 'ไม่ทราบสาเหตุ'));
                     btn.prop('disabled', false);
-                })
-                .always(function () {
-                    btn.prop('disabled', false);
                 });
 
             return false;
