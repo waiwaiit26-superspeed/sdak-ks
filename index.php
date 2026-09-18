@@ -184,7 +184,17 @@ $(document).ready(function() {
 });
 
 function toggleHomeGuestCtas() {
-    const isLoggedIn = !!API.getUser();
+    // Token exists but cached user is missing → recover from server, then re-check
+    if (!API.getUser() && API.isLoggedIn()) {
+        API.get(API.apiUrl('auth', 'me')).then(res => {
+            if (res.success && res.data) {
+                localStorage.setItem('sdak_user', JSON.stringify(res.data));
+                toggleHomeGuestCtas();
+            }
+        }).catch(() => {});
+    }
+
+    const isLoggedIn = !!(API.getUser() || API.isLoggedIn());
     if (isLoggedIn) {
         $('#homeHeroGuestActions').hide();
         $('#homeCtaRegisterBtn').hide();

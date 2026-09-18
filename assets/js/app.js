@@ -258,14 +258,26 @@ const App = {
      * Update navbar based on login state
      */
     updateNavbar() {
+        // Token exists but cached user is missing → recover from server, then re-render
+        if (!API.getUser() && API.isLoggedIn()) {
+            API.get(API.apiUrl('auth', 'me')).then(res => {
+                if (res.success && res.data) {
+                    localStorage.setItem('sdak_user', JSON.stringify(res.data));
+                    this.updateNavbar();
+                }
+            }).catch(() => {});
+        }
+
         const user = API.getUser();
+        const loggedIn = !!(user || API.isLoggedIn());
         const $authNav = $('#auth-nav');
         const $userNav = $('#user-nav');
 
-        if (user) {
+        if (loggedIn) {
             $authNav.removeClass('d-flex').addClass('d-none').hide();
             $userNav.show();
             $('#homeHeroGuestActions').hide();
+            if (!user) return; // user cache still recovering — callback above re-renders
             $('#nav-username').text(user.full_name || user.username);
             const avatarSrc = App.getProfileImage(user, true);
             $('#nav-avatar').attr('src', avatarSrc);

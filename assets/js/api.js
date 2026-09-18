@@ -16,8 +16,14 @@ const API = {
      * Get stored user data
      */
     getUser() {
-        const data = localStorage.getItem('sdak_user');
-        return data ? JSON.parse(data) : null;
+        try {
+            const data = localStorage.getItem('sdak_user');
+            return data ? JSON.parse(data) : null;
+        } catch (e) {
+            // Corrupted cache — remove and treat as not loaded (recoverable via auth/me)
+            localStorage.removeItem('sdak_user');
+            return null;
+        }
     },
 
     /**
