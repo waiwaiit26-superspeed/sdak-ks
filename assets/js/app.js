@@ -265,6 +265,7 @@ const App = {
         if (user) {
             $authNav.removeClass('d-flex').addClass('d-none').hide();
             $userNav.show();
+            $('#homeHeroGuestActions').hide();
             $('#nav-username').text(user.full_name || user.username);
             const avatarSrc = App.getProfileImage(user, true);
             $('#nav-avatar').attr('src', avatarSrc);
@@ -303,6 +304,7 @@ const App = {
         } else {
             $authNav.removeClass('d-none').addClass('d-flex').show();
             $userNav.hide();
+            $('#homeHeroGuestActions').show();
         }
     },
 
