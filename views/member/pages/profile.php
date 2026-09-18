@@ -479,8 +479,11 @@ $(function () {
         if (history.replaceState) history.replaceState(null, null, e.target.hash);
     });
 
-    // ─── Flatpickr วันเกิด (Buddhist Era) ───
-    const profBirthFp = flatpickr('#prof_birth_date', {
+    // ─── Flatpickr วันเกิด (Buddhist Era) — guarded: CDN failure must not break the form ───
+    let profBirthFp = null;
+    try {
+        if (typeof flatpickr === 'function') {
+            profBirthFp = flatpickr('#prof_birth_date', {
         locale: 'th',
         dateFormat: 'd/m/Y',
         maxDate: 'today',
@@ -499,7 +502,8 @@ $(function () {
             }
             return new Date(dateStr);
         }
-    });
+        });
+    } catch (e) { console.error('Flatpickr init error:', e); }
 
     // ─── Academic rank options by position ───
     const academicRankOptions = {
@@ -541,8 +545,16 @@ $(function () {
         updateAcademicRank(val);
     });
 
-    // ─── jquery.Thailand.js — Home Address ───
-    $.Thailand({
+    // ─── jquery.Thailand.js — guarded: CDN failure must not break the rest of the page ───
+    function safeThailand(opts) {
+        try {
+            if (typeof $.Thailand === 'function') {
+                $.Thailand(opts);
+            }
+        } catch (e) { console.error('Thailand autocomplete error:', e); }
+    }
+    // Home Address
+    safeThailand({
         $search: $('#h_search'),
         $district: $('#h_subdistrict'),
         $amphoe: $('#h_district'),
@@ -556,8 +568,8 @@ $(function () {
         }
     });
 
-    // ─── jquery.Thailand.js — Work Address ───
-    $.Thailand({
+    // Work Address
+    safeThailand({
         $search: $('#w_search'),
         $district: $('#w_subdistrict'),
         $amphoe: $('#w_district'),
@@ -642,7 +654,7 @@ $(function () {
         updateAcademicRank(normalizedPosition || '', u.academic_rank || '');
 
         // Birth date
-        if (u.birth_date) {
+        if (profBirthFp && u.birth_date) {
             profBirthFp.setDate(u.birth_date, true);
         }
 
@@ -832,7 +844,7 @@ $(function () {
             delete data.region; // ภาค removed from form
 
             // Birth date (ISO format)
-            if (profBirthFp.selectedDates.length > 0) {
+            if (profBirthFp && profBirthFp.selectedDates.length > 0) {
                 const d = profBirthFp.selectedDates[0];
                 data.birth_date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
             }
