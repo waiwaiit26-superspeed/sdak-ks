@@ -546,16 +546,22 @@ $(function () {
         updateAcademicRank(val);
     });
 
-    // ─── jquery.Thailand.js — guarded: CDN failure must not break the rest of the page ───
-    function safeThailand(opts) {
-        try {
-            if (typeof $.Thailand === 'function') {
-                $.Thailand(opts);
-            }
-        } catch (e) { console.error('Thailand autocomplete error:', e); }
+    // ─── jquery.Thailand.js — lazy load: db.json (หลาย MB) จะโหลดเฉพาะเมื่อผู้ใช้คลิกช่องค้นหาที่อยู่
+    function initThailandOnUse(searchSel, opts) {
+        let done = false;
+        const start = function () {
+            if (done) return;
+            done = true;
+            try {
+                if (typeof $.Thailand === 'function') {
+                    $.Thailand(opts);
+                }
+            } catch (e) { console.error('Thailand autocomplete error:', e); }
+        };
+        $(searchSel).on('focus click', start);
     }
     // Home Address
-    safeThailand({
+    initThailandOnUse('#h_search', {
         $search: $('#h_search'),
         $district: $('#h_subdistrict'),
         $amphoe: $('#h_district'),
@@ -570,7 +576,7 @@ $(function () {
     });
 
     // Work Address
-    safeThailand({
+    initThailandOnUse('#w_search', {
         $search: $('#w_search'),
         $district: $('#w_subdistrict'),
         $amphoe: $('#w_district'),
@@ -694,7 +700,8 @@ $(function () {
             if (fullValue.startsWith(p)) { matched = p; break; }
         }
         $(selectSel).val(matched);
-        $(inputSel).val(matched ? fullValue.substring(matched.length) : fullValue);
+        // แสดงชื่อเต็ม (รวมคำนำหน้า เช่น "โรงเรียน...") ในช่อง — ไม่ตัดออก
+        $(inputSel).val(fullValue);
     }
 
     // ─── Education area: สพม. dropdown vs free-text detail ───
