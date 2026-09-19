@@ -953,6 +953,11 @@ $(function () {
         applyProfileAddressToEdit(true);
     });
 
+    // Expose address-edit helpers to global scope (openEditAddress ที่อยู่ top-level ต้องเรียกใช้)
+    window.fillEditAddressFields = fillEditAddressFields;
+    window.hasEditAddressValue = hasEditAddressValue;
+    window.applyProfileAddressToEdit = applyProfileAddressToEdit;
+
     // Create-flow address modal submit
     $('#createAddressForm').on('submit', function(e) {
         e.preventDefault();
