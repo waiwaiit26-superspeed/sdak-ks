@@ -472,7 +472,41 @@ async function loadDirectory(page = 1) {
                 </div>
                 <div class="form-group">
                     <label class="font-weight-bold">โรงเรียน / สถานที่ทำงาน</label>
-                    <input type="text" class="form-control" id="dirEditSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
+                    <div class="input-group">
+                        <select class="form-control" id="dirEditSchoolPrefix" style="max-width:160px">
+                            <option value="">-- เลือก --</option>
+                            <option value="โรงเรียน">โรงเรียน</option>
+                            <option value="สพม.">สพม.</option>
+                            <option value="สพป.">สพป.</option>
+                            <option value="สำนักงาน">สำนักงาน</option>
+                        </select>
+                        <input type="text" class="form-control" id="dirEditSchool" placeholder="ชื่อโรงเรียนหรือหน่วยงาน">
+                    </div>
+                    <small class="text-muted d-block mt-1" id="dirEditSchoolHint">
+                        <i class="bi bi-info-circle"></i> เลือกประเภทหน่วยงาน แล้วระบบจะเติมคำนำหน้าให้อัตโนมัติ — กรุณาพิมพ์ <strong>ชื่อเต็มของหน่วยงาน</strong> ต่อท้ายในช่อง
+                    </small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label class="font-weight-bold">สังกัดเขตพื้นที่</label>
+                        <select class="form-control" id="dirEditEduArea">
+                            <option value="">-- เลือก --</option>
+                            <option>สพป.</option><option>สพม.</option><option>สพอ.</option>
+                            <option>สช.</option><option>อื่นๆ</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-8" id="dirEditEduDetailWrap">
+                        <label class="font-weight-bold">ชื่อเขตพื้นที่/หน่วยงาน</label>
+                        <input type="text" class="form-control" id="dirEditEduDetail" placeholder="เช่น กาฬสินธุ์ เขต 1">
+                    </div>
+                    <div class="form-group col-md-8" id="dirEditSpmWrap" style="display:none;">
+                        <label class="font-weight-bold">เขตพื้นที่ สพม.</label>
+                        <select class="form-control" id="dirEditSpmSelect">
+                            <option value="สพม.กาฬสินธุ์">สพม.กาฬสินธุ์</option>
+                            <option value="_other">อื่นๆ (ระบุ)</option>
+                        </select>
+                        <input type="text" class="form-control mt-1" id="dirEditSpmOther" placeholder="ระบุชื่อเขตพื้นที่" style="display:none;">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="font-weight-bold">อีเมล <small class="text-muted font-weight-normal">(ไม่บังคับกรอก)</small></label>
@@ -580,11 +614,119 @@ $('#dirEditPosition').on('change', function () {
     updateDirEditSummary();
 });
 
+// ── Work-location helpers for directory edit (แนวทางเดียวกับหน้าโปรไฟล์) ──
+const _dirSchoolPrefixes = ['โรงเรียน', 'สพม.', 'สพป.', 'สำนักงาน'];
+const _dirEduPrefixes = ['สพป.', 'สพม.', 'สพอ.', 'สช.', 'อื่นๆ'];
+
+function _dirStripSchoolPrefix(text) {
+    let t = (text || '').trim();
+    for (const p of _dirSchoolPrefixes) {
+        if (t.startsWith(p)) { t = t.substring(p.length).trim(); break; }
+    }
+    return t;
+}
+
+function _setDirEditSchool(fullValue) {
+    const full = (fullValue || '').trim();
+    let matched = '';
+    for (const p of _dirSchoolPrefixes) {
+        if (full.startsWith(p)) { matched = p; break; }
+    }
+    $('#dirEditSchoolPrefix').val(matched);
+    // แสดงชื่อเต็ม (รวมคำนำหน้า) ในช่อง — ไม่ตัดออก
+    $('#dirEditSchool').val(full);
+}
+
+function _dirCollectSchoolOrganization() {
+    const prefix = $('#dirEditSchoolPrefix').val() || '';
+    const schoolName = _dirStripSchoolPrefix($('#dirEditSchool').val());
+    return prefix + schoolName;
+}
+
+function _dirSplitEducationArea(full) {
+    full = (full || '').trim();
+    const sel = $('#dirEditEduArea');
+    let matched = '', rest = full;
+    for (const p of _dirEduPrefixes) {
+        if (full.startsWith(p)) { matched = p; rest = full.substring(p.length).trim(); break; }
+    }
+    sel.val(matched);
+    if (matched === 'สพม.') {
+        $('#dirEditEduDetailWrap').hide();
+        $('#dirEditSpmWrap').show();
+        if ($('#dirEditSpmSelect option[value="' + full + '"]').length) {
+            $('#dirEditSpmSelect').val(full);
+            $('#dirEditSpmOther').hide();
+        } else {
+            $('#dirEditSpmSelect').val('_other');
+            $('#dirEditSpmOther').val(rest).show();
+        }
+    } else {
+        $('#dirEditSpmWrap').hide();
+        $('#dirEditSpmOther').hide();
+        $('#dirEditEduDetailWrap').show();
+        $('#dirEditEduDetail').val(rest);
+    }
+}
+
+function _dirCollectEducationArea() {
+    const eduSel = $('#dirEditEduArea').val() || '';
+    if (eduSel === 'สพม.') {
+        const spmVal = $('#dirEditSpmSelect').val() || '';
+        return spmVal === '_other' ? 'สพม.' + $('#dirEditSpmOther').val().trim() : spmVal;
+    }
+    if (eduSel) {
+        return eduSel + ($('#dirEditEduDetail').val() || '').trim();
+    }
+    return '';
+}
+
+async function loadDirEditEducationArea(userId) {
+    try {
+        const res = await API.getProfile(userId);
+        _dirSplitEducationArea((res.success && res.data) ? (res.data.education_area || '') : '');
+    } catch (e) {
+        _dirSplitEducationArea('');
+    }
+}
+
+$('#dirEditSchoolPrefix').on('change', function () {
+    const prefix = $(this).val() || '';
+    const input = $('#dirEditSchool');
+    const rest = _dirStripSchoolPrefix(input.val());
+    input.val(prefix + rest);
+    input.focus();
+    const len = input.val().length;
+    input[0].setSelectionRange(len, len);
+    if (prefix) {
+        $('#dirEditSchoolHint').removeClass('text-muted').addClass('text-primary');
+    } else {
+        $('#dirEditSchoolHint').removeClass('text-primary').addClass('text-muted');
+    }
+});
+
+$('#dirEditEduArea').on('change', function () {
+    if ($(this).val() === 'สพม.') {
+        $('#dirEditEduDetailWrap').hide();
+        $('#dirEditSpmWrap').show();
+    } else {
+        $('#dirEditSpmWrap').hide();
+        $('#dirEditSpmOther').hide();
+        $('#dirEditEduDetailWrap').show();
+    }
+});
+
+$('#dirEditSpmSelect').on('change', function () {
+    $('#dirEditSpmOther').toggle($(this).val() === '_other');
+});
+
 function openEditModal(userId, memberNumber, prefix, fullName, position, academicRank, school, email, memberType) {
     _dirEditUserId = userId;
     $('#dirEditMemberNumber').val(memberNumber);
-    $('#dirEditSchool').val(school || '');
     $('#dirEditEmail').val(email || '');
+    // School: split prefix from full name (แสดงชื่อเต็มรวมคำนำหน้าในช่อง เหมือนหน้าโปรไฟล์)
+    _setDirEditSchool(school || '');
+    loadDirEditEducationArea(userId);
     // Member type dropdown — populate from _memberTypesList then select current value
     let mtOpts = '<option value="">— ไม่ระบุ —</option>';
     (_memberTypesList || []).forEach(function(t) {
@@ -640,7 +782,8 @@ async function saveDirectoryEdit() {
     const btn = $('#btnSaveDirEdit');
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> กำลังบันทึก...');
 
-    const school = $('#dirEditSchool').val().trim();
+    const school = _dirCollectSchoolOrganization();
+    const educationArea = _dirCollectEducationArea();
     const email   = $('#dirEditEmail').val().trim();
 
     const res = await API.directoryEdit({
@@ -651,6 +794,7 @@ async function saveDirectoryEdit() {
         position:            position,
         academic_rank:       academicRank,
         school_organization: school,
+        education_area:      educationArea,
         email:               email,
         member_type:         $('#dirEditMemberType').val(),
     });

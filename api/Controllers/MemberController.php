@@ -498,6 +498,11 @@ class MemberController extends Controller
             $data['school_organization'] = trim((string)$input['school_organization']);
         }
 
+        // education_area — direct override (สังกัดเขตพื้นที่/เขต สพม.)
+        if (array_key_exists('education_area', $input)) {
+            $data['education_area'] = trim((string)$input['education_area']);
+        }
+
         // email — optional, validate format and uniqueness
         if (array_key_exists('email', $input)) {
             $emailVal = trim((string)$input['email']);
