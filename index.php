@@ -50,13 +50,15 @@ html {
                 <span class="badge badge-hero mb-3" id="hero-badge"><i class="bi bi-mortarboard-fill me-1"></i> <span id="hero-badge-text"><?php echo siteConfig('site_name_en'); ?></span></span>
                 <h1 class="mb-3" id="hero-title"><?php echo htmlspecialchars(siteConfig('site_name')); ?></h1>
                 <p class="lead mb-4" id="hero-subtitle"><?php echo htmlspecialchars(siteConfig('site_name_short')); ?> — <?php echo htmlspecialchars(siteConfig('site_name_en')); ?></p>
-                <div class="d-flex gap-3 flex-wrap" id="homeHeroGuestActions">
-                    <a href="./auth/?page=login" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
-                    </a>
-                    <a href="./auth/?page=register" class="btn btn-outline-light btn-lg px-4">
-                        <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
-                    </a>
+                <div class="d-flex gap-3 flex-wrap">
+                    <div class="d-flex gap-3 flex-wrap" id="homeHeroGuestActions">
+                        <a href="./auth/?page=login" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
+                        </a>
+                        <a href="./auth/?page=register" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
+                        </a>
+                    </div>
                     <a href="#upcoming" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
                         <i class="bi bi-calendar-event me-2"></i>เข้าร่วมกิจกรรม
                     </a>
@@ -64,9 +66,6 @@ html {
                 <div class="d-flex gap-3 flex-wrap mt-3" id="homeHeroCommonActions">
                     <a href="#about" class="btn btn-outline-light btn-lg px-4">
                         <i class="bi bi-info-circle me-2"></i>เกี่ยวกับเรา
-                    </a>
-                    <a href="#upcoming" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
-                        <i class="bi bi-calendar-event me-2"></i>เข้าร่วมกิจกรรม
                     </a>
                 </div>
             </div>
