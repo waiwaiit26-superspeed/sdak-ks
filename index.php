@@ -55,7 +55,7 @@ html {
                         <a href="./auth/?page=login" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
                             <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
                         </a>
-                        <a href="./auth/?page=register" class="btn btn-outline-light btn-lg px-4">
+                        <a href="./auth/?page=register" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
                             <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
                         </a>
                     </div>
