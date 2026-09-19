@@ -8,6 +8,9 @@ include ROOT_PATH . 'templates/public/header.php';
 ?>
 
 <style>
+html {
+    scroll-behavior: smooth;
+}
 .activity-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -54,10 +57,16 @@ include ROOT_PATH . 'templates/public/header.php';
                     <a href="./auth/?page=register" class="btn btn-outline-light btn-lg px-4">
                         <i class="bi bi-person-plus me-2"></i>สมัครสมาชิก
                     </a>
+                    <a href="#upcoming" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
+                        <i class="bi bi-calendar-event me-2"></i>เข้าร่วมกิจกรรม
+                    </a>
                 </div>
                 <div class="d-flex gap-3 flex-wrap mt-3" id="homeHeroCommonActions">
                     <a href="#about" class="btn btn-outline-light btn-lg px-4">
                         <i class="bi bi-info-circle me-2"></i>เกี่ยวกับเรา
+                    </a>
+                    <a href="#upcoming" class="btn btn-light btn-lg px-4 fw-bold text-primary-custom">
+                        <i class="bi bi-calendar-event me-2"></i>เข้าร่วมกิจกรรม
                     </a>
                 </div>
             </div>
@@ -120,7 +129,7 @@ include ROOT_PATH . 'templates/public/header.php';
 </section>
 
 <!-- Upcoming Activities -->
-<section class="section-padding bg-light">
+<section id="upcoming" class="section-padding bg-light" style="scroll-margin-top:90px;">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
