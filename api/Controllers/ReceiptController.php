@@ -590,6 +590,14 @@ class ReceiptController extends Controller
 
         $receipts->update(['payer_address' => $payerAddress], ['id' => $id]);
 
+        // Optional: sync the edited address back to the member's own profile (same approach as admin edit)
+        $syncProfileAddress = !empty($input['sync_profile_address']);
+        if ($syncProfileAddress) {
+            $addressSource = strtolower(trim((string)($input['address_source'] ?? 'work')));
+            $addressSource = in_array($addressSource, ['current', 'home', 'personal'], true) ? 'current' : 'work';
+            $this->syncReceiptAddressToProfile((int)$receipt['user_id'], $payerAddress, $addressSource);
+        }
+
         Auth::logActivity(
             (int)$this->currentUser['id'], 'update_receipt_address', 'receipt',
             "แก้ไขที่อยู่ใบเสร็จ #" . ($receipt['receipt_number'] ?? $id),

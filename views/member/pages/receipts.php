@@ -367,6 +367,32 @@
             <form id="editAddressForm">
             <div class="modal-body">
                 <input type="hidden" id="editAddrReceiptId">
+                <div class="mb-3" id="editAddressSourceWrap">
+                    <label class="form-label fw-bold d-block">แหล่งที่อยู่</label>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceWork" value="work" checked>
+                        <label class="form-check-label" for="editAddressSourceWork">ใช้ที่อยู่ที่ทำงาน</label>
+                    </div>
+                    <div class="form-check form-check-inline mb-0">
+                        <input class="form-check-input" type="radio" name="editAddressSource" id="editAddressSourceCurrent" value="current">
+                        <label class="form-check-label" for="editAddressSourceCurrent">ใช้ที่อยู่ปัจจุบัน</label>
+                    </div>
+                    <button type="button" class="btn btn-outline-info btn-sm" id="btnLoadAddressFromProfile">
+                        <i class="bi bi-person-lines-fill me-1"></i>ดึงจากโปรไฟล์สมาชิก
+                    </button>
+                    <small class="text-muted d-block mt-1">ใช้ข้อมูลที่อยู่จากหน้าโปรไฟล์ของคุณอัตโนมัติ หรือกดดึงใหม่ได้</small>
+                </div>
+                <div class="mb-3" id="editProfileSyncWrap">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editSyncProfileAddress">
+                        <label class="form-check-label" for="editSyncProfileAddress">บันทึกการแก้ไขที่อยู่นี้กลับไปที่โปรไฟล์ของฉันด้วย</label>
+                    </div>
+                    <small class="text-muted">ถ้าติ๊กไว้ ระบบจะอัปเดตข้อมูลในโปรไฟล์ของคุณตามตัวเลือกที่อยู่ที่เลือก</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">หน่วยงาน/สถานที่ทำงาน</label>
+                    <input type="text" id="editAddrOrg" class="form-control" placeholder="หน่วยงาน">
+                </div>
                 <div class="row mb-3">
                     <div class="col-4">
                         <label class="form-label fw-bold">เลขที่</label>
@@ -750,10 +776,61 @@ $(function () {
         }
     });
 
-    // Edit address form submit
-    $('#editAddressForm').on('submit', async function(e) {
-        e.preventDefault();
-        const id = $('#editAddrReceiptId').val();
+    // ── Receipt address edit helpers (แนวทางเดียวกับ admin) ──
+    let myProfileAddressCache = null;
+
+    function getEditAddressSource() {
+        return $('input[name="editAddressSource"]:checked').val() || 'work';
+    }
+
+    function parseAddressForEditFields(raw) {
+        let addr = {};
+        try {
+            addr = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
+        } catch(e) {
+            addr = {};
+        }
+        if (!addr || typeof addr !== 'object') addr = {};
+
+        let detail = addr.detail || '';
+        let no = '', moo = '', soi = '', road = '';
+
+        const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
+        if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
+        const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
+        if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
+        const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
+        if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
+        no = detail.trim();
+
+        return {
+            organization: addr.organization || '',
+            no,
+            moo,
+            soi,
+            road,
+            subdistrict: addr.subdistrict || '',
+            district: addr.district || '',
+            province: addr.province || '',
+            zipcode: addr.zipcode || ''
+        };
+    }
+
+    function fillEditAddressFields(raw) {
+        const f = parseAddressForEditFields(raw);
+        $('#editAddrOrg').val(f.organization);
+        $('#editAddrNo').val(f.no);
+        $('#editAddrMoo').val(f.moo);
+        $('#editAddrSoi').val(f.soi);
+        $('#editAddrRoad').val(f.road);
+        $('#editAddrSub').val(f.subdistrict);
+        $('#editAddrDist').val(f.district);
+        $('#editAddrProv').val(f.province);
+        $('#editAddrZip').val(f.zipcode);
+    }
+
+    function collectEditAddressJson() {
+        const org  = $('#editAddrOrg').val().trim();
         const no   = $('#editAddrNo').val().trim();
         const moo  = $('#editAddrMoo').val().trim();
         const soi  = $('#editAddrSoi').val().trim();
@@ -763,19 +840,97 @@ $(function () {
         const prov = $('#editAddrProv').val().trim();
         const zip  = $('#editAddrZip').val().trim();
 
-        // Build detail like buildPayerAddress
         let detail = no && no !== '-' ? no : '';
         if (moo && moo !== '-') detail += '   หมู่ ' + moo;
         if (soi && soi !== '-') detail += '   ซอย ' + soi;
         if (road && road !== '-') detail += '   ถนน ' + road;
         detail = detail.trim();
 
-        const addrJson = JSON.stringify({ detail, subdistrict: sub, district: dist, province: prov, zipcode: zip });
+        if (org || detail || sub || dist || prov || zip) {
+            return JSON.stringify({
+                organization: org,
+                detail,
+                subdistrict: sub,
+                district: dist,
+                province: prov,
+                zipcode: zip
+            });
+        }
+        return null;
+    }
+
+    async function getMyAddressProfile() {
+        if (myProfileAddressCache) return myProfileAddressCache;
+        const result = await API.getProfile();
+        if (result.success && result.data) {
+            myProfileAddressCache = result.data;
+            return myProfileAddressCache;
+        }
+        return null;
+    }
+
+    async function applyProfileAddressToEdit(showSuccess = false) {
+        const member = await getMyAddressProfile();
+        if (!member) {
+            App.error('ไม่สามารถโหลดที่อยู่จากโปรไฟล์ของคุณได้');
+            return;
+        }
+        const source = getEditAddressSource();
+        const addrJson = buildPayerAddress(member, source);
+        if (!addrJson) {
+            App.error('ไม่พบข้อมูลที่อยู่ตามตัวเลือกที่เลือก');
+            return;
+        }
+        fillEditAddressFields(addrJson);
+        if (showSuccess) App.success('โหลดที่อยู่จากโปรไฟล์แล้ว');
+    }
+
+    function hasEditAddressValue() {
+        const vals = [
+            $('#editAddrOrg').val(),
+            $('#editAddrNo').val(),
+            $('#editAddrMoo').val(),
+            $('#editAddrSoi').val(),
+            $('#editAddrRoad').val(),
+            $('#editAddrSub').val(),
+            $('#editAddrDist').val(),
+            $('#editAddrProv').val(),
+            $('#editAddrZip').val(),
+        ].map(v => (v || '').trim());
+        return vals.some(v => v !== '');
+    }
+
+    // Edit address form submit (แนวทางเดียวกับ admin)
+    $('#editAddressForm').on('submit', async function(e) {
+        e.preventDefault();
+        const id = $('#editAddrReceiptId').val();
+
+        const addrJson = collectEditAddressJson();
+        if (!addrJson) {
+            App.error('กรุณากรอกข้อมูลที่อยู่อย่างน้อย 1 ช่อง');
+            return;
+        }
+
+        const syncProfileAddress = $('#editSyncProfileAddress').is(':checked');
+        if (syncProfileAddress) {
+            const sourceLabel = getEditAddressSource() === 'current' ? 'ที่อยู่ปัจจุบัน' : 'ที่อยู่ที่ทำงาน';
+            const ok = await App.confirm(
+                'ยืนยันอัปเดตโปรไฟล์',
+                `การบันทึกครั้งนี้จะอัปเดต ${sourceLabel} ในโปรไฟล์ของคุณด้วย ต้องการดำเนินการต่อหรือไม่?`,
+                'warning'
+            );
+            if (!ok) return;
+        }
 
         const btn = $('#btnSaveAddr');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
-        const result = await API.post(API.apiUrl('receipt', 'update-my-address'), { id, payer_address: addrJson });
+        const result = await API.post(API.apiUrl('receipt', 'update-my-address'), {
+            id,
+            payer_address: addrJson,
+            address_source: getEditAddressSource(),
+            sync_profile_address: syncProfileAddress ? 1 : 0
+        });
         btn.prop('disabled', false).html('<i class="bi bi-check me-1"></i> บันทึก');
 
         if (result.success) {
@@ -788,6 +943,14 @@ $(function () {
         } else {
             App.error(result.message || 'เกิดข้อผิดพลาด');
         }
+    });
+
+    $('input[name="editAddressSource"]').on('change', function() {
+        applyProfileAddressToEdit(false);
+    });
+
+    $('#btnLoadAddressFromProfile').on('click', function() {
+        applyProfileAddressToEdit(true);
     });
 
     // Create-flow address modal submit
@@ -1019,34 +1182,14 @@ function openEditReceiptNumber() {
 function openEditAddress() {
     if (!currentReceiptData) return;
     $('#editAddrReceiptId').val(currentReceiptData.id);
-    // Parse existing address into fields
-    let addr = {};
-    try { addr = JSON.parse(currentReceiptData.payer_address); } catch(e) {}
-    if (!addr || typeof addr !== 'object') addr = {};
-
-    // Try to parse detail back into no/moo/soi/road
-    let detail = addr.detail || '';
-    let no = '', moo = '', soi = '', road = '';
-    // Extract road
-    const roadMatch = detail.match(/\s+ถนน\s*(.+?)$/);
-    if (roadMatch) { road = roadMatch[1].trim(); detail = detail.replace(roadMatch[0], ''); }
-    // Extract soi
-    const soiMatch = detail.match(/\s+ซอย\s*(.+?)$/);
-    if (soiMatch) { soi = soiMatch[1].trim(); detail = detail.replace(soiMatch[0], ''); }
-    // Extract moo
-    const mooMatch = detail.match(/\s+หมู่\s*(.+?)$/);
-    if (mooMatch) { moo = mooMatch[1].trim(); detail = detail.replace(mooMatch[0], ''); }
-    no = detail.trim();
-
-    $('#editAddrNo').val(no);
-    $('#editAddrMoo').val(moo);
-    $('#editAddrSoi').val(soi);
-    $('#editAddrRoad').val(road);
-    $('#editAddrSub').val(addr.subdistrict || '');
-    $('#editAddrDist').val(addr.district || '');
-    $('#editAddrProv').val(addr.province || '');
-    $('#editAddrZip').val(addr.zipcode || '');
+    fillEditAddressFields(currentReceiptData.payer_address || '');
+    $('#editAddressSourceWork').prop('checked', true);
+    $('#editSyncProfileAddress').prop('checked', false);
     $('#editAddressModal').modal('show');
+    // If receipt has no stored address, auto-load from profile
+    if (!hasEditAddressValue()) {
+        applyProfileAddressToEdit(false);
+    }
 }
 
 // Convert image URL to base64
