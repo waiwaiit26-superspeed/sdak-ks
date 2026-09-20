@@ -155,9 +155,13 @@
                             <label class="form-label">วันสิ้นสุด</label>
                             <input type="datetime-local" class="form-control" name="end_date" id="actEnd">
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-12 mb-3">
                             <label class="form-label">วันจัดกิจกรรม</label>
-                            <input type="datetime-local" class="form-control" name="event_date" id="actEventDate">
+                            <div id="actEventDatesList" class="mb-2"></div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddEventDate">
+                                <i class="bi bi-plus-lg me-1"></i>เพิ่มวันจัดกิจกรรม
+                            </button>
+                            <small class="d-block text-muted mt-1">ระบุวันที่จัดกิจกรรม (สามารถมีได้หลายวัน) — หากไม่ระบุจะใช้วันเริ่มต้นแทน</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">สถานที่</label>
@@ -662,7 +666,7 @@ async function loadActivities(page = 1) {
         const publicActivityUrl = `${BASE_PATH}web/?page=activity-detail&id=${a.id}`;
         const statusMap = { 'open': '<span class="badge bg-success">เปิดรับ</span>', 'closed': '<span class="badge bg-danger">ปิดรับ</span>', 'draft': '<span class="badge bg-secondary">แบบร่าง</span>', 'cancelled': '<span class="badge bg-dark">ยกเลิก</span>' };
         const statusBadge = statusMap[a.status] || '<span class="badge bg-secondary">' + a.status + '</span>';
-        const eventDate = a.event_date ? App.formatDateTime(a.event_date) : App.formatDateTime(a.start_date);
+        const eventDate = App.formatEventDates(a);
         const fee = a.has_fee && a.fee_amount > 0 ? App.formatCurrency(a.fee_amount) : 'ฟรี';
         const spots = a.max_participants > 0 ? `${a.approved_count || 0}/${a.max_participants}` : (a.approved_count || 0) + ' คน';
         const visBadge = a.visibility === 'members_only' ? '<span class="badge bg-warning text-dark"><i class="bi bi-lock me-1"></i>สมาชิก</span>'
@@ -717,7 +721,21 @@ function openActivityForm(data = null) {
         $('#actLocation').val(data.location);
         $('#actStart').val(data.start_date ? data.start_date.replace(' ', 'T').substring(0, 16) : '');
         $('#actEnd').val(data.end_date ? data.end_date.replace(' ', 'T').substring(0, 16) : '');
-        $('#actEventDate').val(data.event_date ? data.event_date.replace(' ', 'T').substring(0, 16) : '');
+        // Populate multiple event dates
+        $('#actEventDatesList').empty();
+        let evDates = [];
+        if (data.event_dates) {
+            try {
+                const parsed = typeof data.event_dates === 'string' ? JSON.parse(data.event_dates) : data.event_dates;
+                if (Array.isArray(parsed)) evDates = parsed;
+            } catch (e) { evDates = []; }
+        }
+        if (!evDates.length && data.event_date) evDates = [data.event_date];
+        if (evDates.length) {
+            evDates.forEach(d => addEventDateRow(d ? d.replace(' ', 'T').substring(0, 16) : ''));
+        } else {
+            addEventDateRow();
+        }
         $('#actMax').val(data.max_participants || 0);
         $('#actFee').val(data.fee_amount || 0);
         $('#actFeeDesc').val(data.fee_description || '');
@@ -738,11 +756,26 @@ function openActivityForm(data = null) {
         }
     } else {
         $('#actFormTitle').text('เพิ่มกิจกรรม');
+        $('#actEventDatesList').empty();
+        addEventDateRow();
         toggleVisibilityText();
     }
 
     $('#activityFormModal').modal('show');
 }
+
+// ─── Multiple event dates management ───
+function addEventDateRow(value = '') {
+    const row = `
+        <div class="input-group input-group-sm act-event-date-row mb-1" style="max-width:340px;">
+            <input type="datetime-local" class="form-control act-event-date-input" value="${App.escapeHtml(value)}">
+            <button type="button" class="btn btn-outline-danger" onclick="$(this).closest('.act-event-date-row').remove();$('#btnAddEventDate').show();" title="ลบวันนี้"><i class="bi bi-x-lg"></i></button>
+        </div>`;
+    $('#actEventDatesList').append(row);
+}
+$('#btnAddEventDate').on('click', function () {
+    addEventDateRow();
+});
 
 async function editActivity(id) {
     const result = await API.getActivityDetail(id);
@@ -798,7 +831,6 @@ $('#btnSaveActivity').on('click', async function () {
         location: $('#actLocation').val(),
         start_date: startDate.replace('T', ' ') + ':00',
         end_date: $('#actEnd').val() ? $('#actEnd').val().replace('T', ' ') + ':00' : null,
-        event_date: $('#actEventDate').val() ? $('#actEventDate').val().replace('T', ' ') + ':00' : null,
         max_participants: parseInt($('#actMax').val()) || 0,
         fee_amount: parseFloat($('#actFee').val()) || 0,
         fee_description: $('#actFeeDesc').val(),
@@ -809,6 +841,11 @@ $('#btnSaveActivity').on('click', async function () {
         allowed_member_types: $('.member-type-cb:checked').map(function() { return $(this).val(); }).get().join(',') || null,
         show_registrations: $('#actShowRegs').is(':checked') ? 1 : 0
     };
+
+    // Collect multiple event dates (first one also sent as event_date for sorting/compat)
+    const evDateValues = $('.act-event-date-input').map(function() { return $(this).val(); }).get().filter(v => v);
+    data.event_dates = evDateValues.map(v => v.replace('T', ' ') + ':00');
+    data.event_date = data.event_dates.length ? data.event_dates[0] : null;
 
     const actId = $('#actId').val();
     let result;

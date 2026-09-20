@@ -471,6 +471,31 @@ const App = {
     },
 
     /**
+     * Parse activity event_dates JSON → array of date strings
+     * Falls back to legacy single event_date / start_date
+     */
+    parseEventDates(a) {
+        let dates = [];
+        if (a.event_dates) {
+            try {
+                const parsed = typeof a.event_dates === 'string' ? JSON.parse(a.event_dates) : a.event_dates;
+                if (Array.isArray(parsed)) dates = parsed.filter(Boolean);
+            } catch (e) { /* invalid JSON → fallback below */ }
+        }
+        if (!dates.length && a.event_date) dates = [a.event_date];
+        if (!dates.length) dates = [a.start_date];
+        return dates.filter(Boolean);
+    },
+
+    /**
+     * Format activity event dates (supports multiple days) as HTML lines
+     */
+    formatEventDates(a) {
+        const dates = this.parseEventDates(a);
+        return dates.map(d => this.formatDateTime(d)).join('<br>');
+    },
+
+    /**
      * Format number
      */
     formatNumber(num) {

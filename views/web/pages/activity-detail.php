@@ -109,7 +109,7 @@ $(function () {
         const a = activityData;
         const startDate = App.formatDateTime(a.start_date);
         const endDate = a.end_date ? App.formatDateTime(a.end_date) : '-';
-        const eventDate = a.event_date ? App.formatDateTime(a.event_date) : App.formatDateTime(a.start_date);
+        const eventDate = App.formatEventDates(a);
         const fee = a.has_fee && a.fee_amount > 0 ? App.formatCurrency(a.fee_amount) : 'ฟรี';
         const coverImg = a.cover_image ? `<img src="${App.imgUrl(a.cover_image)}" class="img-fluid rounded mb-4" alt="${a.title}" onerror="this.style.display='none'">` : '';
         const registrationStatusText = (a.status === 'open' && a.registration_open)

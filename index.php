@@ -353,7 +353,7 @@ async function loadUpcomingActivities() {
             const months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
             const coverImg = act.cover_image ? App.imgUrl(act.cover_image) : '';
             const detailUrl = `./web/?page=activity-detail&id=${act.id}`;
-            const eventDateText = act.event_date ? App.formatDateTime(act.event_date) : App.formatDateTime(act.start_date);
+            const eventDateText = App.formatEventDates(act);
             const startDateText = App.formatDateTime(act.start_date);
             const endDateText = act.end_date ? App.formatDateTime(act.end_date) : '-';
             const regStatusText = (act.status === 'open' && act.registration_open)

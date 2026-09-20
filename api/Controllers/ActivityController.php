@@ -174,6 +174,10 @@ class ActivityController extends Controller
 
         $activity = $this->model('ActivityModel');
 
+        // Multiple event dates → JSON column + keep first date in event_date for sorting/compat
+        $eventDates = array_values(array_filter(array_map('trim', (array)($input['event_dates'] ?? [])), fn($d) => $d !== ''));
+        $eventDateFirst = $eventDates[0] ?? ($input['event_date'] ?? null);
+
         $feeAmount = (float)($input['fee_amount'] ?? 0);
         $visibility = in_array($input['visibility'] ?? '', ['public','members_only','custom']) ? $input['visibility'] : 'public';
         $data = [
@@ -182,7 +186,8 @@ class ActivityController extends Controller
             'location'         => $input['location'] ?? '',
             'start_date'       => $input['start_date'],
             'end_date'         => $input['end_date'] ?? null,
-            'event_date'       => $input['event_date'] ?? null,
+            'event_date'       => $eventDateFirst,
+            'event_dates'      => !empty($eventDates) ? json_encode($eventDates, JSON_UNESCAPED_SLASHES) : null,
             'max_participants' => (int)($input['max_participants'] ?? 0) ?: null,
             'has_fee'          => $feeAmount > 0 ? 1 : 0,
             'fee_amount'       => $feeAmount,
@@ -215,12 +220,19 @@ class ActivityController extends Controller
         $activity = $this->model('ActivityModel');
         if (!$activity->has(['id' => $id])) Response::error('ไม่พบกิจกรรม', 404);
 
-        $allowed = ['title','description','location','start_date','end_date','event_date',
+        $allowed = ['title','description','location','start_date','end_date','event_date','event_dates',
                      'max_participants','has_fee','fee_amount','fee_description','cover_image','status',
                      'visibility','visibility_text','allowed_member_types','access_code','show_registrations'];
         $data = [];
         foreach ($allowed as $f) {
             if (isset($input[$f])) $data[$f] = $input[$f];
+        }
+
+        // Multiple event dates → JSON column + keep first date in event_date for sorting/compat
+        if (isset($input['event_dates'])) {
+            $eventDates = array_values(array_filter(array_map('trim', (array)$input['event_dates']), fn($d) => $d !== ''));
+            $data['event_dates'] = !empty($eventDates) ? json_encode($eventDates, JSON_UNESCAPED_SLASHES) : null;
+            $data['event_date'] = $eventDates[0] ?? null;
         }
 
         // Auto-set has_fee based on fee_amount
